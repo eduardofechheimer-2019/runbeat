@@ -1,0 +1,13 @@
+{
+  "name": "RunBeat",
+  "short_name": "RunBeat",
+  "description": "Casa a cadência da corrida/caminhada com o BPM da música tocando no Spotify, em tempo real.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#1db954",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

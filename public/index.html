@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>RunBeat</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<meta name="theme-color" content="#1db954" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<main class="app">
+  <header>
+    <h1>RunBeat</h1>
+    <p class="tagline">O ritmo da corrida vira o ritmo da playlist.</p>
+  </header>
+
+  <section id="auth-section">
+    <p id="status">Verificando login...</p>
+    <button id="connect-btn">Conectar ao Spotify</button>
+  </section>
+
+  <section id="setup-section" hidden>
+    <h2>1. Escolha a fonte de músicas</h2>
+    <label for="playlist-select">Playlist</label>
+    <select id="playlist-select"></select>
+    <button id="build-pool-btn">Analisar BPM das faixas</button>
+    <p id="pool-progress" hidden></p>
+  </section>
+
+  <section id="run-section" hidden>
+    <h2>2. Corrida</h2>
+    <p>Cadência: <strong id="cadence-value">—</strong></p>
+    <p>Tocando agora: <strong id="track-value">—</strong></p>
+    <p id="run-error" class="error" hidden></p>
+    <button id="start-btn">Iniciar corrida</button>
+    <button id="stop-btn" hidden>Parar</button>
+  </section>
+</main>
+
+<script type="module" src="src/app.js"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
+</script>
+</body>
+</html>

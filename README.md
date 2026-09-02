@@ -59,11 +59,12 @@ pasta `public/` direto num host estático.
 Qualquer servidor estático simples serve, por exemplo:
 
 ```
-cd public && python3 -m http.server 5173
+cd public && python3 -m http.server 5173 --bind 127.0.0.1
 ```
 
-Abra `http://localhost:5173/` (precisa ser esse endereço exato, batendo com
-o Redirect URI cadastrado).
+Abra `http://127.0.0.1:5173/index.html` (precisa ser esse endereço exato —
+Spotify não aceita mais `localhost` puro como Redirect URI, só `127.0.0.1`
+ou HTTPS — batendo com o que foi cadastrado no app).
 
 ### 3. Durante o uso
 

@@ -1,6 +1,6 @@
 // Configuração do app — preencha SPOTIFY_CLIENT_ID depois de criar o app em
 // https://developer.spotify.com/dashboard (ver README para o passo a passo).
-export const SPOTIFY_CLIENT_ID = "COLOQUE_AQUI_O_CLIENT_ID";
+export const SPOTIFY_CLIENT_ID = "323bfd05cb3546aaa12bb96ea702404b";
 
 // Precisa bater exatamente com uma Redirect URI cadastrada no app do Spotify.
 export const SPOTIFY_REDIRECT_URI = window.location.origin + window.location.pathname;

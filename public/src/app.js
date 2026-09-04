@@ -125,6 +125,7 @@ function stopRun() {
   el.startBtn.hidden = false;
   el.stopBtn.hidden = true;
   el.cadenceValue.textContent = "—";
+  el.trackValue.textContent = "—";
 }
 
 async function refreshAuthedUi() {

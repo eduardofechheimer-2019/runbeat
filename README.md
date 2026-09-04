@@ -4,6 +4,9 @@ App PWA independente que casa, em tempo real, a cadência de passos da sua
 corrida/caminhada com o andamento (BPM) das músicas — e troca a faixa
 sozinho no Spotify quando o ritmo muda, sem precisar escolher música na mão.
 
+**Status: fase 1 validada em teste real** — login, resolução de BPM, leitura
+de cadência e troca automática de faixa testados numa corrida de verdade.
+
 ## Como funciona
 
 1. Você loga com sua conta Spotify (Premium — necessário pra controlar
@@ -77,12 +80,9 @@ ou HTTPS — batendo com o que foi cadastrado no app).
 
 ## Limitações conhecidas desta primeira versão (fase 1)
 
-- **BPM via ReccoBeats não testado ao vivo** neste ambiente de
-  desenvolvimento (o proxy de rede daqui bloqueia o domínio) — a integração
-  foi implementada com base em documentação/exemplos de terceiros. Teste
-  no navegador real antes de confiar 100%; se o formato de campo divergir
-  do esperado (`tempo` em `GET /v1/audio-features?ids=...`), ajuste
-  `extractTempo` em `bpmSource.js`.
+- **BPM via ReccoBeats: validado em teste real** — em torno de 78% das
+  faixas de uma playlist de teste (Músicas Curtidas) tiveram BPM resolvido.
+  Faixas sem BPM na ReccoBeats simplesmente ficam fora do pool.
 - **Sem fallback de fonte de BPM** ainda (GetSongBPM, por título/artista) —
   faixas sem BPM na ReccoBeats simplesmente ficam fora do pool. Fica como
   próximo passo se a cobertura da ReccoBeats se mostrar insuficiente.

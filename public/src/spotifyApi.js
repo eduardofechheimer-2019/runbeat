@@ -31,7 +31,11 @@ export async function getMyPlaylists() {
     items.push(...page.items);
     url = page.next ? page.next.replace(API_BASE, "") : null;
   }
-  return items.map((p) => ({ id: p.id, name: p.name, trackCount: p.tracks.total }));
+  // Algumas playlists (ex. geradas automaticamente pelo Spotify) vêm com
+  // campos ausentes/nulos no item — filtra essas e não deixa quebrar o resto.
+  return items
+    .filter((p) => p && p.id)
+    .map((p) => ({ id: p.id, name: p.name, trackCount: p.tracks?.total ?? 0 }));
 }
 
 export async function getPlaylistTrackRefs(playlistId) {

@@ -68,15 +68,19 @@ async function buildPool() {
       ? await api.getLikedSongRefs()
       : await api.getPlaylistTrackRefs(playlistId);
 
-  bpmPool = await buildBpmPool(refs, (done, total) => {
+  const { tracks, diagnostic } = await buildBpmPool(refs, (done, total) => {
     el.poolProgress.textContent = `Resolvendo BPM: ${done}/${total}...`;
   });
+  bpmPool = tracks;
 
   el.poolProgress.textContent = `Pronto: ${bpmPool.length} de ${refs.length} faixas com BPM encontrado.`;
   el.buildPoolBtn.disabled = false;
   el.runSection.hidden = bpmPool.length === 0;
   if (bpmPool.length === 0) {
-    el.poolProgress.textContent += " Nenhuma faixa teve BPM resolvido — tente outra playlist.";
+    el.poolProgress.textContent += " Nenhuma faixa teve BPM resolvido.";
+    if (diagnostic) {
+      el.poolProgress.textContent += ` [Diagnóstico: ${diagnostic}]`;
+    }
   }
 }
 

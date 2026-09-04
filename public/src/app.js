@@ -1,9 +1,15 @@
-import { STORAGE_KEYS, REMATCH_INTERVAL_MS } from "./config.js";
+import {
+  STORAGE_KEYS,
+  END_OF_TRACK_LEAD_MS,
+  FALLBACK_TRACK_DURATION_MS,
+  CADENCE_DISPLAY_INTERVAL_MS,
+  RETRY_AFTER_ERROR_MS,
+} from "./config.js";
 import * as auth from "./spotifyAuth.js";
 import * as api from "./spotifyApi.js";
 import { buildBpmPool } from "./bpmSource.js";
 import { CadenceTracker, requestMotionPermission } from "./cadence.js";
-import { pickTrackForCadence, shouldRematch } from "./matcher.js";
+import { pickTrackForCadence } from "./matcher.js";
 
 const el = {
   status: document.getElementById("status"),
@@ -22,8 +28,9 @@ const el = {
 
 let bpmPool = [];
 let tracker = null;
-let rematchTimer = null;
-let lastMatchedCadence = null;
+let displayTimer = null;
+let bootstrapTimer = null;
+let endOfTrackTimer = null;
 let currentTrackId = null;
 const playedIds = new Set();
 
@@ -84,42 +91,66 @@ async function buildPool() {
   }
 }
 
-async function rematchLoop() {
+function updateCadenceDisplay() {
   const cadence = tracker.getCurrentSpm();
   el.cadenceValue.textContent = cadence > 0 ? `${cadence} passos/min` : "medindo...";
+}
 
-  if (cadence === 0) return; // ainda sem leitura confiável
-  if (!shouldRematch(lastMatchedCadence, cadence)) return;
-
+// Escolhe e toca a próxima faixa pra cadência atual, e agenda a troca
+// seguinte pra pouco antes do fim dela — sem nunca precisar perguntar ao
+// Spotify "quanto falta", já que sabemos a duração da faixa que mandamos
+// tocar.
+async function playNextAndSchedule() {
+  const cadence = tracker.getCurrentSpm();
   const track = pickTrackForCadence(bpmPool, cadence, playedIds);
-  if (!track || track.id === currentTrackId) return;
+  if (!track) return;
 
   try {
     await api.playTrackUri(track.uri);
     currentTrackId = track.id;
     playedIds.add(track.id);
-    lastMatchedCadence = cadence;
     el.trackValue.textContent = `${track.name} — ${track.artist} (${Math.round(track.tempo)} BPM)`;
     showRunError("");
+
+    const durationMs = track.durationMs || FALLBACK_TRACK_DURATION_MS;
+    const delay = Math.max(durationMs - END_OF_TRACK_LEAD_MS, 1000);
+    endOfTrackTimer = setTimeout(playNextAndSchedule, delay);
   } catch (err) {
     showRunError(err.message);
+    // Não trava o loop — tenta de novo em breve (ex. dispositivo Spotify
+    // pode ter ficado inativo temporariamente).
+    endOfTrackTimer = setTimeout(playNextAndSchedule, RETRY_AFTER_ERROR_MS);
   }
+}
+
+// Só começa a tocar quando tiver uma primeira leitura confiável de
+// cadência — no início da corrida o acelerômetro ainda não tem dado
+// suficiente na janela deslizante.
+function waitForFirstCadence() {
+  bootstrapTimer = setInterval(() => {
+    if (tracker.getCurrentSpm() > 0) {
+      clearInterval(bootstrapTimer);
+      playNextAndSchedule();
+    }
+  }, CADENCE_DISPLAY_INTERVAL_MS);
 }
 
 function startRun() {
   tracker = new CadenceTracker();
   tracker.start();
-  lastMatchedCadence = null;
   currentTrackId = null;
   playedIds.clear();
-  rematchTimer = setInterval(rematchLoop, REMATCH_INTERVAL_MS);
   el.startBtn.hidden = true;
   el.stopBtn.hidden = false;
   showRunError("");
+  displayTimer = setInterval(updateCadenceDisplay, CADENCE_DISPLAY_INTERVAL_MS);
+  waitForFirstCadence();
 }
 
 function stopRun() {
-  clearInterval(rematchTimer);
+  clearInterval(displayTimer);
+  clearInterval(bootstrapTimer);
+  clearTimeout(endOfTrackTimer);
   tracker?.stop();
   tracker = null;
   el.startBtn.hidden = false;

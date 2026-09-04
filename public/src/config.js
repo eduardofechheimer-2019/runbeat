@@ -23,13 +23,22 @@ export const CADENCE_MAX_SPM = 220;
 // Janela deslizante usada pra calcular passos/min a partir dos picos detectados.
 export const CADENCE_WINDOW_MS = 8000;
 
-// De quanto em quanto tempo o motor de matching reavalia se a faixa atual
-// ainda é a melhor opção pra cadência atual.
-export const REMATCH_INTERVAL_MS = 6000;
+// Quanto antes do fim da faixa (em ms) o motor escolhe e já manda tocar a
+// próxima — baseado na duração conhecida da faixa, sem chamar a API do
+// Spotify pra descobrir quanto falta.
+export const END_OF_TRACK_LEAD_MS = 2000;
 
-// Variação mínima de cadência (SPM) pra justificar trocar de faixa — evita
-// ficar pulando música a cada pequena oscilação de passo.
-export const CADENCE_CHANGE_THRESHOLD_SPM = 6;
+// Duração assumida quando uma faixa não vier com `duration_ms` (não deveria
+// acontecer, mas evita travar o agendamento nesse caso).
+export const FALLBACK_TRACK_DURATION_MS = 30000;
+
+// Intervalo de atualização do texto de cadência na tela (só exibição —
+// não afeta quando a troca de faixa acontece).
+export const CADENCE_DISPLAY_INTERVAL_MS = 1000;
+
+// Se der erro ao tentar tocar a próxima faixa (ex. dispositivo Spotify
+// ficou inativo), tenta de novo depois desse tempo.
+export const RETRY_AFTER_ERROR_MS = 5000;
 
 export const STORAGE_KEYS = {
   spotifyTokens: "runbeat_spotify_tokens",

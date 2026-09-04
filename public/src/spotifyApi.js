@@ -40,7 +40,7 @@ export async function getMyPlaylists() {
 
 export async function getPlaylistTrackRefs(playlistId) {
   const refs = [];
-  let url = `/playlists/${playlistId}/tracks?fields=next,items(track(id,name,uri,artists(name)))&limit=100`;
+  let url = `/playlists/${playlistId}/tracks?fields=next,items(track(id,name,uri,duration_ms,artists(name)))&limit=100`;
   while (url) {
     const page = await request(url);
     for (const item of page.items) {
@@ -50,6 +50,7 @@ export async function getPlaylistTrackRefs(playlistId) {
           name: item.track.name,
           uri: item.track.uri,
           artist: item.track.artists?.[0]?.name ?? "",
+          durationMs: item.track.duration_ms,
         });
       }
     }
@@ -70,6 +71,7 @@ export async function getLikedSongRefs() {
           name: item.track.name,
           uri: item.track.uri,
           artist: item.track.artists?.[0]?.name ?? "",
+          durationMs: item.track.duration_ms,
         });
       }
     }

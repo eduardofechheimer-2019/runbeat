@@ -17,9 +17,13 @@ de cadência e troca automática de faixa testados numa corrida de verdade.
    — sem risco de casar com a versão errada de uma música).
 3. Durante a corrida, o acelerômetro do celular (`DeviceMotion`) mede sua
    cadência (passos/min) em tempo real.
-4. O motor de matching escolhe, dentro do pool de faixas já analisadas, a
-   que tem o BPM mais próximo da cadência atual (considerando também metade
-   e dobro do BPM) e manda o Spotify tocar — automaticamente.
+4. Cada faixa toca **até quase o fim** — pouco antes de acabar (por padrão,
+   2 segundos antes, ajustável em `END_OF_TRACK_LEAD_MS`), o motor de
+   matching escolhe a próxima faixa do pool com o BPM mais próximo da
+   cadência atual (considerando também metade e dobro do BPM) e já manda o
+   Spotify tocá-la — sem nunca interromper uma música no meio. Esse momento
+   é calculado localmente a partir da duração da faixa (que já conhecemos),
+   sem precisar perguntar ao Spotify "quanto falta".
 
 ## Estrutura
 

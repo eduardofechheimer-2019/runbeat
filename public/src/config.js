@@ -40,6 +40,14 @@ export const CADENCE_DISPLAY_INTERVAL_MS = 1000;
 // ficou inativo), tenta de novo depois desse tempo.
 export const RETRY_AFTER_ERROR_MS = 5000;
 
+// Opções do modo "ritmo fixo" — cadência alvo constante, independente do
+// passo real do usuário. Valores em passos/min (SPM), ajustáveis aqui.
+export const FIXED_PACE_OPTIONS = [
+  { id: "slow", label: "Lento", spm: 130 },
+  { id: "medium", label: "Médio", spm: 160 },
+  { id: "fast", label: "Rápido", spm: 180 },
+];
+
 export const STORAGE_KEYS = {
   spotifyTokens: "runbeat_spotify_tokens",
   pkceVerifier: "runbeat_pkce_verifier",

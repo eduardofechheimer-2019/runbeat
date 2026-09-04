@@ -4,6 +4,7 @@ import {
   FALLBACK_TRACK_DURATION_MS,
   CADENCE_DISPLAY_INTERVAL_MS,
   RETRY_AFTER_ERROR_MS,
+  FIXED_PACE_OPTIONS,
 } from "./config.js";
 import * as auth from "./spotifyAuth.js";
 import * as api from "./spotifyApi.js";
@@ -19,6 +20,9 @@ const el = {
   buildPoolBtn: document.getElementById("build-pool-btn"),
   poolProgress: document.getElementById("pool-progress"),
   runSection: document.getElementById("run-section"),
+  modeSelect: document.getElementById("mode-select"),
+  paceGroup: document.getElementById("pace-group"),
+  paceSelect: document.getElementById("pace-select"),
   startBtn: document.getElementById("start-btn"),
   stopBtn: document.getElementById("stop-btn"),
   cadenceValue: document.getElementById("cadence-value"),
@@ -32,7 +36,23 @@ let displayTimer = null;
 let bootstrapTimer = null;
 let endOfTrackTimer = null;
 let currentTrackId = null;
+let activeMode = "auto"; // "auto" (cadência real) | "fixed" (ritmo fixo)
+let fixedCadence = null;
 const playedIds = new Set();
+
+function populatePaceOptions() {
+  el.paceSelect.innerHTML = "";
+  for (const opt of FIXED_PACE_OPTIONS) {
+    const option = document.createElement("option");
+    option.value = String(opt.spm);
+    option.textContent = `${opt.label} (${opt.spm} bpm)`;
+    el.paceSelect.appendChild(option);
+  }
+}
+
+function getCadence() {
+  return activeMode === "fixed" ? fixedCadence : (tracker?.getCurrentSpm() ?? 0);
+}
 
 function setStatus(text) {
   el.status.textContent = text;
@@ -92,7 +112,7 @@ async function buildPool() {
 }
 
 function updateCadenceDisplay() {
-  const cadence = tracker.getCurrentSpm();
+  const cadence = getCadence();
   el.cadenceValue.textContent = cadence > 0 ? `${cadence} passos/min` : "medindo...";
 }
 
@@ -101,7 +121,7 @@ function updateCadenceDisplay() {
 // Spotify "quanto falta", já que sabemos a duração da faixa que mandamos
 // tocar.
 async function playNextAndSchedule() {
-  const cadence = tracker.getCurrentSpm();
+  const cadence = getCadence();
   const track = pickTrackForCadence(bpmPool, cadence, playedIds);
   if (!track) return;
 
@@ -123,10 +143,15 @@ async function playNextAndSchedule() {
   }
 }
 
-// Só começa a tocar quando tiver uma primeira leitura confiável de
-// cadência — no início da corrida o acelerômetro ainda não tem dado
-// suficiente na janela deslizante.
+// Modo automático: só começa a tocar quando tiver uma primeira leitura
+// confiável de cadência (no início da corrida o acelerômetro ainda não tem
+// dado suficiente na janela deslizante). Modo fixo: começa na hora, o valor
+// já é conhecido de antemão.
 function waitForFirstCadence() {
+  if (activeMode === "fixed") {
+    playNextAndSchedule();
+    return;
+  }
   bootstrapTimer = setInterval(() => {
     if (tracker.getCurrentSpm() > 0) {
       clearInterval(bootstrapTimer);
@@ -136,8 +161,13 @@ function waitForFirstCadence() {
 }
 
 function startRun() {
-  tracker = new CadenceTracker();
-  tracker.start();
+  activeMode = el.modeSelect.value;
+  fixedCadence = activeMode === "fixed" ? Number(el.paceSelect.value) : null;
+
+  if (activeMode === "auto") {
+    tracker = new CadenceTracker();
+    tracker.start();
+  }
   currentTrackId = null;
   playedIds.clear();
   el.startBtn.hidden = true;
@@ -153,6 +183,7 @@ function stopRun() {
   clearTimeout(endOfTrackTimer);
   tracker?.stop();
   tracker = null;
+  fixedCadence = null;
   el.startBtn.hidden = false;
   el.stopBtn.hidden = true;
   el.cadenceValue.textContent = "—";
@@ -167,6 +198,11 @@ async function refreshAuthedUi() {
 }
 
 async function init() {
+  populatePaceOptions();
+  el.modeSelect.addEventListener("change", () => {
+    el.paceGroup.hidden = el.modeSelect.value !== "fixed";
+  });
+
   try {
     const justLoggedIn = await auth.handleRedirectCallback();
     if (justLoggedIn || auth.isLoggedIn()) {
@@ -190,7 +226,9 @@ async function init() {
 
   el.startBtn.addEventListener("click", async () => {
     try {
-      await requestMotionPermission();
+      if (el.modeSelect.value === "auto") {
+        await requestMotionPermission();
+      }
       startRun();
     } catch (err) {
       showRunError(err.message);

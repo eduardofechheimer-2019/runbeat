@@ -31,6 +31,15 @@
 
   <section id="run-section" hidden>
     <h2>2. Corrida</h2>
+    <label for="mode-select">Ritmo</label>
+    <select id="mode-select">
+      <option value="auto">Automático (minha cadência)</option>
+      <option value="fixed">Ritmo fixo</option>
+    </select>
+    <div id="pace-group" hidden>
+      <label for="pace-select">Nível</label>
+      <select id="pace-select"></select>
+    </div>
     <p>Cadência: <strong id="cadence-value">—</strong></p>
     <p>Tocando agora: <strong id="track-value">—</strong></p>
     <p id="run-error" class="error" hidden></p>

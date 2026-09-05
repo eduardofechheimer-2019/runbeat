@@ -73,6 +73,17 @@ button:disabled {
   border: 1px solid var(--danger);
 }
 
+#playback-controls {
+  display: flex;
+  gap: 8px;
+}
+
+#playback-controls button {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid #30363d;
+}
+
 .error {
   color: var(--danger);
 }

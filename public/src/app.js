@@ -25,6 +25,9 @@ const el = {
   paceSelect: document.getElementById("pace-select"),
   startBtn: document.getElementById("start-btn"),
   stopBtn: document.getElementById("stop-btn"),
+  playbackControls: document.getElementById("playback-controls"),
+  prevBtn: document.getElementById("prev-btn"),
+  nextBtn: document.getElementById("next-btn"),
   cadenceValue: document.getElementById("cadence-value"),
   trackValue: document.getElementById("track-value"),
   runError: document.getElementById("run-error"),
@@ -38,6 +41,7 @@ let endOfTrackTimer = null;
 let currentTrackId = null;
 let activeMode = "auto"; // "auto" (cadência real) | "fixed" (ritmo fixo)
 let fixedCadence = null;
+let history = []; // faixas já tocadas nesta corrida, em ordem — pra "Anterior"
 const playedIds = new Set();
 
 function populatePaceOptions() {
@@ -78,22 +82,43 @@ async function loadPlaylistOptions() {
     el.playlistSelect.appendChild(opt);
   }
 
-  const saved = localStorage.getItem(STORAGE_KEYS.sourcePlaylist);
-  if (saved) el.playlistSelect.value = saved;
+  let saved = [];
+  try {
+    saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.sourcePlaylist) || "[]");
+  } catch {
+    saved = [];
+  }
+  for (const opt of el.playlistSelect.options) {
+    opt.selected = saved.includes(opt.value);
+  }
 }
 
 async function buildPool() {
-  const playlistId = el.playlistSelect.value;
-  localStorage.setItem(STORAGE_KEYS.sourcePlaylist, playlistId);
+  const selectedIds = Array.from(el.playlistSelect.selectedOptions).map((o) => o.value);
+  if (selectedIds.length === 0) {
+    el.poolProgress.hidden = false;
+    el.poolProgress.textContent = "Escolha ao menos uma playlist.";
+    return;
+  }
+  localStorage.setItem(STORAGE_KEYS.sourcePlaylist, JSON.stringify(selectedIds));
 
   el.buildPoolBtn.disabled = true;
   el.poolProgress.hidden = false;
   el.poolProgress.textContent = "Buscando faixas...";
 
-  const refs =
-    playlistId === "__liked__"
-      ? await api.getLikedSongRefs()
-      : await api.getPlaylistTrackRefs(playlistId);
+  const refsBySource = await Promise.all(
+    selectedIds.map((id) => (id === "__liked__" ? api.getLikedSongRefs() : api.getPlaylistTrackRefs(id)))
+  );
+  const seenIds = new Set();
+  const refs = [];
+  for (const list of refsBySource) {
+    for (const track of list) {
+      if (!seenIds.has(track.id)) {
+        seenIds.add(track.id);
+        refs.push(track);
+      }
+    }
+  }
 
   const { tracks, diagnostic } = await buildBpmPool(refs, (done, total) => {
     el.poolProgress.textContent = `Resolvendo BPM: ${done}/${total}...`;
@@ -116,30 +141,58 @@ function updateCadenceDisplay() {
   el.cadenceValue.textContent = cadence > 0 ? `${cadence} passos/min` : "medindo...";
 }
 
-// Escolhe e toca a próxima faixa pra cadência atual, e agenda a troca
-// seguinte pra pouco antes do fim dela — sem nunca precisar perguntar ao
-// Spotify "quanto falta", já que sabemos a duração da faixa que mandamos
-// tocar.
+async function playSpecificTrack(track) {
+  await api.playTrackUri(track.uri);
+  currentTrackId = track.id;
+  playedIds.add(track.id);
+  el.trackValue.textContent = `${track.name} — ${track.artist} (${Math.round(track.tempo)} BPM)`;
+  showRunError("");
+}
+
+// Agenda a troca seguinte pra pouco antes do fim da faixa — sem nunca
+// precisar perguntar ao Spotify "quanto falta", já que sabemos a duração da
+// faixa que mandamos tocar.
+function scheduleEndOfTrack(track) {
+  clearTimeout(endOfTrackTimer);
+  const durationMs = track.durationMs || FALLBACK_TRACK_DURATION_MS;
+  const delay = Math.max(durationMs - END_OF_TRACK_LEAD_MS, 1000);
+  endOfTrackTimer = setTimeout(playNextAndSchedule, delay);
+}
+
+// Escolhe e toca a próxima faixa pra cadência atual (usado tanto pela troca
+// automática de fim de faixa quanto pelo botão "Próxima").
 async function playNextAndSchedule() {
   const cadence = getCadence();
   const track = pickTrackForCadence(bpmPool, cadence, playedIds);
   if (!track) return;
 
   try {
-    await api.playTrackUri(track.uri);
-    currentTrackId = track.id;
-    playedIds.add(track.id);
-    el.trackValue.textContent = `${track.name} — ${track.artist} (${Math.round(track.tempo)} BPM)`;
-    showRunError("");
-
-    const durationMs = track.durationMs || FALLBACK_TRACK_DURATION_MS;
-    const delay = Math.max(durationMs - END_OF_TRACK_LEAD_MS, 1000);
-    endOfTrackTimer = setTimeout(playNextAndSchedule, delay);
+    await playSpecificTrack(track);
+    history.push(track);
+    scheduleEndOfTrack(track);
   } catch (err) {
     showRunError(err.message);
     // Não trava o loop — tenta de novo em breve (ex. dispositivo Spotify
     // pode ter ficado inativo temporariamente).
     endOfTrackTimer = setTimeout(playNextAndSchedule, RETRY_AFTER_ERROR_MS);
+  }
+}
+
+async function skipToNext() {
+  clearTimeout(endOfTrackTimer);
+  await playNextAndSchedule();
+}
+
+async function skipToPrevious() {
+  if (history.length < 2) return; // nada antes da faixa atual
+  clearTimeout(endOfTrackTimer);
+  history.pop(); // remove a atual
+  const previousTrack = history[history.length - 1];
+  try {
+    await playSpecificTrack(previousTrack);
+    scheduleEndOfTrack(previousTrack);
+  } catch (err) {
+    showRunError(err.message);
   }
 }
 
@@ -170,8 +223,10 @@ function startRun() {
   }
   currentTrackId = null;
   playedIds.clear();
+  history = [];
   el.startBtn.hidden = true;
   el.stopBtn.hidden = false;
+  el.playbackControls.hidden = false;
   showRunError("");
   displayTimer = setInterval(updateCadenceDisplay, CADENCE_DISPLAY_INTERVAL_MS);
   waitForFirstCadence();
@@ -186,6 +241,7 @@ function stopRun() {
   fixedCadence = null;
   el.startBtn.hidden = false;
   el.stopBtn.hidden = true;
+  el.playbackControls.hidden = true;
   el.cadenceValue.textContent = "—";
   el.trackValue.textContent = "—";
 }
@@ -236,6 +292,13 @@ async function init() {
   });
 
   el.stopBtn.addEventListener("click", stopRun);
+
+  el.nextBtn.addEventListener("click", () => {
+    skipToNext().catch((err) => showRunError(err.message));
+  });
+  el.prevBtn.addEventListener("click", () => {
+    skipToPrevious().catch((err) => showRunError(err.message));
+  });
 }
 
 init();

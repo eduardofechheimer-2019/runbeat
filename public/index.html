@@ -6,6 +6,10 @@
 <title>RunBeat</title>
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="RunBeat" />
 <meta name="theme-color" content="#1db954" />
 <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -23,8 +27,8 @@
 
   <section id="setup-section" hidden>
     <h2>1. Escolha a fonte de músicas</h2>
-    <label for="playlist-select">Playlist</label>
-    <select id="playlist-select"></select>
+    <label for="playlist-select">Playlists (toque pra marcar mais de uma)</label>
+    <select id="playlist-select" multiple size="6"></select>
     <button id="build-pool-btn">Analisar BPM das faixas</button>
     <p id="pool-progress" hidden></p>
   </section>
@@ -44,6 +48,10 @@
     <p>Tocando agora: <strong id="track-value">—</strong></p>
     <p id="run-error" class="error" hidden></p>
     <button id="start-btn">Iniciar corrida</button>
+    <div id="playback-controls" hidden>
+      <button id="prev-btn">⏮ Anterior</button>
+      <button id="next-btn">⏭ Próxima</button>
+    </div>
     <button id="stop-btn" hidden>Parar</button>
   </section>
 </main>

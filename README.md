@@ -10,8 +10,9 @@ de cadência e troca automática de faixa testados numa corrida de verdade.
 ## Como funciona
 
 1. Você loga com sua conta Spotify (Premium — necessário pra controlar
-   playback pela API) e escolhe uma playlist (ou "Músicas Curtidas") como
-   fonte de faixas.
+   playback pela API) e escolhe uma ou mais playlists (ou "Músicas
+   Curtidas") como fonte de faixas — o pool junta todas, sem repetir faixa
+   que apareça em mais de uma.
 2. O app resolve o BPM de cada faixa dessa fonte via [ReccoBeats](https://reccobeats.com/)
    (API gratuita, sem chave, que aceita o ID da faixa do Spotify diretamente
    — sem risco de casar com a versão errada de uma música).
@@ -28,6 +29,22 @@ de cadência e troca automática de faixa testados numa corrida de verdade.
    Spotify tocá-la — sem nunca interromper uma música no meio. Esse momento
    é calculado localmente a partir da duração da faixa (que já conhecemos),
    sem precisar perguntar ao Spotify "quanto falta".
+5. Os botões **⏮ Anterior** / **⏭ Próxima** deixam pular manualmente pra
+   faixa seguinte do pool (recalcula pela cadência atual) ou voltar pra
+   última que já tocou nessa corrida.
+
+## Instalando como app no celular
+
+O RunBeat é um PWA — dá pra instalar um ícone na tela de início, sem passar
+pela App Store/Play Store:
+
+- **iPhone (Safari)**: abra o link do app, toque no ícone de compartilhar
+  (quadrado com seta pra cima) e escolha **"Adicionar à Tela de Início"**.
+- **Android (Chrome)**: menu (⋮) → **"Adicionar à tela inicial"** / "Instalar
+  app".
+
+Depois disso abre em tela cheia, com o ícone do RunBeat, como qualquer app
+instalado.
 
 ## Estrutura
 

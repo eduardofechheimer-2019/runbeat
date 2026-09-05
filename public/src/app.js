@@ -108,15 +108,32 @@ function dedupeRefs(listOfRefLists) {
   return refs;
 }
 
+// Busca as faixas de uma fonte sem deixar uma falha isolada (ex. playlist
+// sem permissão de leitura) derrubar a análise inteira — devolve refs
+// vazio e o nome da fonte em `failedLabel` nesse caso.
+async function fetchSourceRefs(id, label) {
+  try {
+    const refs = id === "__liked__" ? await api.getLikedSongRefs() : await api.getPlaylistTrackRefs(id);
+    return { refs, failedLabel: null };
+  } catch (err) {
+    console.warn(`Falha ao buscar faixas de "${label}":`, err.message);
+    return { refs: [], failedLabel: label };
+  }
+}
+
 // Resolve o BPM de `refs` e atualiza a tela — usado tanto pra análise das
 // playlists selecionadas quanto pra "toda a biblioteca".
-async function resolvePool(refs) {
+async function resolvePool(refs, failedSources = []) {
   const { tracks, diagnostic } = await buildBpmPool(refs, (done, total) => {
     el.poolProgress.textContent = `Resolvendo BPM: ${done}/${total}...`;
   });
   bpmPool = tracks;
 
-  el.poolProgress.textContent = `Pronto: ${bpmPool.length} de ${refs.length} faixas com BPM encontrado.`;
+  let text = `Pronto: ${bpmPool.length} de ${refs.length} faixas com BPM encontrado.`;
+  if (failedSources.length > 0) {
+    text += ` (${failedSources.length} fonte(s) não puderam ser lidas: ${failedSources.join(", ")})`;
+  }
+  el.poolProgress.textContent = text;
   el.runSection.hidden = bpmPool.length === 0;
   if (bpmPool.length === 0) {
     el.poolProgress.textContent += " Nenhuma faixa teve BPM resolvido.";
@@ -127,23 +144,24 @@ async function resolvePool(refs) {
 }
 
 async function buildPool() {
-  const selectedIds = Array.from(el.playlistSelect.selectedOptions).map((o) => o.value);
-  if (selectedIds.length === 0) {
+  const selectedOptions = Array.from(el.playlistSelect.selectedOptions);
+  if (selectedOptions.length === 0) {
     el.poolProgress.hidden = false;
     el.poolProgress.textContent = "Escolha ao menos uma playlist.";
     return;
   }
-  localStorage.setItem(STORAGE_KEYS.sourcePlaylist, JSON.stringify(selectedIds));
+  localStorage.setItem(STORAGE_KEYS.sourcePlaylist, JSON.stringify(selectedOptions.map((o) => o.value)));
 
   el.buildPoolBtn.disabled = true;
   el.buildAllBtn.disabled = true;
   el.poolProgress.hidden = false;
   el.poolProgress.textContent = "Buscando faixas...";
 
-  const refsBySource = await Promise.all(
-    selectedIds.map((id) => (id === "__liked__" ? api.getLikedSongRefs() : api.getPlaylistTrackRefs(id)))
+  const results = await Promise.all(
+    selectedOptions.map((opt) => fetchSourceRefs(opt.value, opt.textContent))
   );
-  await resolvePool(dedupeRefs(refsBySource));
+  const failedSources = results.map((r) => r.failedLabel).filter(Boolean);
+  await resolvePool(dedupeRefs(results.map((r) => r.refs)), failedSources);
 
   el.buildPoolBtn.disabled = false;
   el.buildAllBtn.disabled = false;
@@ -159,20 +177,19 @@ async function buildPoolFromLibrary() {
   el.poolProgress.textContent = "Buscando playlists da biblioteca...";
 
   const playlists = await api.getMyPlaylists();
-  const sources = [{ id: "__liked__" }, ...playlists];
+  const sources = [{ id: "__liked__", name: "Músicas Curtidas" }, ...playlists];
 
   const refLists = [];
+  const failedSources = [];
   for (let i = 0; i < sources.length; i++) {
-    el.poolProgress.textContent = `Buscando faixas: fonte ${i + 1}/${sources.length}...`;
     const source = sources[i];
-    const list =
-      source.id === "__liked__"
-        ? await api.getLikedSongRefs()
-        : await api.getPlaylistTrackRefs(source.id);
-    refLists.push(list);
+    el.poolProgress.textContent = `Buscando faixas: fonte ${i + 1}/${sources.length} (${source.name})...`;
+    const { refs, failedLabel } = await fetchSourceRefs(source.id, source.name);
+    refLists.push(refs);
+    if (failedLabel) failedSources.push(failedLabel);
   }
 
-  await resolvePool(dedupeRefs(refLists));
+  await resolvePool(dedupeRefs(refLists), failedSources);
 
   el.buildPoolBtn.disabled = false;
   el.buildAllBtn.disabled = false;

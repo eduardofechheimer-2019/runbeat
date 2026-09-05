@@ -18,6 +18,7 @@ const el = {
   setupSection: document.getElementById("setup-section"),
   playlistSelect: document.getElementById("playlist-select"),
   buildPoolBtn: document.getElementById("build-pool-btn"),
+  buildAllBtn: document.getElementById("build-pool-all-btn"),
   poolProgress: document.getElementById("pool-progress"),
   runSection: document.getElementById("run-section"),
   modeSelect: document.getElementById("mode-select"),
@@ -93,6 +94,38 @@ async function loadPlaylistOptions() {
   }
 }
 
+function dedupeRefs(listOfRefLists) {
+  const seenIds = new Set();
+  const refs = [];
+  for (const list of listOfRefLists) {
+    for (const track of list) {
+      if (!seenIds.has(track.id)) {
+        seenIds.add(track.id);
+        refs.push(track);
+      }
+    }
+  }
+  return refs;
+}
+
+// Resolve o BPM de `refs` e atualiza a tela — usado tanto pra análise das
+// playlists selecionadas quanto pra "toda a biblioteca".
+async function resolvePool(refs) {
+  const { tracks, diagnostic } = await buildBpmPool(refs, (done, total) => {
+    el.poolProgress.textContent = `Resolvendo BPM: ${done}/${total}...`;
+  });
+  bpmPool = tracks;
+
+  el.poolProgress.textContent = `Pronto: ${bpmPool.length} de ${refs.length} faixas com BPM encontrado.`;
+  el.runSection.hidden = bpmPool.length === 0;
+  if (bpmPool.length === 0) {
+    el.poolProgress.textContent += " Nenhuma faixa teve BPM resolvido.";
+    if (diagnostic) {
+      el.poolProgress.textContent += ` [Diagnóstico: ${diagnostic}]`;
+    }
+  }
+}
+
 async function buildPool() {
   const selectedIds = Array.from(el.playlistSelect.selectedOptions).map((o) => o.value);
   if (selectedIds.length === 0) {
@@ -103,37 +136,46 @@ async function buildPool() {
   localStorage.setItem(STORAGE_KEYS.sourcePlaylist, JSON.stringify(selectedIds));
 
   el.buildPoolBtn.disabled = true;
+  el.buildAllBtn.disabled = true;
   el.poolProgress.hidden = false;
   el.poolProgress.textContent = "Buscando faixas...";
 
   const refsBySource = await Promise.all(
     selectedIds.map((id) => (id === "__liked__" ? api.getLikedSongRefs() : api.getPlaylistTrackRefs(id)))
   );
-  const seenIds = new Set();
-  const refs = [];
-  for (const list of refsBySource) {
-    for (const track of list) {
-      if (!seenIds.has(track.id)) {
-        seenIds.add(track.id);
-        refs.push(track);
-      }
-    }
-  }
+  await resolvePool(dedupeRefs(refsBySource));
 
-  const { tracks, diagnostic } = await buildBpmPool(refs, (done, total) => {
-    el.poolProgress.textContent = `Resolvendo BPM: ${done}/${total}...`;
-  });
-  bpmPool = tracks;
-
-  el.poolProgress.textContent = `Pronto: ${bpmPool.length} de ${refs.length} faixas com BPM encontrado.`;
   el.buildPoolBtn.disabled = false;
-  el.runSection.hidden = bpmPool.length === 0;
-  if (bpmPool.length === 0) {
-    el.poolProgress.textContent += " Nenhuma faixa teve BPM resolvido.";
-    if (diagnostic) {
-      el.poolProgress.textContent += ` [Diagnóstico: ${diagnostic}]`;
-    }
+  el.buildAllBtn.disabled = false;
+}
+
+// Junta Músicas Curtidas + todas as playlists da conta, sem precisar
+// escolher uma por uma — o "banco de BPM" cresce conforme mais faixas vão
+// sendo analisadas (o cache de BPM em bpmSource.js já persiste entre usos).
+async function buildPoolFromLibrary() {
+  el.buildPoolBtn.disabled = true;
+  el.buildAllBtn.disabled = true;
+  el.poolProgress.hidden = false;
+  el.poolProgress.textContent = "Buscando playlists da biblioteca...";
+
+  const playlists = await api.getMyPlaylists();
+  const sources = [{ id: "__liked__" }, ...playlists];
+
+  const refLists = [];
+  for (let i = 0; i < sources.length; i++) {
+    el.poolProgress.textContent = `Buscando faixas: fonte ${i + 1}/${sources.length}...`;
+    const source = sources[i];
+    const list =
+      source.id === "__liked__"
+        ? await api.getLikedSongRefs()
+        : await api.getPlaylistTrackRefs(source.id);
+    refLists.push(list);
   }
+
+  await resolvePool(dedupeRefs(refLists));
+
+  el.buildPoolBtn.disabled = false;
+  el.buildAllBtn.disabled = false;
 }
 
 function updateCadenceDisplay() {
@@ -276,6 +318,12 @@ async function init() {
 
   el.buildPoolBtn.addEventListener("click", () => {
     buildPool().catch((err) => {
+      el.poolProgress.textContent = `Erro: ${err.message}`;
+    });
+  });
+
+  el.buildAllBtn.addEventListener("click", () => {
+    buildPoolFromLibrary().catch((err) => {
       el.poolProgress.textContent = `Erro: ${err.message}`;
     });
   });

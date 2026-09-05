@@ -10,9 +10,13 @@ de cadência e troca automática de faixa testados numa corrida de verdade.
 ## Como funciona
 
 1. Você loga com sua conta Spotify (Premium — necessário pra controlar
-   playback pela API) e escolhe uma ou mais playlists (ou "Músicas
-   Curtidas") como fonte de faixas — o pool junta todas, sem repetir faixa
-   que apareça em mais de uma.
+   playback pela API) e escolhe a fonte de faixas: uma ou mais playlists
+   específicas (+ "Músicas Curtidas"), ou o botão **"Analisar toda a minha
+   biblioteca"**, que junta automaticamente todas as suas playlists e as
+   Curtidas de uma vez, sem escolher uma por uma. Em qualquer caso, o pool
+   junta as fontes sem repetir faixa que apareça em mais de uma — e o BPM já
+   resolvido fica em cache local, então analisar de novo (com mais fontes)
+   não perde o que já foi calculado antes.
 2. O app resolve o BPM de cada faixa dessa fonte via [ReccoBeats](https://reccobeats.com/)
    (API gratuita, sem chave, que aceita o ID da faixa do Spotify diretamente
    — sem risco de casar com a versão errada de uma música).

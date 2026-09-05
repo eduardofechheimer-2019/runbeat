@@ -33,6 +33,9 @@ const el = {
   cadenceValue: document.getElementById("cadence-value"),
   trackValue: document.getElementById("track-value"),
   runError: document.getElementById("run-error"),
+  beatVisual: document.getElementById("beat-visual"),
+  beatPulse: document.getElementById("beat-pulse"),
+  beatBpmValue: document.getElementById("beat-bpm-value"),
 };
 
 let bpmPool = [];
@@ -58,6 +61,26 @@ function populatePaceOptions() {
 
 function getCadence() {
   return activeMode === "fixed" ? fixedCadence : (tracker?.getCurrentSpm() ?? 0);
+}
+
+// Metrônomo visual: pulsa no BPM efetivo usado pro casamento (já
+// considerando dobro/metade), não no tempo bruto da faixa — é esse o
+// ritmo que deve coincidir com o passo no chão. Não é sincronizado com o
+// áudio de verdade (o Spotify não expõe isso via API) — é um guia de
+// ritmo constante a partir do momento em que a faixa começa a tocar.
+function startBeatPulse(effectiveBpm) {
+  if (!effectiveBpm || effectiveBpm <= 0) return;
+  const periodMs = 60000 / effectiveBpm;
+  el.beatPulse.style.animation = "none";
+  void el.beatPulse.offsetWidth; // força reflow pra reiniciar a animação do zero
+  el.beatPulse.style.animation = `beat-pulse-anim ${periodMs}ms ease-out infinite`;
+  el.beatBpmValue.textContent = `${Math.round(effectiveBpm)} /min`;
+  el.beatVisual.hidden = false;
+}
+
+function stopBeatPulse() {
+  el.beatVisual.hidden = true;
+  el.beatPulse.style.animation = "none";
 }
 
 function setStatus(text) {
@@ -218,6 +241,7 @@ async function playSpecificTrack(track) {
   playedIds.add(track.id);
   el.trackValue.textContent = `${track.name} — ${track.artist} (${Math.round(track.tempo)} BPM)`;
   showRunError("");
+  startBeatPulse(track.effectiveBpm);
 }
 
 // Agenda a troca seguinte pra pouco antes do fim da faixa — sem nunca
@@ -315,6 +339,7 @@ function stopRun() {
   el.playbackControls.hidden = true;
   el.cadenceValue.textContent = "—";
   el.trackValue.textContent = "—";
+  stopBeatPulse();
 }
 
 async function refreshAuthedUi() {

@@ -17,13 +17,18 @@ export function pickTrackForCadence(pool, cadence, playedIds) {
 
   let best = null;
   let bestDiff = Infinity;
+  let bestEffectiveBpm = null;
   for (const track of candidates) {
     const matched = bestMultiple(track.tempo, cadence);
     const diff = Math.abs(matched - cadence);
     if (diff < bestDiff) {
       bestDiff = diff;
       best = track;
+      bestEffectiveBpm = matched;
     }
   }
-  return best;
+  // `effectiveBpm` é o BPM real usado no casamento (pode ser o tempo da
+  // faixa, metade ou o dobro) — é o valor certo pra sincronizar um
+  // metrônomo visual, não o `tempo` bruto da faixa.
+  return best ? { ...best, effectiveBpm: bestEffectiveBpm } : null;
 }

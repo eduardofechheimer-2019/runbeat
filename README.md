@@ -36,6 +36,12 @@ de cadência e troca automática de faixa testados numa corrida de verdade.
 5. Os botões **⏮ Anterior** / **⏭ Próxima** deixam pular manualmente pra
    faixa seguinte do pool (recalcula pela cadência atual) ou voltar pra
    última que já tocou nessa corrida.
+6. Um **metrônomo visual** (círculo pulsando) mostra a batida-alvo de cada
+   faixa — o BPM efetivo usado no casamento (já considerando metade/dobro
+   do tempo da faixa, não o tempo bruto), pra ajudar a olhar e sincronizar
+   o passo com o pulso. Não é sincronizado com o áudio de verdade (a API do
+   Spotify não expõe isso) — é um guia de ritmo constante a partir do
+   momento em que a faixa começa a tocar, não a batida exata da música.
 
 ## Instalando como app no celular
 

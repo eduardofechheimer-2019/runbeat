@@ -88,6 +88,36 @@ button:disabled {
   color: var(--danger);
 }
 
+.beat-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 24px;
+}
+
+.beat-pulse {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: beat-pulse-anim 1s ease-out infinite;
+}
+
+@keyframes beat-pulse-anim {
+  0% { transform: scale(0.55); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+.beat-label {
+  color: var(--muted);
+  margin: 0;
+}
+
+.beat-label strong {
+  color: var(--accent);
+}
+
 #cadence-value, #track-value {
   color: var(--accent);
 }

@@ -52,8 +52,12 @@ export async function getMyPlaylists() {
 export async function getPlaylistTrackRefs(playlistId) {
   const refs = [];
   // Endpoint antigo /playlists/{id}/tracks foi descontinuado pelo Spotify
-  // (retorna 403) — a substituta é /playlists/{id}/items.
-  let url = `/playlists/${playlistId}/items?fields=next,items(track(id,name,uri,duration_ms,artists(name)))&limit=100`;
+  // (retorna 403) — a substituta é /playlists/{id}/items. Sem `fields`: a
+  // documentação/relatos de terceiros divergem sobre o nome do campo de
+  // cada item nessa versão (`track` ou `item`) — filtrar por um nome
+  // errado faz o Spotify devolver objetos vazios sem erro nenhum. Pedindo
+  // tudo e filtrando no cliente (abaixo) evita depender de acertar o nome.
+  let url = `/playlists/${playlistId}/items?limit=100`;
   while (url) {
     const page = await request(url);
     for (const entry of page.items) {

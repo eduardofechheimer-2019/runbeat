@@ -15,6 +15,7 @@ import { pickTrackForCadence } from "./matcher.js";
 const el = {
   status: document.getElementById("status"),
   connectBtn: document.getElementById("connect-btn"),
+  disconnectBtn: document.getElementById("disconnect-btn"),
   setupSection: document.getElementById("setup-section"),
   playlistSelect: document.getElementById("playlist-select"),
   buildPoolBtn: document.getElementById("build-pool-btn"),
@@ -307,6 +308,7 @@ function stopRun() {
 
 async function refreshAuthedUi() {
   el.connectBtn.hidden = true;
+  el.disconnectBtn.hidden = false;
   el.setupSection.hidden = false;
   setStatus("Conectado ao Spotify.");
   await loadPlaylistOptions();
@@ -331,6 +333,11 @@ async function init() {
 
   el.connectBtn.addEventListener("click", () => {
     auth.startLogin().catch((err) => setStatus(err.message));
+  });
+
+  el.disconnectBtn.addEventListener("click", () => {
+    auth.logout();
+    window.location.reload();
   });
 
   el.buildPoolBtn.addEventListener("click", () => {

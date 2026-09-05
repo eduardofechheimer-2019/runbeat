@@ -76,11 +76,13 @@ async function loadPlaylistOptions() {
   likedOpt.textContent = "Músicas Curtidas";
   el.playlistSelect.appendChild(likedOpt);
 
+  const myUserId = await api.getCurrentUserId();
   const playlists = await api.getMyPlaylists();
   for (const p of playlists) {
     const opt = document.createElement("option");
     opt.value = p.id;
-    opt.textContent = `${p.name} (${p.trackCount})`;
+    const ownerTag = p.ownerId && p.ownerId !== myUserId ? ` — de ${p.ownerName}` : "";
+    opt.textContent = `${p.name} (${p.trackCount})${ownerTag}`;
     el.playlistSelect.appendChild(opt);
   }
 
@@ -179,8 +181,15 @@ async function buildPoolFromLibrary() {
   el.poolProgress.hidden = false;
   el.poolProgress.textContent = "Buscando playlists da biblioteca...";
 
+  const myUserId = await api.getCurrentUserId();
   const playlists = await api.getMyPlaylists();
-  const sources = [{ id: "__liked__", name: "Músicas Curtidas" }, ...playlists];
+  const sources = [
+    { id: "__liked__", name: "Músicas Curtidas" },
+    ...playlists.map((p) => ({
+      id: p.id,
+      name: p.ownerId && p.ownerId !== myUserId ? `${p.name} (de ${p.ownerName})` : p.name,
+    })),
+  ];
 
   const refLists = [];
   const failures = [];

@@ -23,6 +23,11 @@ async function request(path, options = {}) {
   return text ? JSON.parse(text) : null;
 }
 
+export async function getCurrentUserId() {
+  const me = await request("/me");
+  return me.id;
+}
+
 export async function getMyPlaylists() {
   const items = [];
   let url = "/me/playlists?limit=50";
@@ -35,7 +40,13 @@ export async function getMyPlaylists() {
   // campos ausentes/nulos no item — filtra essas e não deixa quebrar o resto.
   return items
     .filter((p) => p && p.id)
-    .map((p) => ({ id: p.id, name: p.name, trackCount: p.tracks?.total ?? 0 }));
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      trackCount: p.tracks?.total ?? 0,
+      ownerId: p.owner?.id ?? null,
+      ownerName: p.owner?.display_name ?? p.owner?.id ?? "desconhecido",
+    }));
 }
 
 export async function getPlaylistTrackRefs(playlistId) {

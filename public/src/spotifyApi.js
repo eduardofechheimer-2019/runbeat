@@ -40,17 +40,23 @@ export async function getMyPlaylists() {
 
 export async function getPlaylistTrackRefs(playlistId) {
   const refs = [];
-  let url = `/playlists/${playlistId}/tracks?fields=next,items(track(id,name,uri,duration_ms,artists(name)))&limit=100`;
+  // Endpoint antigo /playlists/{id}/tracks foi descontinuado pelo Spotify
+  // (retorna 403) — a substituta é /playlists/{id}/items.
+  let url = `/playlists/${playlistId}/items?fields=next,items(track(id,name,uri,duration_ms,artists(name)))&limit=100`;
   while (url) {
     const page = await request(url);
-    for (const item of page.items) {
-      if (item.track?.id) {
+    for (const entry of page.items) {
+      // A documentação e relatos de terceiros divergem sobre o nome do
+      // campo do item nessa versão do endpoint (`track` ou `item`) — aceita
+      // os dois pra não quebrar dependendo de qual for o real.
+      const track = entry.track ?? entry.item;
+      if (track?.id) {
         refs.push({
-          id: item.track.id,
-          name: item.track.name,
-          uri: item.track.uri,
-          artist: item.track.artists?.[0]?.name ?? "",
-          durationMs: item.track.duration_ms,
+          id: track.id,
+          name: track.name,
+          uri: track.uri,
+          artist: track.artists?.[0]?.name ?? "",
+          durationMs: track.duration_ms,
         });
       }
     }

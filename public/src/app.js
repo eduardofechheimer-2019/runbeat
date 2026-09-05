@@ -111,28 +111,30 @@ function dedupeRefs(listOfRefLists) {
 
 // Busca as faixas de uma fonte sem deixar uma falha isolada (ex. playlist
 // sem permissão de leitura) derrubar a análise inteira — devolve refs
-// vazio e o nome da fonte em `failedLabel` nesse caso.
+// vazio e o nome/motivo da fonte em `failure` nesse caso.
 async function fetchSourceRefs(id, label) {
   try {
     const refs = id === "__liked__" ? await api.getLikedSongRefs() : await api.getPlaylistTrackRefs(id);
-    return { refs, failedLabel: null };
+    return { refs, failure: null };
   } catch (err) {
     console.warn(`Falha ao buscar faixas de "${label}":`, err.message);
-    return { refs: [], failedLabel: label };
+    return { refs: [], failure: { label, message: err.message } };
   }
 }
 
 // Resolve o BPM de `refs` e atualiza a tela — usado tanto pra análise das
 // playlists selecionadas quanto pra "toda a biblioteca".
-async function resolvePool(refs, failedSources = []) {
+async function resolvePool(refs, failures = []) {
   const { tracks, diagnostic } = await buildBpmPool(refs, (done, total) => {
     el.poolProgress.textContent = `Resolvendo BPM: ${done}/${total}...`;
   });
   bpmPool = tracks;
 
   let text = `Pronto: ${bpmPool.length} de ${refs.length} faixas com BPM encontrado.`;
-  if (failedSources.length > 0) {
-    text += ` (${failedSources.length} fonte(s) não puderam ser lidas: ${failedSources.join(", ")})`;
+  if (failures.length > 0) {
+    const names = failures.map((f) => f.label).join(", ");
+    text += ` (${failures.length} fonte(s) não puderam ser lidas: ${names})`;
+    text += ` [motivo da 1ª: ${failures[0].message}]`;
   }
   el.poolProgress.textContent = text;
   el.runSection.hidden = bpmPool.length === 0;
@@ -161,8 +163,8 @@ async function buildPool() {
   const results = await Promise.all(
     selectedOptions.map((opt) => fetchSourceRefs(opt.value, opt.textContent))
   );
-  const failedSources = results.map((r) => r.failedLabel).filter(Boolean);
-  await resolvePool(dedupeRefs(results.map((r) => r.refs)), failedSources);
+  const failures = results.map((r) => r.failure).filter(Boolean);
+  await resolvePool(dedupeRefs(results.map((r) => r.refs)), failures);
 
   el.buildPoolBtn.disabled = false;
   el.buildAllBtn.disabled = false;
@@ -181,16 +183,16 @@ async function buildPoolFromLibrary() {
   const sources = [{ id: "__liked__", name: "Músicas Curtidas" }, ...playlists];
 
   const refLists = [];
-  const failedSources = [];
+  const failures = [];
   for (let i = 0; i < sources.length; i++) {
     const source = sources[i];
     el.poolProgress.textContent = `Buscando faixas: fonte ${i + 1}/${sources.length} (${source.name})...`;
-    const { refs, failedLabel } = await fetchSourceRefs(source.id, source.name);
+    const { refs, failure } = await fetchSourceRefs(source.id, source.name);
     refLists.push(refs);
-    if (failedLabel) failedSources.push(failedLabel);
+    if (failure) failures.push(failure);
   }
 
-  await resolvePool(dedupeRefs(refLists), failedSources);
+  await resolvePool(dedupeRefs(refLists), failures);
 
   el.buildPoolBtn.disabled = false;
   el.buildAllBtn.disabled = false;

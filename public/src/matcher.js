@@ -1,13 +1,6 @@
 // Escolhe, dentro do pool de faixas com BPM conhecido, a melhor candidata
-// pra cadência atual — considerando o BPM da faixa tocado no ritmo normal,
-// na metade (passo a cada 2 batidas) ou no dobro (2 passos por batida).
-
-function bestMultiple(tempo, cadence) {
-  const candidates = [tempo, tempo / 2, tempo * 2];
-  return candidates.reduce((best, c) =>
-    Math.abs(c - cadence) < Math.abs(best - cadence) ? c : best
-  );
-}
+// pra cadência atual — relação fixa 1:1 (1 passo = 1 batida da música).
+// Mais direto de perceber e sincronizar do que aceitar metade/dobro do BPM.
 
 export function pickTrackForCadence(pool, cadence, playedIds) {
   if (pool.length === 0) return null;
@@ -17,18 +10,14 @@ export function pickTrackForCadence(pool, cadence, playedIds) {
 
   let best = null;
   let bestDiff = Infinity;
-  let bestEffectiveBpm = null;
   for (const track of candidates) {
-    const matched = bestMultiple(track.tempo, cadence);
-    const diff = Math.abs(matched - cadence);
+    const diff = Math.abs(track.tempo - cadence);
     if (diff < bestDiff) {
       bestDiff = diff;
       best = track;
-      bestEffectiveBpm = matched;
     }
   }
-  // `effectiveBpm` é o BPM real usado no casamento (pode ser o tempo da
-  // faixa, metade ou o dobro) — é o valor certo pra sincronizar um
-  // metrônomo visual, não o `tempo` bruto da faixa.
-  return best ? { ...best, effectiveBpm: bestEffectiveBpm } : null;
+  // `effectiveBpm` é o BPM usado pro metrônomo visual/sonoro — com a
+  // relação 1:1, é sempre igual ao `tempo` bruto da faixa.
+  return best ? { ...best, effectiveBpm: best.tempo } : null;
 }

@@ -96,17 +96,12 @@ button:disabled {
   margin: 8px 0 24px;
 }
 
-.beat-pulse {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: var(--accent);
-  animation: beat-pulse-anim 1s ease-out infinite;
-}
-
-@keyframes beat-pulse-anim {
-  0% { transform: scale(0.55); opacity: 1; }
-  100% { transform: scale(1.5); opacity: 0; }
+.beat-canvas {
+  width: 100%;
+  height: 80px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
 }
 
 .beat-label {
@@ -116,6 +111,21 @@ button:disabled {
 
 .beat-label strong {
   color: var(--accent);
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.checkbox-row input {
+  width: auto;
+  margin: 0;
+  flex-shrink: 0;
 }
 
 #cadence-value, #track-value {

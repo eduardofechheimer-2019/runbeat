@@ -28,20 +28,23 @@ de cadência e troca automática de faixa testados numa corrida de verdade.
      todo, ignorando o sensor — útil pra treino estruturado.
 4. Cada faixa toca **até quase o fim** — pouco antes de acabar (por padrão,
    2 segundos antes, ajustável em `END_OF_TRACK_LEAD_MS`), o motor de
-   matching escolhe a próxima faixa do pool com o BPM mais próximo da
-   cadência atual (considerando também metade e dobro do BPM) e já manda o
+   matching escolhe a próxima faixa do pool com o BPM **mais próximo da
+   cadência atual, numa relação fixa 1:1** (1 passo = 1 batida) e já manda o
    Spotify tocá-la — sem nunca interromper uma música no meio. Esse momento
    é calculado localmente a partir da duração da faixa (que já conhecemos),
    sem precisar perguntar ao Spotify "quanto falta".
 5. Os botões **⏮ Anterior** / **⏭ Próxima** deixam pular manualmente pra
    faixa seguinte do pool (recalcula pela cadência atual) ou voltar pra
    última que já tocou nessa corrida.
-6. Um **metrônomo visual** (círculo pulsando) mostra a batida-alvo de cada
-   faixa — o BPM efetivo usado no casamento (já considerando metade/dobro
-   do tempo da faixa, não o tempo bruto), pra ajudar a olhar e sincronizar
-   o passo com o pulso. Não é sincronizado com o áudio de verdade (a API do
-   Spotify não expõe isso) — é um guia de ritmo constante a partir do
-   momento em que a faixa começa a tocar, não a batida exata da música.
+6. Um **metrônomo visual** (forma de onda tipo monitor cardíaco, com um
+   pico a cada batida) mostra o BPM-alvo da faixa atual, pra ajudar a olhar
+   e sincronizar o passo com a batida. Opcionalmente, um **pulso sonoro
+   experimental** (checkbox, desligado por padrão) toca um clique curto no
+   navegador a cada batida. Nenhum dos dois é sincronizado com o áudio real
+   da faixa (a API do Spotify não expõe posição/fase de batida) — são guias
+   de ritmo constantes a partir do momento em que a faixa começa a tocar,
+   não a batida exata da música. O pulso sonoro também não tem garantia de
+   tocar junto com o Spotify sem interferir — por isso é opt-in.
 
 ## Instalando como app no celular
 

@@ -34,8 +34,9 @@ const el = {
   trackValue: document.getElementById("track-value"),
   runError: document.getElementById("run-error"),
   beatVisual: document.getElementById("beat-visual"),
-  beatPulse: document.getElementById("beat-pulse"),
+  beatCanvas: document.getElementById("beat-canvas"),
   beatBpmValue: document.getElementById("beat-bpm-value"),
+  audiblePulseToggle: document.getElementById("audible-pulse-toggle"),
 };
 
 let bpmPool = [];
@@ -48,6 +49,19 @@ let activeMode = "auto"; // "auto" (cadência real) | "fixed" (ritmo fixo)
 let fixedCadence = null;
 let history = []; // faixas já tocadas nesta corrida, em ordem — pra "Anterior"
 const playedIds = new Set();
+
+// Metrônomo visual (canvas) — estado da animação em quadro contínuo.
+let beatAnimHandle = null;
+let beatStartTime = null;
+let beatEffectiveBpm = null;
+
+// Pulso sonoro (experimental) — agenda cliques via Web Audio API, cujo
+// relógio é bem mais preciso que setTimeout pra esse fim.
+let audioCtx = null;
+let audiblePulseEnabled = false;
+let clickSchedulerHandle = null;
+let clickPeriodSec = null;
+let nextClickTime = 0;
 
 function populatePaceOptions() {
   el.paceSelect.innerHTML = "";
@@ -63,24 +77,118 @@ function getCadence() {
   return activeMode === "fixed" ? fixedCadence : (tracker?.getCurrentSpm() ?? 0);
 }
 
-// Metrônomo visual: pulsa no BPM efetivo usado pro casamento (já
-// considerando dobro/metade), não no tempo bruto da faixa — é esse o
-// ritmo que deve coincidir com o passo no chão. Não é sincronizado com o
-// áudio de verdade (o Spotify não expõe isso via API) — é um guia de
-// ritmo constante a partir do momento em que a faixa começa a tocar.
+// Metrônomo visual (forma de onda tipo monitor cardíaco): desenha um pico
+// a cada batida do BPM efetivo usado pro casamento (relação 1:1 com a
+// cadência) — é esse o ritmo que deve coincidir com o passo no chão. Não é
+// sincronizado com o áudio de verdade (o Spotify não expõe isso via API) —
+// é um guia de ritmo constante a partir do momento em que a faixa começa.
+function drawBeatWaveform(now) {
+  const canvas = el.beatCanvas;
+  const ctx = canvas.getContext("2d");
+  const width = canvas.width;
+  const height = canvas.height;
+  ctx.clearRect(0, 0, width, height);
+
+  if (beatEffectiveBpm) {
+    const periodMs = 60000 / beatEffectiveBpm;
+    const windowMs = 4000; // mostra os últimos ~4s de batida
+    const pxPerMs = width / windowMs;
+    const baseline = height * 0.65;
+    const spikeHeight = height * 0.55;
+    const elapsed = now - beatStartTime;
+    const startMs = Math.max(0, elapsed - windowMs);
+
+    ctx.strokeStyle = "#1db954";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    let first = true;
+    for (let t = startMs; t <= elapsed; t += 8) {
+      const phase = (t % periodMs) / periodMs;
+      const spike = Math.max(0, 1 - phase * 10); // decai rápido logo após a batida
+      const x = (t - startMs) * pxPerMs;
+      const y = baseline - spike * spikeHeight;
+      if (first) {
+        ctx.moveTo(x, y);
+        first = false;
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    ctx.stroke();
+  }
+
+  beatAnimHandle = requestAnimationFrame(drawBeatWaveform);
+}
+
 function startBeatPulse(effectiveBpm) {
   if (!effectiveBpm || effectiveBpm <= 0) return;
-  const periodMs = 60000 / effectiveBpm;
-  el.beatPulse.style.animation = "none";
-  void el.beatPulse.offsetWidth; // força reflow pra reiniciar a animação do zero
-  el.beatPulse.style.animation = `beat-pulse-anim ${periodMs}ms ease-out infinite`;
+  beatEffectiveBpm = effectiveBpm;
+  beatStartTime = performance.now();
   el.beatBpmValue.textContent = `${Math.round(effectiveBpm)} /min`;
   el.beatVisual.hidden = false;
+  if (!beatAnimHandle) beatAnimHandle = requestAnimationFrame(drawBeatWaveform);
+  startAudiblePulse(effectiveBpm);
 }
 
 function stopBeatPulse() {
   el.beatVisual.hidden = true;
-  el.beatPulse.style.animation = "none";
+  if (beatAnimHandle) {
+    cancelAnimationFrame(beatAnimHandle);
+    beatAnimHandle = null;
+  }
+  beatEffectiveBpm = null;
+  stopAudiblePulse();
+}
+
+// --- Pulso sonoro (experimental) ---
+// Um clique curto a cada batida, tocado no navegador (não no Spotify).
+// Não temos como saber a fase real do áudio da faixa (mesma limitação do
+// visual) — é um metrônomo independente, não uma sobreposição travada no
+// áudio. Também não é garantido que o iOS misture esse som com o Spotify
+// em vez de abafar um dos dois — daí ser opcional e claramente marcado
+// como experimental.
+function ensureAudioContext() {
+  if (!audioCtx) {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AudioCtx();
+  }
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+
+function playClick(time) {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.frequency.value = 1000;
+  gain.gain.setValueAtTime(0.0001, time);
+  gain.gain.exponentialRampToValueAtTime(0.3, time + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.04);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(time);
+  osc.stop(time + 0.05);
+}
+
+function scheduleClicks() {
+  if (!audiblePulseEnabled || !clickPeriodSec || !audioCtx) return;
+  while (nextClickTime < audioCtx.currentTime + 0.2) {
+    playClick(nextClickTime);
+    nextClickTime += clickPeriodSec;
+  }
+}
+
+function startAudiblePulse(effectiveBpm) {
+  if (!audiblePulseEnabled || !effectiveBpm) return;
+  const ctx = ensureAudioContext();
+  clickPeriodSec = 60 / effectiveBpm;
+  nextClickTime = ctx.currentTime + 0.05;
+  clearInterval(clickSchedulerHandle);
+  clickSchedulerHandle = setInterval(scheduleClicks, 50);
+}
+
+function stopAudiblePulse() {
+  clearInterval(clickSchedulerHandle);
+  clickSchedulerHandle = null;
+  clickPeriodSec = null;
 }
 
 function setStatus(text) {
@@ -406,6 +514,16 @@ async function init() {
   });
   el.prevBtn.addEventListener("click", () => {
     skipToPrevious().catch((err) => showRunError(err.message));
+  });
+
+  el.audiblePulseToggle.addEventListener("change", () => {
+    audiblePulseEnabled = el.audiblePulseToggle.checked;
+    if (audiblePulseEnabled) {
+      ensureAudioContext(); // precisa acontecer dentro do gesto do toque (iOS)
+      if (beatEffectiveBpm) startAudiblePulse(beatEffectiveBpm);
+    } else {
+      stopAudiblePulse();
+    }
   });
 }
 

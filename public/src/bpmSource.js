@@ -78,12 +78,15 @@ function saveCache(cache) {
   localStorage.setItem(STORAGE_KEYS.bpmPool, JSON.stringify(cache));
 }
 
-// Recebe [{id, name, artist, uri}], devolve { tracks, diagnostic }.
-// `tracks` só tem as faixas com BPM resolvido; `diagnostic` traz uma amostra
-// da última resposta problemática, útil quando `tracks` sai vazio.
+// Recebe [{id, name, artist, uri}] — ou já [{..., tempo}] pra faixas
+// pré-resolvidas, como as do catálogo de referência (catalogSource.js),
+// que não precisam passar pela ReccoBeats de novo. Devolve
+// { tracks, diagnostic }: `tracks` só tem as faixas com BPM resolvido;
+// `diagnostic` traz uma amostra da última resposta problemática, útil
+// quando `tracks` sai vazio.
 export async function buildBpmPool(trackRefs, onProgress) {
   const cache = loadCache();
-  const missing = trackRefs.filter((t) => !cache[t.id]);
+  const missing = trackRefs.filter((t) => !t.tempo && !cache[t.id]);
   const batches = chunk(missing, RECCOBEATS_BATCH_SIZE);
 
   let done = 0;
@@ -100,8 +103,8 @@ export async function buildBpmPool(trackRefs, onProgress) {
   saveCache(cache);
 
   const tracks = trackRefs
-    .filter((t) => cache[t.id])
-    .map((t) => ({ ...t, tempo: cache[t.id] }));
+    .filter((t) => t.tempo || cache[t.id])
+    .map((t) => ({ ...t, tempo: t.tempo ?? cache[t.id] }));
 
-  return { tracks, diagnostic: tracks.length === 0 ? lastDiagnostic : null };
+  return { tracks, diagnostic: tracks.length === 0 && missing.length > 0 ? lastDiagnostic : null };
 }

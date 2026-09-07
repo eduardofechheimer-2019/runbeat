@@ -11,10 +11,19 @@ de cadência e troca automática de faixa testados numa corrida de verdade.
 
 1. Você loga com sua conta Spotify (Premium — necessário pra controlar
    playback pela API) e escolhe a fonte de faixas: uma ou mais playlists
-   específicas (+ "Músicas Curtidas"), ou o botão **"Analisar toda a minha
-   biblioteca"**, que junta automaticamente todas as suas playlists e as
-   Curtidas de uma vez, sem escolher uma por uma. Em qualquer caso, o pool
-   junta as fontes sem repetir faixa que apareça em mais de uma — e o BPM já
+   específicas (+ "Músicas Curtidas"), o botão **"Analisar toda a minha
+   biblioteca"** (junta automaticamente todas as suas playlists e as
+   Curtidas de uma vez), e/ou o **"Catálogo de referência"** — uma opção
+   extra na mesma lista de playlists, com ~89 mil músicas de BPM já
+   conhecido (dataset público CC0/domínio público, baseado em dados do
+   Spotify: [maharshipandya/spotify-tracks-dataset](https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset)).
+   É útil pra quem não tem muitas playlists, ou pra preencher faixas de BPM
+   que suas próprias músicas não cobrem — cada entrada já vem com o ID real
+   da faixa no Spotify (`public/data/songs-bpm.json`), sem precisar buscar
+   por nome. Como o dataset tem uma data de captura própria, algumas faixas
+   podem não existir mais no catálogo do Spotify — o app trata isso como
+   falha normal e pula pra próxima candidata. Em qualquer caso, o pool junta
+   as fontes sem repetir faixa que apareça em mais de uma — e o BPM já
    resolvido fica em cache local, então analisar de novo (com mais fontes)
    não perde o que já foi calculado antes.
 2. O app resolve o BPM de cada faixa dessa fonte via [ReccoBeats](https://reccobeats.com/)
@@ -69,11 +78,14 @@ runbeat/
     ├── sw.js                 # service worker (cache do app shell)
     ├── icon.svg
     ├── css/style.css
+    ├── data/
+    │   └── songs-bpm.json     # catálogo de referência (~89 mil músicas, CC0)
     └── src/
         ├── config.js         # client ID do Spotify e parâmetros ajustáveis
         ├── spotifyAuth.js     # login OAuth (Authorization Code + PKCE)
         ├── spotifyApi.js      # playlists, faixas, controle de playback
         ├── bpmSource.js       # resolve BPM via ReccoBeats
+        ├── catalogSource.js   # carrega o catálogo de referência (BPM pré-resolvido)
         ├── cadence.js         # detecção de passos via acelerômetro
         ├── matcher.js         # escolhe a faixa certa pra cadência atual
         └── app.js             # orquestra a UI e o loop de matching

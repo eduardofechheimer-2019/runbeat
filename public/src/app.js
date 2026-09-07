@@ -9,6 +9,7 @@ import {
 import * as auth from "./spotifyAuth.js";
 import * as api from "./spotifyApi.js";
 import { buildBpmPool } from "./bpmSource.js";
+import { loadCatalogRefs } from "./catalogSource.js";
 import { CadenceTracker, requestMotionPermission } from "./cadence.js";
 import { pickTrackForCadence } from "./matcher.js";
 
@@ -207,6 +208,11 @@ async function loadPlaylistOptions() {
   likedOpt.textContent = "Músicas Curtidas";
   el.playlistSelect.appendChild(likedOpt);
 
+  const catalogOpt = document.createElement("option");
+  catalogOpt.value = "__catalog__";
+  catalogOpt.textContent = "Catálogo de referência (~89 mil músicas por BPM)";
+  el.playlistSelect.appendChild(catalogOpt);
+
   const myUserId = await api.getCurrentUserId();
   const playlists = await api.getMyPlaylists();
   for (const p of playlists) {
@@ -247,7 +253,10 @@ function dedupeRefs(listOfRefLists) {
 // vazio e o nome/motivo da fonte em `failure` nesse caso.
 async function fetchSourceRefs(id, label) {
   try {
-    const refs = id === "__liked__" ? await api.getLikedSongRefs() : await api.getPlaylistTrackRefs(id);
+    let refs;
+    if (id === "__catalog__") refs = await loadCatalogRefs();
+    else if (id === "__liked__") refs = await api.getLikedSongRefs();
+    else refs = await api.getPlaylistTrackRefs(id);
     return { refs, failure: null };
   } catch (err) {
     console.warn(`Falha ao buscar faixas de "${label}":`, err.message);
@@ -346,7 +355,6 @@ function updateCadenceDisplay() {
 async function playSpecificTrack(track) {
   await api.playTrackUri(track.uri);
   currentTrackId = track.id;
-  playedIds.add(track.id);
   el.trackValue.textContent = `${track.name} — ${track.artist} (${Math.round(track.tempo)} BPM)`;
   showRunError("");
   startBeatPulse(track.effectiveBpm);
@@ -369,6 +377,11 @@ async function playNextAndSchedule() {
   const track = pickTrackForCadence(bpmPool, cadence, playedIds);
   if (!track) return;
 
+  // Marca como "tentada" antes de tocar — se falhar (ex. faixa do catálogo
+  // com ID que não existe mais no Spotify), o retry abaixo escolhe outra
+  // em vez de bater na mesma faixa quebrada pra sempre.
+  playedIds.add(track.id);
+
   try {
     await playSpecificTrack(track);
     history.push(track);
@@ -376,7 +389,7 @@ async function playNextAndSchedule() {
   } catch (err) {
     showRunError(err.message);
     // Não trava o loop — tenta de novo em breve (ex. dispositivo Spotify
-    // pode ter ficado inativo temporariamente).
+    // pode ter ficado inativo temporariamente, ou a faixa não existe mais).
     endOfTrackTimer = setTimeout(playNextAndSchedule, RETRY_AFTER_ERROR_MS);
   }
 }

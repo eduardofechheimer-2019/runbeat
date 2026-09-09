@@ -103,19 +103,20 @@ function ensureAudioContext() {
 }
 
 function playClick(time) {
-  // Som tipo "surdo" (grave, tipo batida de bateria): a frequência começa
-  // mais alta e cai rápido pro grave, dando o "thump" — não é só um bipe.
+  // Tom intermediário (nem o bipe agudo original, nem o surdo grave) —
+  // frequência começa em 400Hz e cai até 180Hz, mais parecido com uma
+  // batida de tom/caixa do que um bipe eletrônico ou um grave de bumbo.
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = "sine";
-  osc.frequency.setValueAtTime(150, time);
-  osc.frequency.exponentialRampToValueAtTime(50, time + 0.08);
+  osc.frequency.setValueAtTime(400, time);
+  osc.frequency.exponentialRampToValueAtTime(180, time + 0.05);
   gain.gain.setValueAtTime(0.0001, time);
-  gain.gain.exponentialRampToValueAtTime(0.8, time + 0.006);
-  gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.18);
+  gain.gain.exponentialRampToValueAtTime(0.7, time + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.1);
   osc.connect(gain).connect(audioCtx.destination);
   osc.start(time);
-  osc.stop(time + 0.2);
+  osc.stop(time + 0.12);
 }
 
 function scheduleClicks() {

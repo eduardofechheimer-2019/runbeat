@@ -35,7 +35,6 @@ const el = {
   trackValue: document.getElementById("track-value"),
   runError: document.getElementById("run-error"),
   beatVisual: document.getElementById("beat-visual"),
-  beatCanvas: document.getElementById("beat-canvas"),
   beatBpmValue: document.getElementById("beat-bpm-value"),
   audiblePulseToggle: document.getElementById("audible-pulse-toggle"),
 };
@@ -51,18 +50,14 @@ let fixedCadence = null;
 let history = []; // faixas já tocadas nesta corrida, em ordem — pra "Anterior"
 const playedIds = new Set();
 
-// Metrônomo visual (canvas) — estado da animação em quadro contínuo.
-let beatAnimHandle = null;
-let beatStartTime = null;
-let beatEffectiveBpm = null;
-
-// Pulso sonoro (experimental) — agenda cliques via Web Audio API, cujo
-// relógio é bem mais preciso que setTimeout pra esse fim.
+// Pulso sonoro — agenda cliques via Web Audio API, cujo relógio é bem mais
+// preciso que setTimeout pra esse fim.
 let audioCtx = null;
 let audiblePulseEnabled = false;
 let clickSchedulerHandle = null;
 let clickPeriodSec = null;
 let nextClickTime = 0;
+let currentEffectiveBpm = null; // pra religar o pulso se o checkbox for marcado no meio de uma faixa
 
 function populatePaceOptions() {
   el.paceSelect.innerHTML = "";
@@ -78,76 +73,26 @@ function getCadence() {
   return activeMode === "fixed" ? fixedCadence : (tracker?.getCurrentSpm() ?? 0);
 }
 
-// Metrônomo visual (forma de onda tipo monitor cardíaco): desenha um pico
-// a cada batida do BPM efetivo usado pro casamento (relação 1:1 com a
-// cadência) — é esse o ritmo que deve coincidir com o passo no chão. Não é
-// sincronizado com o áudio de verdade (o Spotify não expõe isso via API) —
-// é um guia de ritmo constante a partir do momento em que a faixa começa.
-function drawBeatWaveform(now) {
-  const canvas = el.beatCanvas;
-  const ctx = canvas.getContext("2d");
-  const width = canvas.width;
-  const height = canvas.height;
-  ctx.clearRect(0, 0, width, height);
-
-  if (beatEffectiveBpm) {
-    const periodMs = 60000 / beatEffectiveBpm;
-    const windowMs = 4000; // mostra os últimos ~4s de batida
-    const pxPerMs = width / windowMs;
-    const baseline = height * 0.65;
-    const spikeHeight = height * 0.55;
-    const elapsed = now - beatStartTime;
-    const startMs = Math.max(0, elapsed - windowMs);
-
-    ctx.strokeStyle = "#1db954";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    let first = true;
-    for (let t = startMs; t <= elapsed; t += 8) {
-      const phase = (t % periodMs) / periodMs;
-      const spike = Math.max(0, 1 - phase * 10); // decai rápido logo após a batida
-      const x = (t - startMs) * pxPerMs;
-      const y = baseline - spike * spikeHeight;
-      if (first) {
-        ctx.moveTo(x, y);
-        first = false;
-      } else {
-        ctx.lineTo(x, y);
-      }
-    }
-    ctx.stroke();
-  }
-
-  beatAnimHandle = requestAnimationFrame(drawBeatWaveform);
-}
-
 function startBeatPulse(effectiveBpm) {
   if (!effectiveBpm || effectiveBpm <= 0) return;
-  beatEffectiveBpm = effectiveBpm;
-  beatStartTime = performance.now();
+  currentEffectiveBpm = effectiveBpm;
   el.beatBpmValue.textContent = `${Math.round(effectiveBpm)} /min`;
   el.beatVisual.hidden = false;
-  if (!beatAnimHandle) beatAnimHandle = requestAnimationFrame(drawBeatWaveform);
   startAudiblePulse(effectiveBpm);
 }
 
 function stopBeatPulse() {
   el.beatVisual.hidden = true;
-  if (beatAnimHandle) {
-    cancelAnimationFrame(beatAnimHandle);
-    beatAnimHandle = null;
-  }
-  beatEffectiveBpm = null;
+  currentEffectiveBpm = null;
   stopAudiblePulse();
 }
 
-// --- Pulso sonoro (experimental) ---
-// Um clique curto a cada batida, tocado no navegador (não no Spotify).
-// Não temos como saber a fase real do áudio da faixa (mesma limitação do
-// visual) — é um metrônomo independente, não uma sobreposição travada no
-// áudio. Também não é garantido que o iOS misture esse som com o Spotify
-// em vez de abafar um dos dois — daí ser opcional e claramente marcado
-// como experimental.
+// --- Pulso sonoro ---
+// Um clique curto a cada batida, tocado no navegador (não no Spotify). Não
+// temos como saber a fase real do áudio da faixa — é um metrônomo
+// independente, não uma sobreposição travada no áudio. Também não é
+// garantido que o iOS misture esse som com o Spotify em vez de abafar um
+// dos dois — daí ser opcional.
 function ensureAudioContext() {
   if (!audioCtx) {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -533,7 +478,7 @@ async function init() {
     audiblePulseEnabled = el.audiblePulseToggle.checked;
     if (audiblePulseEnabled) {
       ensureAudioContext(); // precisa acontecer dentro do gesto do toque (iOS)
-      if (beatEffectiveBpm) startAudiblePulse(beatEffectiveBpm);
+      if (currentEffectiveBpm) startAudiblePulse(currentEffectiveBpm);
     } else {
       stopAudiblePulse();
     }

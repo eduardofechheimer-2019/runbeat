@@ -45,15 +45,15 @@ de cadência e troca automática de faixa testados numa corrida de verdade.
 5. Os botões **⏮ Anterior** / **⏭ Próxima** deixam pular manualmente pra
    faixa seguinte do pool (recalcula pela cadência atual) ou voltar pra
    última que já tocou nessa corrida.
-6. Um **metrônomo visual** (forma de onda tipo monitor cardíaco, com um
-   pico a cada batida) mostra o BPM-alvo da faixa atual, pra ajudar a olhar
-   e sincronizar o passo com a batida. Opcionalmente, um **pulso sonoro
-   experimental** (checkbox, desligado por padrão) toca um clique curto no
-   navegador a cada batida. Nenhum dos dois é sincronizado com o áudio real
-   da faixa (a API do Spotify não expõe posição/fase de batida) — são guias
-   de ritmo constantes a partir do momento em que a faixa começa a tocar,
-   não a batida exata da música. O pulso sonoro também não tem garantia de
-   tocar junto com o Spotify sem interferir — por isso é opt-in.
+6. Um **pulso sonoro** (checkbox, opt-in) toca um clique curto no navegador
+   a cada batida do BPM-alvo, pra ajudar a sincronizar o passo com a
+   batida. Não é sincronizado com o áudio real da faixa (a API do Spotify
+   não expõe posição/fase de batida) — é um guia de ritmo constante a
+   partir do momento em que a faixa começa a tocar, não a batida exata da
+   música. Também não tem garantia de tocar junto com o Spotify sem
+   interferir — por isso é opt-in. (A versão anterior tinha um metrônomo
+   visual — removido após teste real, não ajudou o suficiente a perceber a
+   batida.)
 
 ## Instalando como app no celular
 

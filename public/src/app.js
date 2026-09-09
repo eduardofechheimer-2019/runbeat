@@ -103,15 +103,19 @@ function ensureAudioContext() {
 }
 
 function playClick(time) {
+  // Som tipo "surdo" (grave, tipo batida de bateria): a frequência começa
+  // mais alta e cai rápido pro grave, dando o "thump" — não é só um bipe.
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
-  osc.frequency.value = 1000;
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(150, time);
+  osc.frequency.exponentialRampToValueAtTime(50, time + 0.08);
   gain.gain.setValueAtTime(0.0001, time);
-  gain.gain.exponentialRampToValueAtTime(0.3, time + 0.005);
-  gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.04);
+  gain.gain.exponentialRampToValueAtTime(0.8, time + 0.006);
+  gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.18);
   osc.connect(gain).connect(audioCtx.destination);
   osc.start(time);
-  osc.stop(time + 0.05);
+  osc.stop(time + 0.2);
 }
 
 function scheduleClicks() {

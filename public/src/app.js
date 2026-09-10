@@ -11,7 +11,7 @@ import * as api from "./spotifyApi.js";
 import { buildBpmPool } from "./bpmSource.js";
 import { loadCatalogRefs } from "./catalogSource.js";
 import { CadenceTracker, requestMotionPermission } from "./cadence.js";
-import { pickTrackForCadence } from "./matcher.js";
+import { pickTrackForCadence, pickTrackForRange } from "./matcher.js";
 
 const el = {
   status: document.getElementById("status"),
@@ -45,8 +45,10 @@ let displayTimer = null;
 let bootstrapTimer = null;
 let endOfTrackTimer = null;
 let currentTrackId = null;
-let activeMode = "auto"; // "auto" (cadência real) | "fixed" (ritmo fixo)
-let fixedCadence = null;
+let activeMode = "auto"; // "auto" (cadência real) | "fixed" (faixa de BPM fixa)
+let fixedRange = null; // {min, max} quando activeMode === "fixed"
+let runActive = false; // true entre "Iniciar corrida" e "Parar"
+let playRequestSeq = 0; // invalida trocas de faixa que ficaram pra trás no tempo
 let history = []; // faixas já tocadas nesta corrida, em ordem — pra "Anterior"
 const playedIds = new Set();
 
@@ -63,14 +65,28 @@ function populatePaceOptions() {
   el.paceSelect.innerHTML = "";
   for (const opt of FIXED_PACE_OPTIONS) {
     const option = document.createElement("option");
-    option.value = String(opt.spm);
-    option.textContent = `${opt.label} (${opt.spm} bpm)`;
+    option.value = opt.id;
+    option.textContent = `${opt.label} (${opt.min}–${opt.max} bpm)`;
     el.paceSelect.appendChild(option);
   }
 }
 
-function getCadence() {
-  return activeMode === "fixed" ? fixedCadence : (tracker?.getCurrentSpm() ?? 0);
+function currentFixedRange() {
+  const opt = FIXED_PACE_OPTIONS.find((o) => o.id === el.paceSelect.value);
+  return opt ? { min: opt.min, max: opt.max } : null;
+}
+
+// Aplica imediatamente uma troca de modo/velocidade feita em pleno andamento
+// da corrida — antes, essas trocas só valiam na próxima vez que "Iniciar
+// corrida" fosse clicado, o que fazia o app ignorar qualquer mudança de
+// modo/ritmo escolhida depois de já ter começado.
+function applyLiveModeChange() {
+  if (!runActive) return;
+  activeMode = el.modeSelect.value;
+  fixedRange = activeMode === "fixed" ? currentFixedRange() : null;
+  clearInterval(bootstrapTimer);
+  clearTimeout(endOfTrackTimer);
+  playNextAndSchedule().catch((err) => showRunError(err.message));
 }
 
 function startBeatPulse(effectiveBpm) {
@@ -298,16 +314,28 @@ async function buildPoolFromLibrary() {
 }
 
 function updateCadenceDisplay() {
-  const cadence = getCadence();
+  if (activeMode === "fixed") {
+    el.cadenceValue.textContent = fixedRange
+      ? `${fixedRange.min}–${fixedRange.max} passos/min (alvo)`
+      : "—";
+    return;
+  }
+  const cadence = tracker?.getCurrentSpm() ?? 0;
   el.cadenceValue.textContent = cadence > 0 ? `${cadence} passos/min` : "medindo...";
 }
 
-async function playSpecificTrack(track) {
+// `requestId` evita que uma troca de faixa lenta (ex. chamada à API do
+// Spotify demorando) sobrescreva na tela o resultado de uma troca mais
+// recente — se outra chamada já começou depois desta, esta é descartada
+// silenciosamente ao terminar. Devolve false quando isso acontece.
+async function playSpecificTrack(track, requestId) {
   await api.playTrackUri(track.uri);
+  if (requestId !== playRequestSeq) return false;
   currentTrackId = track.id;
   el.trackValue.textContent = `${track.name} — ${track.artist} (${Math.round(track.tempo)} BPM)`;
   showRunError("");
   startBeatPulse(track.effectiveBpm);
+  return true;
 }
 
 // Agenda a troca seguinte pra pouco antes do fim da faixa — sem nunca
@@ -323,8 +351,11 @@ function scheduleEndOfTrack(track) {
 // Escolhe e toca a próxima faixa pra cadência atual (usado tanto pela troca
 // automática de fim de faixa quanto pelo botão "Próxima").
 async function playNextAndSchedule() {
-  const cadence = getCadence();
-  const track = pickTrackForCadence(bpmPool, cadence, playedIds);
+  const requestId = ++playRequestSeq;
+  const track =
+    activeMode === "fixed"
+      ? pickTrackForRange(bpmPool, fixedRange, playedIds)
+      : pickTrackForCadence(bpmPool, tracker?.getCurrentSpm() ?? 0, playedIds);
   if (!track) return;
 
   // Marca como "tentada" antes de tocar — se falhar (ex. faixa do catálogo
@@ -333,10 +364,12 @@ async function playNextAndSchedule() {
   playedIds.add(track.id);
 
   try {
-    await playSpecificTrack(track);
+    const applied = await playSpecificTrack(track, requestId);
+    if (!applied) return; // uma troca mais recente já assumiu enquanto isso tocava
     history.push(track);
     scheduleEndOfTrack(track);
   } catch (err) {
+    if (requestId !== playRequestSeq) return;
     showRunError(err.message);
     // Não trava o loop — tenta de novo em breve (ex. dispositivo Spotify
     // pode ter ficado inativo temporariamente, ou a faixa não existe mais).
@@ -354,10 +387,13 @@ async function skipToPrevious() {
   clearTimeout(endOfTrackTimer);
   history.pop(); // remove a atual
   const previousTrack = history[history.length - 1];
+  const requestId = ++playRequestSeq;
   try {
-    await playSpecificTrack(previousTrack);
+    const applied = await playSpecificTrack(previousTrack, requestId);
+    if (!applied) return;
     scheduleEndOfTrack(previousTrack);
   } catch (err) {
+    if (requestId !== playRequestSeq) return;
     showRunError(err.message);
   }
 }
@@ -381,15 +417,17 @@ function waitForFirstCadence() {
 
 function startRun() {
   activeMode = el.modeSelect.value;
-  fixedCadence = activeMode === "fixed" ? Number(el.paceSelect.value) : null;
+  fixedRange = activeMode === "fixed" ? currentFixedRange() : null;
 
-  if (activeMode === "auto") {
-    tracker = new CadenceTracker();
-    tracker.start();
-  }
+  // Sempre inicia o sensor, mesmo começando em ritmo fixo — assim dá pra
+  // alternar pro modo automático a qualquer momento durante a corrida.
+  tracker = new CadenceTracker();
+  tracker.start();
+
   currentTrackId = null;
   playedIds.clear();
   history = [];
+  runActive = true;
   el.startBtn.hidden = true;
   el.stopBtn.hidden = false;
   el.playbackControls.hidden = false;
@@ -399,12 +437,13 @@ function startRun() {
 }
 
 function stopRun() {
+  runActive = false;
   clearInterval(displayTimer);
   clearInterval(bootstrapTimer);
   clearTimeout(endOfTrackTimer);
   tracker?.stop();
   tracker = null;
-  fixedCadence = null;
+  fixedRange = null;
   el.startBtn.hidden = false;
   el.stopBtn.hidden = true;
   el.playbackControls.hidden = true;
@@ -425,6 +464,10 @@ async function init() {
   populatePaceOptions();
   el.modeSelect.addEventListener("change", () => {
     el.paceGroup.hidden = el.modeSelect.value !== "fixed";
+    applyLiveModeChange();
+  });
+  el.paceSelect.addEventListener("change", () => {
+    if (el.modeSelect.value === "fixed") applyLiveModeChange();
   });
 
   try {
@@ -461,9 +504,10 @@ async function init() {
 
   el.startBtn.addEventListener("click", async () => {
     try {
-      if (el.modeSelect.value === "auto") {
-        await requestMotionPermission();
-      }
+      // Pede a permissão sempre, mesmo começando em ritmo fixo — o sensor
+      // roda em paralelo pra poder alternar pro modo automático a qualquer
+      // momento, sem precisar reiniciar a corrida.
+      await requestMotionPermission();
       startRun();
     } catch (err) {
       showRunError(err.message);

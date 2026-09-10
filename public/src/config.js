@@ -41,12 +41,14 @@ export const CADENCE_DISPLAY_INTERVAL_MS = 1000;
 // ficou inativo), tenta de novo depois desse tempo.
 export const RETRY_AFTER_ERROR_MS = 5000;
 
-// Opções do modo "ritmo fixo" — cadência alvo constante, independente do
-// passo real do usuário. Valores em passos/min (SPM), ajustáveis aqui.
+// Opções do modo "ritmo fixo" — faixa de BPM alvo, independente do passo
+// real do usuário. Dentro do intervalo, qualquer faixa do pool serve; sem
+// nenhuma no intervalo, cai pra faixa mais próxima do limite. Ajustável aqui.
 export const FIXED_PACE_OPTIONS = [
-  { id: "slow", label: "Lento", spm: 130 },
-  { id: "medium", label: "Médio", spm: 160 },
-  { id: "fast", label: "Rápido", spm: 180 },
+  { id: "easy", label: "Easy Pace", min: CADENCE_MIN_SPM, max: 119 },
+  { id: "warming-up", label: "Warming Up", min: 120, max: 149 },
+  { id: "taking-off", label: "Taking Off", min: 150, max: 189 },
+  { id: "pro", label: "Pro", min: 190, max: CADENCE_MAX_SPM },
 ];
 
 export const STORAGE_KEYS = {

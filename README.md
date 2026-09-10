@@ -29,12 +29,24 @@ de cadência e troca automática de faixa testados numa corrida de verdade.
 2. O app resolve o BPM de cada faixa dessa fonte via [ReccoBeats](https://reccobeats.com/)
    (API gratuita, sem chave, que aceita o ID da faixa do Spotify diretamente
    — sem risco de casar com a versão errada de uma música).
-3. Antes de começar, você escolhe o modo de ritmo:
+3. Você escolhe o modo de ritmo, e pode **trocar a qualquer momento durante
+   a corrida** (a troca vale na hora, sem precisar parar e reiniciar):
    - **Automático**: o acelerômetro do celular (`DeviceMotion`) mede sua
      cadência (passos/min) em tempo real.
-   - **Ritmo fixo**: você escolhe um nível (Lento/Médio/Rápido, valores em
-     `FIXED_PACE_OPTIONS` em `config.js`) e o app usa esse BPM alvo o tempo
-     todo, ignorando o sensor — útil pra treino estruturado.
+   - **Ritmo fixo**: você escolhe uma faixa de BPM (nível), definida em
+     `FIXED_PACE_OPTIONS` em `config.js`:
+     | Nível | BPM |
+     |---|---|
+     | Easy Pace | 60–119 |
+     | Warming Up | 120–149 |
+     | Taking Off | 150–189 |
+     | Pro | 190–220 |
+
+     Qualquer faixa do pool dentro desse intervalo serve (escolhida ao
+     acaso entre as candidatas); sem nenhuma no intervalo, cai pra mais
+     próxima do limite. O sensor de passos continua rodando em segundo
+     plano mesmo em ritmo fixo, então voltar pro automático depois também
+     funciona sem reiniciar.
 4. Cada faixa toca **até quase o fim** — pouco antes de acabar (por padrão,
    2 segundos antes, ajustável em `END_OF_TRACK_LEAD_MS`), o motor de
    matching escolhe a próxima faixa do pool com o BPM **mais próximo da

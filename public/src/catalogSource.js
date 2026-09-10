@@ -20,7 +20,7 @@ export async function loadCatalogRefs() {
     throw new Error(`Falha ao carregar o catálogo de referência (HTTP ${res.status})`);
   }
   const rows = await res.json();
-  cachedCatalog = rows.map(([id, name, artist, tempo, durationMs, genres]) => ({
+  cachedCatalog = rows.map(([id, name, artist, tempo, durationMs, genres, popularity]) => ({
     id,
     name,
     artist,
@@ -28,6 +28,7 @@ export async function loadCatalogRefs() {
     tempo,
     durationMs,
     genres,
+    popularity,
   }));
   return cachedCatalog;
 }

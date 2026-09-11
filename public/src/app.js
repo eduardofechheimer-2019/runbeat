@@ -34,6 +34,7 @@ const el = {
   cadenceValue: document.getElementById("cadence-value"),
   trackValue: document.getElementById("track-value"),
   runError: document.getElementById("run-error"),
+  openSpotifyLink: document.getElementById("open-spotify-link"),
   beatVisual: document.getElementById("beat-visual"),
   beatBpmValue: document.getElementById("beat-bpm-value"),
   audiblePulseToggle: document.getElementById("audible-pulse-toggle"),
@@ -60,6 +61,12 @@ let clickSchedulerHandle = null;
 let clickPeriodSec = null;
 let nextClickTime = 0;
 let currentEffectiveBpm = null; // pra religar o pulso se o checkbox for marcado no meio de uma faixa
+
+// Screen Wake Lock — mantém a tela ligada durante a corrida (iOS 18.4+ em
+// PWA instalado) pra evitar que o app fique em segundo plano por timeout
+// automático de tela. Não impede o usuário de apertar o botão físico de
+// bloquear — a API não tem como interceptar isso.
+let wakeLock = null;
 
 function populatePaceOptions() {
   el.paceSelect.innerHTML = "";
@@ -165,6 +172,36 @@ function setStatus(text) {
 function showRunError(message) {
   el.runError.textContent = message;
   el.runError.hidden = !message;
+}
+
+// Mostra um link "spotify:track:<id>" — abrir esse link no celular manda o
+// app Spotify começar a tocar essa faixa sozinho (sem precisar procurar nada
+// lá dentro), desde que nada mais esteja tocando ainda. É o que resolve o
+// caso "nenhum dispositivo ativo" com um toque só.
+function showNoDeviceLink(track) {
+  el.openSpotifyLink.href = `spotify:track:${track.id}`;
+  el.openSpotifyLink.hidden = false;
+}
+
+function hideNoDeviceLink() {
+  el.openSpotifyLink.hidden = true;
+}
+
+async function requestWakeLock() {
+  if (!("wakeLock" in navigator)) return;
+  try {
+    wakeLock = await navigator.wakeLock.request("screen");
+    wakeLock.addEventListener("release", () => {
+      wakeLock = null;
+    });
+  } catch (err) {
+    console.warn("Wake Lock indisponível:", err.message);
+  }
+}
+
+function releaseWakeLock() {
+  wakeLock?.release().catch(() => {});
+  wakeLock = null;
 }
 
 async function loadPlaylistOptions() {
@@ -334,6 +371,7 @@ async function playSpecificTrack(track, requestId) {
   currentTrackId = track.id;
   el.trackValue.textContent = `${track.name} — ${track.artist} (${Math.round(track.tempo)} BPM)`;
   showRunError("");
+  hideNoDeviceLink();
   startBeatPulse(track.effectiveBpm);
   return true;
 }
@@ -371,6 +409,7 @@ async function playNextAndSchedule() {
   } catch (err) {
     if (requestId !== playRequestSeq) return;
     showRunError(err.message);
+    if (err.code === "NO_ACTIVE_DEVICE") showNoDeviceLink(track);
     // Não trava o loop — tenta de novo em breve (ex. dispositivo Spotify
     // pode ter ficado inativo temporariamente, ou a faixa não existe mais).
     endOfTrackTimer = setTimeout(playNextAndSchedule, RETRY_AFTER_ERROR_MS);
@@ -395,6 +434,7 @@ async function skipToPrevious() {
   } catch (err) {
     if (requestId !== playRequestSeq) return;
     showRunError(err.message);
+    if (err.code === "NO_ACTIVE_DEVICE") showNoDeviceLink(previousTrack);
   }
 }
 
@@ -432,6 +472,8 @@ function startRun() {
   el.stopBtn.hidden = false;
   el.playbackControls.hidden = false;
   showRunError("");
+  hideNoDeviceLink();
+  requestWakeLock();
   displayTimer = setInterval(updateCadenceDisplay, CADENCE_DISPLAY_INTERVAL_MS);
   waitForFirstCadence();
 }
@@ -444,11 +486,13 @@ function stopRun() {
   tracker?.stop();
   tracker = null;
   fixedRange = null;
+  releaseWakeLock();
   el.startBtn.hidden = false;
   el.stopBtn.hidden = true;
   el.playbackControls.hidden = true;
   el.cadenceValue.textContent = "—";
   el.trackValue.textContent = "—";
+  hideNoDeviceLink();
   stopBeatPulse();
 }
 
@@ -530,6 +574,15 @@ async function init() {
       if (currentEffectiveBpm) startAudiblePulse(currentEffectiveBpm);
     } else {
       stopAudiblePulse();
+    }
+  });
+
+  // O Wake Lock é liberado automaticamente pelo navegador quando a aba/app
+  // fica em segundo plano (parte do spec) — reconquista sozinho ao voltar,
+  // sem precisar que o usuário faça nada.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && runActive && !wakeLock) {
+      requestWakeLock();
     }
   });
 }

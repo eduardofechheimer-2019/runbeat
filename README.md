@@ -57,7 +57,21 @@ de cadência e troca automática de faixa testados numa corrida de verdade.
 5. Os botões **⏮ Anterior** / **⏭ Próxima** deixam pular manualmente pra
    faixa seguinte do pool (recalcula pela cadência atual) ou voltar pra
    última que já tocou nessa corrida.
-6. Um **pulso sonoro** (checkbox, opt-in) toca um clique curto no navegador
+6. Se o Spotify não tiver nenhum dispositivo ativo (app fechado, nada
+   tocando ainda), aparece um botão **"▶ Abrir Spotify e começar"** — um
+   toque só abre o app Spotify direto na faixa certa e já começa a tocar
+   sozinho (link `spotify:track:<id>`, que só precisa de 1 toque porque
+   nada mais está tocando ainda). O botão some assim que a próxima troca de
+   faixa funcionar normalmente.
+7. Enquanto a corrida está ativa, o app pede à tela pra não apagar sozinha
+   (Screen Wake Lock). Isso evita que o navegador pare de rodar em segundo
+   plano por *timeout* automático de tela. **Limite importante**: isso não
+   evita que a tela apague se você apertar o botão físico de bloquear o
+   celular — não existe API que intercepte isso; nesse caso a faixa atual
+   continua tocando normalmente (é o app Spotify nativo, não a página do
+   RunBeat, que toca o áudio), mas a troca automática de faixa só volta a
+   acontecer quando você desbloquear e voltar pro RunBeat.
+8. Um **pulso sonoro** (checkbox, opt-in) toca um clique curto no navegador
    a cada batida do BPM-alvo, pra ajudar a sincronizar o passo com a
    batida. Não é sincronizado com o áudio real da faixa (a API do Spotify
    não expõe posição/fase de batida) — é um guia de ritmo constante a
@@ -133,12 +147,16 @@ ou HTTPS — batendo com o que foi cadastrado no app).
 
 ### 3. Durante o uso
 
-- Abra o app Spotify no celular e comece a tocar qualquer coisa antes de
-  clicar em "Iniciar corrida" — a API só consegue trocar de faixa se já
-  houver um dispositivo Spotify ativo (o app não usa o Web Playback SDK, só
-  comanda o dispositivo já tocando).
-- No iPhone, mantenha a tela ligada durante a corrida — o sensor de
-  movimento para de disparar com a tela bloqueada/app em segundo plano.
+- Se você clicar em "Iniciar corrida" sem nenhum dispositivo Spotify ativo
+  (app fechado, nada tocando), o RunBeat mostra um botão **"▶ Abrir Spotify
+  e começar"** — um toque nele abre o app Spotify já tocando a faixa certa,
+  sem precisar procurar nada lá dentro (o app não usa o Web Playback SDK, só
+  comanda o dispositivo ativo).
+- O RunBeat pede pra tela não apagar sozinha enquanto a corrida está ativa
+  (Screen Wake Lock), mas isso não segura o botão físico de bloquear o
+  celular — bloqueando manualmente, o sensor de passos e a troca automática
+  de faixa pausam até você desbloquear e voltar ao app (a faixa que já
+  estava tocando continua até o fim normalmente).
 
 ## Limitações conhecidas desta primeira versão (fase 1)
 

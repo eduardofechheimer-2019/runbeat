@@ -120,9 +120,11 @@ export async function playTrackUri(uri) {
     // faixas do catálogo de referência, que tem uma data de captura própria).
     // Só assume "sem dispositivo" se a mensagem realmente falar de device.
     if (err.status === 404 && /device/i.test(err.message)) {
-      throw new Error(
-        "Nenhum dispositivo Spotify ativo. Abra o Spotify no celular e toque play em qualquer música antes de iniciar a corrida."
+      const noDeviceErr = new Error(
+        "Nenhum dispositivo Spotify ativo. Toque no botão abaixo pra abrir o Spotify e começar."
       );
+      noDeviceErr.code = "NO_ACTIVE_DEVICE";
+      throw noDeviceErr;
     }
     if (err.status === 404) {
       throw new Error(`Faixa não encontrada no Spotify (pode ter sido removida do catálogo): ${uri}`);

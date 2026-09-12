@@ -117,7 +117,7 @@ export async function playTrackUri(uri) {
   } catch (err) {
     // 404 cobre dois casos bem diferentes: nenhum dispositivo Spotify ativo,
     // ou o ID da faixa não existe mais no catálogo (pode acontecer com
-    // faixas do catálogo de referência, que tem uma data de captura própria).
+    // faixas do Catálogo RunBeat, que tem uma data de curadoria própria).
     // Só assume "sem dispositivo" se a mensagem realmente falar de device.
     if (err.status === 404 && /device/i.test(err.message)) {
       const noDeviceErr = new Error(

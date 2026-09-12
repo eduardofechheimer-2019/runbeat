@@ -79,7 +79,7 @@ function saveCache(cache) {
 }
 
 // Recebe [{id, name, artist, uri}] — ou já [{..., tempo}] pra faixas
-// pré-resolvidas, como as do catálogo de referência (catalogSource.js),
+// pré-resolvidas, como as do Catálogo RunBeat (catalogSource.js),
 // que não precisam passar pela ReccoBeats de novo. Devolve
 // { tracks, diagnostic }: `tracks` só tem as faixas com BPM resolvido;
 // `diagnostic` traz uma amostra da última resposta problemática, útil

@@ -9,7 +9,7 @@ import {
 import * as auth from "./spotifyAuth.js";
 import * as api from "./spotifyApi.js";
 import { buildBpmPool } from "./bpmSource.js";
-import { loadCatalogRefs } from "./catalogSource.js";
+import { loadCatalogRefs, loadCatalogGenres } from "./catalogSource.js";
 import { CadenceTracker, requestMotionPermission } from "./cadence.js";
 import { pickTrackForCadence, pickTrackForRange } from "./matcher.js";
 
@@ -19,6 +19,8 @@ const el = {
   disconnectBtn: document.getElementById("disconnect-btn"),
   setupSection: document.getElementById("setup-section"),
   playlistSelect: document.getElementById("playlist-select"),
+  catalogGenreGroup: document.getElementById("catalog-genre-group"),
+  catalogGenreSelect: document.getElementById("catalog-genre-select"),
   buildPoolBtn: document.getElementById("build-pool-btn"),
   buildAllBtn: document.getElementById("build-pool-all-btn"),
   poolProgress: document.getElementById("pool-progress"),
@@ -213,7 +215,7 @@ async function loadPlaylistOptions() {
 
   const catalogOpt = document.createElement("option");
   catalogOpt.value = "__catalog__";
-  catalogOpt.textContent = "Catálogo de referência (~89 mil músicas por BPM)";
+  catalogOpt.textContent = "Catálogo RunBeat (~8 mil músicas por BPM e gênero)";
   el.playlistSelect.appendChild(catalogOpt);
 
   const myUserId = await api.getCurrentUserId();
@@ -235,6 +237,51 @@ async function loadPlaylistOptions() {
   for (const opt of el.playlistSelect.options) {
     opt.selected = saved.includes(opt.value);
   }
+  updateCatalogGenreVisibility();
+}
+
+let catalogGenresLoaded = false;
+
+// Mostra/esconde o dropdown de gêneros do Catálogo RunBeat conforme ele
+// estiver marcado ou não entre as fontes selecionadas — e popula o
+// dropdown na primeira vez que ficar visível.
+function updateCatalogGenreVisibility() {
+  const catalogSelected = Array.from(el.playlistSelect.selectedOptions).some(
+    (o) => o.value === "__catalog__"
+  );
+  el.catalogGenreGroup.hidden = !catalogSelected;
+  if (catalogSelected && !catalogGenresLoaded) {
+    catalogGenresLoaded = true;
+    populateCatalogGenreOptions().catch((err) => {
+      catalogGenresLoaded = false; // permite tentar de novo na próxima seleção
+      console.warn("Falha ao carregar gêneros do Catálogo RunBeat:", err.message);
+    });
+  }
+}
+
+async function populateCatalogGenreOptions() {
+  const genres = await loadCatalogGenres();
+  el.catalogGenreSelect.innerHTML = "";
+  for (const genre of genres) {
+    const opt = document.createElement("option");
+    opt.value = genre;
+    opt.textContent = genre;
+    el.catalogGenreSelect.appendChild(opt);
+  }
+
+  let saved = [];
+  try {
+    saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.catalogGenres) || "[]");
+  } catch {
+    saved = [];
+  }
+  for (const opt of el.catalogGenreSelect.options) {
+    opt.selected = saved.includes(opt.value);
+  }
+}
+
+function selectedCatalogGenres() {
+  return Array.from(el.catalogGenreSelect.selectedOptions).map((o) => o.value);
 }
 
 function dedupeRefs(listOfRefLists) {
@@ -254,10 +301,10 @@ function dedupeRefs(listOfRefLists) {
 // Busca as faixas de uma fonte sem deixar uma falha isolada (ex. playlist
 // sem permissão de leitura) derrubar a análise inteira — devolve refs
 // vazio e o nome/motivo da fonte em `failure` nesse caso.
-async function fetchSourceRefs(id, label) {
+async function fetchSourceRefs(id, label, catalogGenres) {
   try {
     let refs;
-    if (id === "__catalog__") refs = await loadCatalogRefs();
+    if (id === "__catalog__") refs = await loadCatalogRefs(catalogGenres);
     else if (id === "__liked__") refs = await api.getLikedSongRefs();
     else refs = await api.getPlaylistTrackRefs(id);
     return { refs, failure: null };
@@ -300,13 +347,18 @@ async function buildPool() {
   }
   localStorage.setItem(STORAGE_KEYS.sourcePlaylist, JSON.stringify(selectedOptions.map((o) => o.value)));
 
+  const catalogGenres = selectedCatalogGenres();
+  if (selectedOptions.some((o) => o.value === "__catalog__")) {
+    localStorage.setItem(STORAGE_KEYS.catalogGenres, JSON.stringify(catalogGenres));
+  }
+
   el.buildPoolBtn.disabled = true;
   el.buildAllBtn.disabled = true;
   el.poolProgress.hidden = false;
   el.poolProgress.textContent = "Buscando faixas...";
 
   const results = await Promise.all(
-    selectedOptions.map((opt) => fetchSourceRefs(opt.value, opt.textContent))
+    selectedOptions.map((opt) => fetchSourceRefs(opt.value, opt.textContent, catalogGenres))
   );
   const failures = results.map((r) => r.failure).filter(Boolean);
   await resolvePool(dedupeRefs(results.map((r) => r.refs)), failures);
@@ -513,6 +565,7 @@ async function init() {
   el.paceSelect.addEventListener("change", () => {
     if (el.modeSelect.value === "fixed") applyLiveModeChange();
   });
+  el.playlistSelect.addEventListener("change", updateCatalogGenreVisibility);
 
   try {
     const justLoggedIn = await auth.handleRedirectCallback();

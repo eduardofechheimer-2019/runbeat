@@ -13,19 +13,20 @@ de cadência e troca automática de faixa testados numa corrida de verdade.
    playback pela API) e escolhe a fonte de faixas: uma ou mais playlists
    específicas (+ "Músicas Curtidas"), o botão **"Analisar toda a minha
    biblioteca"** (junta automaticamente todas as suas playlists e as
-   Curtidas de uma vez), e/ou o **"Catálogo de referência"** — uma opção
-   extra na mesma lista de playlists, com ~89 mil músicas de BPM já
-   conhecido (dataset público CC0/domínio público, baseado em dados do
-   Spotify: [maharshipandya/spotify-tracks-dataset](https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset)).
-   É útil pra quem não tem muitas playlists, ou pra preencher faixas de BPM
-   que suas próprias músicas não cobrem — cada entrada já vem com o ID real
-   da faixa no Spotify (`public/data/songs-bpm.json`), sem precisar buscar
-   por nome. Como o dataset tem uma data de captura própria, algumas faixas
-   podem não existir mais no catálogo do Spotify — o app trata isso como
-   falha normal e pula pra próxima candidata. Em qualquer caso, o pool junta
-   as fontes sem repetir faixa que apareça em mais de uma — e o BPM já
-   resolvido fica em cache local, então analisar de novo (com mais fontes)
-   não perde o que já foi calculado antes.
+   Curtidas de uma vez), e/ou o **"Catálogo RunBeat"** — uma opção extra na
+   mesma lista de playlists, com uma seleção própria de ~8 mil músicas com
+   BPM e gênero já classificados. Marcando essa opção aparece um segundo
+   dropdown pra filtrar por gênero musical (ex. Rock, Pagode, Sertanejo,
+   Funk) — nenhum gênero marcado usa o catálogo inteiro. É útil pra quem não
+   tem muitas playlists, ou pra preencher faixas de BPM que suas próprias
+   músicas não cobrem — cada entrada já vem com o ID real da faixa no
+   Spotify (`public/data/runbeat-catalog.json`), sem precisar buscar por
+   nome. Como a curadoria tem uma data própria, algumas faixas podem não
+   existir mais no catálogo do Spotify — o app trata isso como falha normal
+   e pula pra próxima candidata. Em qualquer caso, o pool junta as fontes
+   sem repetir faixa que apareça em mais de uma — e o BPM já resolvido fica
+   em cache local, então analisar de novo (com mais fontes) não perde o que
+   já foi calculado antes.
 2. O app resolve o BPM de cada faixa dessa fonte via [ReccoBeats](https://reccobeats.com/)
    (API gratuita, sem chave, que aceita o ID da faixa do Spotify diretamente
    — sem risco de casar com a versão errada de uma música).
@@ -105,13 +106,13 @@ runbeat/
     ├── icon.svg
     ├── css/style.css
     ├── data/
-    │   └── songs-bpm.json     # catálogo de referência (~89 mil músicas, CC0)
+    │   └── runbeat-catalog.json # Catálogo RunBeat (~8 mil músicas, BPM + gênero)
     └── src/
         ├── config.js         # client ID do Spotify e parâmetros ajustáveis
         ├── spotifyAuth.js     # login OAuth (Authorization Code + PKCE)
         ├── spotifyApi.js      # playlists, faixas, controle de playback
         ├── bpmSource.js       # resolve BPM via ReccoBeats
-        ├── catalogSource.js   # carrega o catálogo de referência (BPM pré-resolvido)
+        ├── catalogSource.js   # carrega o Catálogo RunBeat (BPM pré-resolvido, filtro por gênero)
         ├── cadence.js         # detecção de passos via acelerômetro
         ├── matcher.js         # escolhe a faixa certa pra cadência atual
         └── app.js             # orquestra a UI e o loop de matching

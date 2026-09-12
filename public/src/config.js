@@ -56,4 +56,5 @@ export const STORAGE_KEYS = {
   pkceVerifier: "runbeat_pkce_verifier",
   sourcePlaylist: "runbeat_source_playlist",
   bpmPool: "runbeat_bpm_pool",
+  catalogGenres: "runbeat_catalog_genres",
 };

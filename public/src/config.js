@@ -57,4 +57,5 @@ export const STORAGE_KEYS = {
   sourcePlaylist: "runbeat_source_playlist",
   bpmPool: "runbeat_bpm_pool",
   catalogGenres: "runbeat_catalog_genres",
+  onboardingSeen: "runbeat_onboarding_seen",
 };

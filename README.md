@@ -7,6 +7,18 @@ sozinho no Spotify quando o ritmo muda, sem precisar escolher música na mão.
 **Status: fase 1 validada em teste real** — login, resolução de BPM, leitura
 de cadência e troca automática de faixa testados numa corrida de verdade.
 
+## Primeira vez abrindo o app
+
+Na primeira visita, um tutorial guiado (5 passos) explica o fluxo completo
+antes de qualquer coisa — dá pra pular a qualquer momento ("Pular") e
+reabrir depois tocando no botão **"?"** no canto superior direito do
+cabeçalho. A tela só passa depois disso é essencialmente igual, mas o
+layout mudou pra deixar cada etapa mais clara: cada seção principal agora é
+um cartão numerado (1. Escolha a fonte de músicas, 2. Corrida), e opções
+que dependem de uma escolha anterior (Nível dentro de Ritmo fixo, Gêneros
+dentro do Catálogo RunBeat) aparecem visualmente recuadas/indentadas, com
+uma barra verde, dentro do controle do qual dependem.
+
 ## Como funciona
 
 1. Você loga com sua conta Spotify (Premium — necessário pra controlar
@@ -115,6 +127,7 @@ runbeat/
         ├── catalogSource.js   # carrega o Catálogo RunBeat (BPM pré-resolvido, filtro por gênero)
         ├── cadence.js         # detecção de passos via acelerômetro
         ├── matcher.js         # escolhe a faixa certa pra cadência atual
+        ├── onboarding.js      # tutorial guiado da primeira vez (e botão "?")
         └── app.js             # orquestra a UI e o loop de matching
 ```
 

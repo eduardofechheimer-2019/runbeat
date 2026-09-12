@@ -16,8 +16,13 @@
 <body>
 <main class="app">
   <header>
-    <h1>RunBeat</h1>
-    <p class="tagline">O ritmo da corrida vira o ritmo da playlist.</p>
+    <div class="header-row">
+      <div>
+        <h1>RunBeat</h1>
+        <p class="tagline">O ritmo da corrida vira o ritmo da playlist.</p>
+      </div>
+      <button id="help-btn" class="help-btn" type="button" aria-label="Como funciona">?</button>
+    </div>
   </header>
 
   <section id="auth-section">
@@ -27,10 +32,10 @@
   </section>
 
   <section id="setup-section" hidden>
-    <h2>1. Escolha a fonte de músicas</h2>
+    <h2><span class="step-badge">1</span> Escolha a fonte de músicas</h2>
     <label for="playlist-select">Playlists (toque pra marcar mais de uma)</label>
     <select id="playlist-select" multiple size="6"></select>
-    <div id="catalog-genre-group" hidden>
+    <div id="catalog-genre-group" class="nested-group" hidden>
       <label for="catalog-genre-select">Gêneros do Catálogo RunBeat (toque pra marcar mais de um; nenhum marcado = todos)</label>
       <select id="catalog-genre-select" multiple size="6"></select>
     </div>
@@ -40,13 +45,13 @@
   </section>
 
   <section id="run-section" hidden>
-    <h2>2. Corrida</h2>
+    <h2><span class="step-badge">2</span> Corrida</h2>
     <label for="mode-select">Ritmo</label>
     <select id="mode-select">
       <option value="auto">Automático (minha cadência)</option>
       <option value="fixed">Ritmo fixo</option>
     </select>
-    <div id="pace-group" hidden>
+    <div id="pace-group" class="nested-group" hidden>
       <label for="pace-select">Nível</label>
       <select id="pace-select"></select>
     </div>
@@ -70,6 +75,52 @@
     <button id="stop-btn" hidden>Parar</button>
   </section>
 </main>
+
+<div id="onboarding-overlay" class="onboarding-overlay" hidden>
+  <div class="onboarding-card">
+    <div class="onboarding-steps">
+      <div class="onboarding-step" data-step="1">
+        <p class="onboarding-emoji">🎧</p>
+        <h3>Bem-vindo ao RunBeat</h3>
+        <p>O RunBeat troca a música sozinho no Spotify pra acompanhar o ritmo da sua corrida ou caminhada — sem precisar escolher faixa na mão.</p>
+      </div>
+      <div class="onboarding-step" data-step="2" hidden>
+        <p class="onboarding-emoji">🔗</p>
+        <h3>Conecte sua conta Spotify</h3>
+        <p>Precisa ser <strong>Premium</strong> — é a API de controle de playback que troca a faixa por você, sem custo além da sua assinatura.</p>
+      </div>
+      <div class="onboarding-step" data-step="3" hidden>
+        <p class="onboarding-emoji">🎵</p>
+        <h3>Escolha suas músicas</h3>
+        <p>Selecione playlists, use "Analisar toda a minha biblioteca" pra juntar tudo de uma vez, ou marque o <strong>Catálogo RunBeat</strong> (com filtro por gênero) se quiser mais opções de BPM.</p>
+      </div>
+      <div class="onboarding-step" data-step="4" hidden>
+        <p class="onboarding-emoji">⚙️</p>
+        <h3>Escolha o ritmo</h3>
+        <p><strong>Automático</strong> usa o acelerômetro do celular pra medir sua cadência real. <strong>Ritmo fixo</strong> trava um nível (Easy Pace, Warming Up, Taking Off, Pro) — dá pra trocar a qualquer momento durante a corrida.</p>
+      </div>
+      <div class="onboarding-step" data-step="5" hidden>
+        <p class="onboarding-emoji">🏃</p>
+        <h3>Inicie a corrida</h3>
+        <p>A troca de faixa acontece sozinha, sem interromper a música no meio. Use ⏮/⏭ pra pular manualmente, e o pulso sonoro (opcional) pra sentir a batida-alvo. Se o Spotify pedir, um toque no botão verde já abre e começa a tocar.</p>
+      </div>
+    </div>
+    <div class="onboarding-dots">
+      <span class="onboarding-dot" data-dot="1"></span>
+      <span class="onboarding-dot" data-dot="2"></span>
+      <span class="onboarding-dot" data-dot="3"></span>
+      <span class="onboarding-dot" data-dot="4"></span>
+      <span class="onboarding-dot" data-dot="5"></span>
+    </div>
+    <div class="onboarding-actions">
+      <button id="onboarding-skip" class="onboarding-skip" type="button">Pular</button>
+      <div class="onboarding-nav">
+        <button id="onboarding-back" class="onboarding-back" type="button" hidden>Voltar</button>
+        <button id="onboarding-next" type="button">Próximo</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script type="module" src="src/app.js"></script>
 <script>

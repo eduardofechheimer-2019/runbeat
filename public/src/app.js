@@ -12,6 +12,7 @@ import { buildBpmPool } from "./bpmSource.js";
 import { loadCatalogRefs, loadCatalogGenres } from "./catalogSource.js";
 import { CadenceTracker, requestMotionPermission } from "./cadence.js";
 import { pickTrackForCadence, pickTrackForRange } from "./matcher.js";
+import { initOnboarding } from "./onboarding.js";
 
 const el = {
   status: document.getElementById("status"),
@@ -589,6 +590,7 @@ async function refreshAuthedUi() {
 }
 
 async function init() {
+  initOnboarding();
   populatePaceOptions();
   el.modeSelect.addEventListener("change", () => {
     el.paceGroup.hidden = el.modeSelect.value !== "fixed";

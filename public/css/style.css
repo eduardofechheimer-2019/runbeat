@@ -147,6 +147,16 @@ button:disabled {
   flex-shrink: 0;
 }
 
+.audio-status {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.audio-status.audio-status-warn {
+  color: var(--danger);
+}
+
 #cadence-value, #track-value {
   color: var(--accent);
 }

@@ -40,6 +40,7 @@ const el = {
   beatVisual: document.getElementById("beat-visual"),
   beatBpmValue: document.getElementById("beat-bpm-value"),
   audiblePulseToggle: document.getElementById("audible-pulse-toggle"),
+  audioStatus: document.getElementById("audio-status"),
 };
 
 let bpmPool = [];
@@ -110,6 +111,7 @@ function stopBeatPulse() {
   el.beatVisual.hidden = true;
   currentEffectiveBpm = null;
   stopAudiblePulse();
+  el.audioStatus.hidden = true;
 }
 
 // --- Pulso sonoro ---
@@ -118,13 +120,41 @@ function stopBeatPulse() {
 // independente, não uma sobreposição travada no áudio. Também não é
 // garantido que o iOS misture esse som com o Spotify em vez de abafar um
 // dos dois — daí ser opcional.
-function ensureAudioContext() {
+// A criação do AudioContext (linha de baixo) precisa acontecer de forma
+// síncrona dentro do gesto de toque do usuário — isso já acontece (é
+// chamada direto no "change" do checkbox). O resume() em si pode demorar
+// um pouco pra resolver no Safari/iOS, daí o await — mas isso não invalida
+// o gesto, porque o pedido de resume já foi disparado de forma síncrona.
+async function ensureAudioContext() {
   if (!audioCtx) {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     audioCtx = new AudioCtx();
   }
-  if (audioCtx.state === "suspended") audioCtx.resume();
+  if (audioCtx.state === "suspended") {
+    try {
+      await audioCtx.resume();
+    } catch {
+      // O estado abaixo (ctx.state) reflete a falha — não precisa de mais nada aqui.
+    }
+  }
   return audioCtx;
+}
+
+// iOS às vezes cria o contexto mas não sai de "suspended" (ou toca sem som
+// nenhum sair, por causa do interruptor de silêncio do aparelho, ou por já
+// ter o Spotify ocupando a sessão de áudio) — mostra isso na tela, já que
+// não dá pra abrir o console do navegador num iPhone sem um Mac por perto.
+function updateAudioStatus(ctx) {
+  if (!audiblePulseEnabled) {
+    el.audioStatus.hidden = true;
+    return;
+  }
+  const blocked = ctx.state !== "running";
+  el.audioStatus.hidden = false;
+  el.audioStatus.textContent = blocked
+    ? "🔇 iOS não liberou o som — desmarque e marque de novo, ou confira o interruptor de silêncio"
+    : "🔊 Pulso sonoro ativo";
+  el.audioStatus.classList.toggle("audio-status-warn", blocked);
 }
 
 function playClick(time) {
@@ -152,9 +182,11 @@ function scheduleClicks() {
   }
 }
 
-function startAudiblePulse(effectiveBpm) {
+async function startAudiblePulse(effectiveBpm) {
   if (!audiblePulseEnabled || !effectiveBpm) return;
-  const ctx = ensureAudioContext();
+  const ctx = await ensureAudioContext();
+  if (!audiblePulseEnabled) return; // pode ter sido desmarcado enquanto o resume() rodava
+  updateAudioStatus(ctx);
   clickPeriodSec = 60 / effectiveBpm;
   nextClickTime = ctx.currentTime + 0.05;
   clearInterval(clickSchedulerHandle);
@@ -623,10 +655,15 @@ async function init() {
   el.audiblePulseToggle.addEventListener("change", () => {
     audiblePulseEnabled = el.audiblePulseToggle.checked;
     if (audiblePulseEnabled) {
-      ensureAudioContext(); // precisa acontecer dentro do gesto do toque (iOS)
-      if (currentEffectiveBpm) startAudiblePulse(currentEffectiveBpm);
+      ensureAudioContext() // precisa iniciar dentro do gesto do toque (iOS)
+        .then((ctx) => {
+          updateAudioStatus(ctx);
+          if (currentEffectiveBpm) startAudiblePulse(currentEffectiveBpm);
+        })
+        .catch((err) => console.warn("Falha ao iniciar áudio do pulso:", err.message));
     } else {
       stopAudiblePulse();
+      el.audioStatus.hidden = true;
     }
   });
 

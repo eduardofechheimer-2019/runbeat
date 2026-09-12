@@ -78,6 +78,10 @@ button:disabled {
   gap: 8px;
 }
 
+#playback-controls[hidden] {
+  display: none;
+}
+
 #playback-controls button {
   background: transparent;
   color: var(--fg);
@@ -113,6 +117,10 @@ button:disabled {
   align-items: center;
   gap: 12px;
   margin: 8px 0 24px;
+}
+
+.beat-visual[hidden] {
+  display: none;
 }
 
 .beat-label {

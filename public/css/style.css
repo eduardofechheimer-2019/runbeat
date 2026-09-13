@@ -1,28 +1,43 @@
 :root {
   color-scheme: dark;
   --bg: #0b0f14;
-  --card-bg: #141a21;
-  --card-border: #232b34;
-  --input-bg: #0f151b;
+  --card-bg: rgba(20, 26, 33, 0.82);
+  --card-border: #2a323c;
+  --input-bg: rgba(15, 21, 27, 0.9);
   --fg: #e8edf2;
-  --muted: #8b98a5;
-  --accent: #1db954;
-  --accent-ink: #04140a;
+  --muted: #9aa5b1;
+  --accent: #ff5c00;
+  --accent-soft: #ffb27a;
+  --accent-strong: #cc4400;
+  --accent-ink: #1a0900;
   --danger: #f85149;
   --radius: 14px;
   --radius-sm: 10px;
+  --font-display: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 * { box-sizing: border-box; }
 
 body {
+  position: relative;
   margin: 0;
+  min-height: 100vh;
   background: var(--bg);
   color: var(--fg);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: url("../img/bg-marble.webp") center/cover no-repeat;
+}
+
 .app {
+  position: relative;
+  z-index: 1;
   max-width: 480px;
   margin: 0 auto;
   padding: 24px 20px 64px;
@@ -40,6 +55,11 @@ header { margin-bottom: 20px; }
 header h1 {
   margin: 0;
   color: var(--accent);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 900;
+  font-size: 2rem;
+  letter-spacing: -0.01em;
 }
 
 .tagline {
@@ -67,12 +87,16 @@ section {
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
   background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 h2 {
   display: flex;
   align-items: center;
   gap: 10px;
+  font-family: var(--font-display);
+  font-weight: 800;
   font-size: 1.05rem;
   margin: 0 0 16px;
 }
@@ -90,6 +114,20 @@ h2 {
   font-weight: 700;
   flex-shrink: 0;
 }
+
+.back-link {
+  display: block;
+  width: auto;
+  margin: 0 0 12px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.back-link[hidden] { display: none; }
 
 label {
   display: block;
@@ -115,7 +153,8 @@ select, button {
 button {
   background: var(--accent);
   color: var(--accent-ink);
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-weight: 800;
   border: none;
   cursor: pointer;
   transition: filter 0.15s ease, transform 0.05s ease;
@@ -129,36 +168,26 @@ button:disabled {
   transform: none;
 }
 
-#stop-btn {
-  background: transparent;
-  color: var(--danger);
-  border: 1px solid var(--danger);
+.button-row {
+  display: flex;
+  gap: 8px;
+}
+
+.button-row button {
+  flex: 1;
+  font-size: 0.85rem;
+  padding: 12px 8px;
 }
 
 .nested-group {
   margin-top: 14px;
   padding: 12px 14px;
   border-left: 3px solid var(--accent);
-  background: rgba(29, 185, 84, 0.06);
+  background: rgba(255, 92, 0, 0.08);
   border-radius: 0 10px 10px 0;
 }
 
 .nested-group label:first-of-type { margin-top: 0; }
-
-#playback-controls {
-  display: flex;
-  gap: 8px;
-}
-
-#playback-controls[hidden] {
-  display: none;
-}
-
-#playback-controls button {
-  background: transparent;
-  color: var(--fg);
-  border: 1px solid var(--card-border);
-}
 
 .button-link {
   display: block;
@@ -168,7 +197,8 @@ button:disabled {
   border-radius: var(--radius-sm);
   background: var(--accent);
   color: var(--accent-ink);
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-weight: 800;
   font-size: 0.95rem;
   text-align: center;
   text-decoration: none;
@@ -191,8 +221,8 @@ button:disabled {
   margin: 16px 0;
   padding: 16px;
   border-radius: var(--radius-sm);
-  background: rgba(29, 185, 84, 0.08);
-  border: 1px solid rgba(29, 185, 84, 0.25);
+  background: rgba(255, 92, 0, 0.1);
+  border: 1px solid rgba(255, 92, 0, 0.3);
 }
 
 .beat-visual[hidden] {
@@ -212,6 +242,8 @@ button:disabled {
   display: block;
   margin-top: 2px;
   color: var(--accent);
+  font-family: var(--font-display);
+  font-weight: 800;
   font-size: 1.4rem;
   letter-spacing: normal;
   text-transform: none;
@@ -246,6 +278,111 @@ button:disabled {
   color: var(--accent);
 }
 
+/* --- Resumo (tela de corrida) --- */
+
+.summary-list { margin-bottom: 4px; }
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.summary-row:last-child { border-bottom: none; }
+
+.summary-label {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.summary-value {
+  display: block;
+  margin-top: 2px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.summary-edit {
+  width: auto;
+  margin-top: 0;
+  padding: 8px 14px;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--accent);
+  font-size: 0.8rem;
+}
+
+/* --- Play/Pause --- */
+
+.playpause-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.play-pause-btn {
+  width: auto;
+  min-width: 140px;
+  padding: 16px 28px;
+  margin-top: 0;
+  border-radius: 999px;
+  font-size: 1.05rem;
+}
+
+.side-btn {
+  width: auto;
+  margin-top: 0;
+  padding: 12px 16px;
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--fg);
+  font-family: inherit;
+  font-weight: 600;
+}
+
+.side-btn[hidden] { display: none; }
+
+/* --- Splash --- */
+
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+
+.splash-screen[hidden] { display: none; }
+
+.splash-screen.splash-hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-icon {
+  width: 40vw;
+  max-width: 220px;
+  opacity: 0;
+  animation: splash-fade-in 0.6s ease forwards;
+}
+
+@keyframes splash-fade-in {
+  to { opacity: 1; }
+}
+
 /* --- Onboarding --- */
 
 .onboarding-overlay {
@@ -265,6 +402,8 @@ button:disabled {
 
 .onboarding-card {
   background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
   padding: 28px 24px 20px;
@@ -286,6 +425,8 @@ button:disabled {
 .onboarding-step h3 {
   margin: 0 0 8px;
   font-size: 1.15rem;
+  font-family: var(--font-display);
+  font-weight: 800;
 }
 
 .onboarding-step p {
@@ -332,6 +473,7 @@ button:disabled {
   background: none;
   border: none;
   color: var(--muted);
+  font-family: inherit;
   font-weight: 400;
   margin-top: 0;
   padding: 8px;

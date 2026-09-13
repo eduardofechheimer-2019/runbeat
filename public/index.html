@@ -10,10 +10,17 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="RunBeat" />
-<meta name="theme-color" content="#1db954" />
+<meta name="theme-color" content="#ff5c00" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,700;0,800;1,900&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+<div id="splash-screen" class="splash-screen">
+  <img src="icon-512.png" alt="RunBeat" class="splash-icon" />
+</div>
+
 <main class="app">
   <header>
     <div class="header-row">
@@ -25,27 +32,33 @@
     </div>
   </header>
 
-  <section id="auth-section">
+  <section id="screen-connect" class="app-screen" hidden>
+    <button class="back-link back-to-run-btn" type="button" hidden>‹ Voltar à corrida</button>
+    <h2><span class="step-badge">1</span> Conecte ao Spotify</h2>
     <p id="status">Verificando login...</p>
     <button id="connect-btn">Conectar ao Spotify</button>
     <button id="disconnect-btn" hidden>Desconectar do Spotify</button>
   </section>
 
-  <section id="setup-section" hidden>
-    <h2><span class="step-badge">1</span> Escolha a fonte de músicas</h2>
+  <section id="screen-library" class="app-screen" hidden>
+    <button class="back-link back-to-run-btn" type="button" hidden>‹ Voltar à corrida</button>
+    <h2><span class="step-badge">2</span> Escolha a fonte de músicas</h2>
     <label for="playlist-select">Playlists (toque pra marcar mais de uma)</label>
     <select id="playlist-select" multiple size="6"></select>
     <div id="catalog-genre-group" class="nested-group" hidden>
       <label for="catalog-genre-select">Gêneros do Catálogo RunBeat (toque pra marcar mais de um; nenhum marcado = todos)</label>
       <select id="catalog-genre-select" multiple size="6"></select>
     </div>
-    <button id="build-pool-btn">Analisar BPM das faixas selecionadas</button>
-    <button id="build-pool-all-btn">Analisar toda a minha biblioteca</button>
+    <div class="button-row">
+      <button id="build-pool-btn">Analisar BPM das faixas selecionadas</button>
+      <button id="build-pool-all-btn">Analisar toda a minha biblioteca</button>
+    </div>
     <p id="pool-progress" hidden></p>
   </section>
 
-  <section id="run-section" hidden>
-    <h2><span class="step-badge">2</span> Corrida</h2>
+  <section id="screen-pace" class="app-screen" hidden>
+    <button class="back-link back-to-run-btn" type="button" hidden>‹ Voltar à corrida</button>
+    <h2><span class="step-badge">3</span> Escolha o ritmo</h2>
     <label for="mode-select">Ritmo</label>
     <select id="mode-select">
       <option value="auto">Automático (minha cadência)</option>
@@ -55,6 +68,35 @@
       <label for="pace-select">Nível</label>
       <select id="pace-select"></select>
     </div>
+    <button id="confirm-pace-btn">Continuar</button>
+  </section>
+
+  <section id="screen-run" class="app-screen" hidden>
+    <h2>Sua corrida</h2>
+    <div class="summary-list">
+      <div class="summary-row">
+        <div>
+          <span class="summary-label">1. Spotify</span>
+          <span id="summary-connect" class="summary-value">—</span>
+        </div>
+        <button class="summary-edit" data-edit-target="connect" type="button">Editar</button>
+      </div>
+      <div class="summary-row">
+        <div>
+          <span class="summary-label">2. Músicas</span>
+          <span id="summary-library" class="summary-value">—</span>
+        </div>
+        <button class="summary-edit" data-edit-target="library" type="button">Editar</button>
+      </div>
+      <div class="summary-row">
+        <div>
+          <span class="summary-label">3. Ritmo</span>
+          <span id="summary-pace" class="summary-value">—</span>
+        </div>
+        <button class="summary-edit" data-edit-target="pace" type="button">Editar</button>
+      </div>
+    </div>
+
     <div id="beat-visual" class="beat-visual" hidden>
       <p class="beat-label">Batida-alvo: <strong id="beat-bpm-value">—</strong></p>
       <label class="checkbox-row">
@@ -67,12 +109,12 @@
     <p>Tocando agora: <strong id="track-value">—</strong></p>
     <p id="run-error" class="error" hidden></p>
     <a id="open-spotify-link" class="button-link" hidden>▶ Abrir Spotify e começar</a>
-    <button id="start-btn">Iniciar corrida</button>
-    <div id="playback-controls" hidden>
-      <button id="prev-btn">⏮ Anterior</button>
-      <button id="next-btn">⏭ Próxima</button>
+
+    <div class="playpause-row">
+      <button id="prev-btn" class="side-btn" hidden>⏮</button>
+      <button id="play-pause-btn" class="play-pause-btn" type="button">▶ Play</button>
+      <button id="next-btn" class="side-btn" hidden>⏭</button>
     </div>
-    <button id="stop-btn" hidden>Parar</button>
   </section>
 </main>
 
@@ -101,8 +143,8 @@
       </div>
       <div class="onboarding-step" data-step="5" hidden>
         <p class="onboarding-emoji">🏃</p>
-        <h3>Inicie a corrida</h3>
-        <p>A troca de faixa acontece sozinha, sem interromper a música no meio. Use ⏮/⏭ pra pular manualmente, e o pulso sonoro (opcional) pra sentir a batida-alvo. Se o Spotify pedir, um toque no botão verde já abre e começa a tocar.</p>
+        <h3>Toque em Play pra começar</h3>
+        <p>A troca de faixa acontece sozinha, sem interromper a música no meio. Use ⏮/⏭ pra pular manualmente, e o pulso sonoro (opcional) pra sentir a batida-alvo. Se o Spotify pedir, um toque no botão que aparece já abre e começa a tocar.</p>
       </div>
     </div>
     <div class="onboarding-dots">

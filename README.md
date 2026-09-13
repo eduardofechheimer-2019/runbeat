@@ -7,17 +7,50 @@ sozinho no Spotify quando o ritmo muda, sem precisar escolher música na mão.
 **Status: fase 1 validada em teste real** — login, resolução de BPM, leitura
 de cadência e troca automática de faixa testados numa corrida de verdade.
 
-## Primeira vez abrindo o app
+## Identidade visual
 
-Na primeira visita, um tutorial guiado (5 passos) explica o fluxo completo
+Fundo com textura marmorizada preta (imagem em `public/img/bg-marble.webp`),
+tipografia em itálico bold (Google Fonts "Archivo") no nome "RunBeat" e nos
+títulos, e laranja como cor de destaque (`--accent` em `style.css`, com
+variações de intensidade `--accent-soft`/`--accent-strong`) em vez do verde
+do Spotify — usada em botões, ícone do app e nos indicadores numerados dos
+cartões. Os cartões (seções) têm fundo semitransparente com desfoque
+(`backdrop-filter`), deixando a textura do fundo aparecer sutilmente atrás
+do conteúdo.
+
+## Abrindo o app
+
+Toda vez que o app abre, aparece por ~1,5s uma tela de splash com o ícone do
+RunBeat em fade-in no meio da tela — depois some sozinha, sem precisar de
+toque nenhum, revelando a tela seguinte.
+
+O fluxo depois disso é em telas (uma por vez, como um assistente/wizard):
+
+1. **Cartão 1 — Conectar ao Spotify.** Só esse botão. Depois de conectar,
+   avança sozinho pro cartão 2.
+2. **Cartão 2 — Escolha a fonte de músicas.** Os botões "Analisar BPM..." e
+   "Analisar toda a biblioteca..." ficam lado a lado. Assim que o pool sai
+   com alguma faixa, avança sozinho pro cartão 3.
+3. **Cartão 3 — Escolha o ritmo.** Último cartão — um botão **"Continuar"**
+   leva pra tela de corrida.
+4. **Tela de corrida.** Mostra um resumo dos 3 cartões (com o que foi
+   escolhido em cada um) — cada linha tem um botão **"Editar"** que volta
+   pro cartão correspondente pra trocar alguma coisa sem perder o restante.
+   Trocar o ritmo aqui no meio de uma corrida já em andamento aplica a
+   mudança na hora (não reinicia a corrida do zero); trocar as músicas
+   refaz a análise de BPM e volta direto pra essa tela. Embaixo do resumo
+   fica a medição de cadência, a faixa tocando agora, e os controles: um
+   botão central **▶ Play / ⏸ Pause** (substituindo os antigos "Iniciar
+   corrida"/"Parar") com **⏮ Anterior** / **⏭ Próxima** ao lado, que só
+   aparecem depois que a corrida começa.
+
+Na primeira visita, um tutorial guiado (5 passos) também explica esse fluxo
 antes de qualquer coisa — dá pra pular a qualquer momento ("Pular") e
 reabrir depois tocando no botão **"?"** no canto superior direito do
-cabeçalho. A tela só passa depois disso é essencialmente igual, mas o
-layout mudou pra deixar cada etapa mais clara: cada seção principal agora é
-um cartão numerado (1. Escolha a fonte de músicas, 2. Corrida), e opções
-que dependem de uma escolha anterior (Nível dentro de Ritmo fixo, Gêneros
-dentro do Catálogo RunBeat) aparecem visualmente recuadas/indentadas, com
-uma barra verde, dentro do controle do qual dependem.
+cabeçalho. Cartões que dependem de uma escolha anterior (Nível dentro de
+Ritmo fixo, Gêneros dentro do Catálogo RunBeat) aparecem visualmente
+recuados/indentados, com uma barra de destaque, dentro do controle do qual
+dependem.
 
 ## Como funciona
 
@@ -67,9 +100,9 @@ uma barra verde, dentro do controle do qual dependem.
    Spotify tocá-la — sem nunca interromper uma música no meio. Esse momento
    é calculado localmente a partir da duração da faixa (que já conhecemos),
    sem precisar perguntar ao Spotify "quanto falta".
-5. Os botões **⏮ Anterior** / **⏭ Próxima** deixam pular manualmente pra
-   faixa seguinte do pool (recalcula pela cadência atual) ou voltar pra
-   última que já tocou nessa corrida.
+5. Os botões **⏮ Anterior** / **⏭ Próxima** (visíveis só com a corrida em
+   andamento) deixam pular manualmente pra faixa seguinte do pool (recalcula
+   pela cadência atual) ou voltar pra última que já tocou nessa corrida.
 6. Se o Spotify não tiver nenhum dispositivo ativo (app fechado, nada
    tocando ainda), aparece um botão **"▶ Abrir Spotify e começar"** — um
    toque só abre o app Spotify direto na faixa certa e já começa a tocar
@@ -117,6 +150,8 @@ runbeat/
     ├── sw.js                 # service worker (cache do app shell)
     ├── icon.svg
     ├── css/style.css
+    ├── img/
+    │   └── bg-marble.webp    # textura de fundo
     ├── data/
     │   └── runbeat-catalog.json # Catálogo RunBeat (~8 mil músicas, BPM + gênero)
     └── src/
@@ -161,9 +196,9 @@ ou HTTPS — batendo com o que foi cadastrado no app).
 
 ### 3. Durante o uso
 
-- Se você clicar em "Iniciar corrida" sem nenhum dispositivo Spotify ativo
-  (app fechado, nada tocando), o RunBeat mostra um botão **"▶ Abrir Spotify
-  e começar"** — um toque nele abre o app Spotify já tocando a faixa certa,
+- Se você tocar em "▶ Play" sem nenhum dispositivo Spotify ativo (app
+  fechado, nada tocando), o RunBeat mostra um botão **"▶ Abrir Spotify e
+  começar"** — um toque nele abre o app Spotify já tocando a faixa certa,
   sem precisar procurar nada lá dentro (o app não usa o Web Playback SDK, só
   comanda o dispositivo ativo).
 - O RunBeat pede pra tela não apagar sozinha enquanto a corrida está ativa

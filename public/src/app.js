@@ -15,23 +15,25 @@ import { pickTrackForCadence, pickTrackForRange } from "./matcher.js";
 import { initOnboarding } from "./onboarding.js";
 
 const el = {
+  splashScreen: document.getElementById("splash-screen"),
   status: document.getElementById("status"),
   connectBtn: document.getElementById("connect-btn"),
   disconnectBtn: document.getElementById("disconnect-btn"),
-  setupSection: document.getElementById("setup-section"),
+  screenConnect: document.getElementById("screen-connect"),
+  screenLibrary: document.getElementById("screen-library"),
+  screenPace: document.getElementById("screen-pace"),
+  screenRun: document.getElementById("screen-run"),
   playlistSelect: document.getElementById("playlist-select"),
   catalogGenreGroup: document.getElementById("catalog-genre-group"),
   catalogGenreSelect: document.getElementById("catalog-genre-select"),
   buildPoolBtn: document.getElementById("build-pool-btn"),
   buildAllBtn: document.getElementById("build-pool-all-btn"),
   poolProgress: document.getElementById("pool-progress"),
-  runSection: document.getElementById("run-section"),
   modeSelect: document.getElementById("mode-select"),
   paceGroup: document.getElementById("pace-group"),
   paceSelect: document.getElementById("pace-select"),
-  startBtn: document.getElementById("start-btn"),
-  stopBtn: document.getElementById("stop-btn"),
-  playbackControls: document.getElementById("playback-controls"),
+  confirmPaceBtn: document.getElementById("confirm-pace-btn"),
+  playPauseBtn: document.getElementById("play-pause-btn"),
   prevBtn: document.getElementById("prev-btn"),
   nextBtn: document.getElementById("next-btn"),
   cadenceValue: document.getElementById("cadence-value"),
@@ -42,7 +44,45 @@ const el = {
   beatBpmValue: document.getElementById("beat-bpm-value"),
   audiblePulseToggle: document.getElementById("audible-pulse-toggle"),
   audioStatus: document.getElementById("audio-status"),
+  summaryConnect: document.getElementById("summary-connect"),
+  summaryLibrary: document.getElementById("summary-library"),
+  summaryPace: document.getElementById("summary-pace"),
+  backToRunBtns: document.querySelectorAll(".back-to-run-btn"),
+  editBtns: document.querySelectorAll(".summary-edit"),
 };
+
+const SCREENS = {
+  connect: el.screenConnect,
+  library: el.screenLibrary,
+  pace: el.screenPace,
+  run: el.screenRun,
+};
+
+// true depois que o usuário passou pelo cartão 3 (Ritmo) ao menos uma vez
+// nesta sessão — a partir daí, voltar a logar/reconstruir o pool leva direto
+// pra tela de corrida em vez de repetir os cartões 2 e 3.
+let onboardedToRun = false;
+
+function showScreen(name) {
+  for (const [key, section] of Object.entries(SCREENS)) {
+    section.hidden = key !== name;
+  }
+  if (name === "run") updateSummaries();
+}
+
+// Preenche o resumo dos 3 cartões na tela de corrida, com o que já foi
+// escolhido em cada um — cada linha tem um botão "Editar" que volta pro
+// cartão correspondente.
+function updateSummaries() {
+  el.summaryConnect.textContent = "Conectado ✓";
+  el.summaryLibrary.textContent = bpmPool.length > 0 ? `${bpmPool.length} faixas com BPM prontas` : "—";
+  if (el.modeSelect.value === "fixed") {
+    const opt = FIXED_PACE_OPTIONS.find((o) => o.id === el.paceSelect.value);
+    el.summaryPace.textContent = opt ? `Ritmo fixo — ${opt.label}` : "Ritmo fixo";
+  } else {
+    el.summaryPace.textContent = "Automático (minha cadência)";
+  }
+}
 
 let bpmPool = [];
 let tracker = null;
@@ -362,12 +402,16 @@ async function resolvePool(refs, failures = []) {
     text += ` [motivo da 1ª: ${failures[0].message}]`;
   }
   el.poolProgress.textContent = text;
-  el.runSection.hidden = bpmPool.length === 0;
   if (bpmPool.length === 0) {
     el.poolProgress.textContent += " Nenhuma faixa teve BPM resolvido.";
     if (diagnostic) {
       el.poolProgress.textContent += ` [Diagnóstico: ${diagnostic}]`;
     }
+  } else {
+    // Cartão 2 concluído — avança pro cartão 3 (Ritmo) na primeira vez, ou
+    // direto pra tela de corrida se o usuário já tinha passado por ali antes
+    // (ex. voltou aqui só pra trocar de playlist no meio da corrida).
+    showScreen(onboardedToRun ? "run" : "pace");
   }
 }
 
@@ -553,9 +597,9 @@ function startRun() {
   playedIds.clear();
   history = [];
   runActive = true;
-  el.startBtn.hidden = true;
-  el.stopBtn.hidden = false;
-  el.playbackControls.hidden = false;
+  el.playPauseBtn.textContent = "⏸ Pause";
+  el.prevBtn.hidden = false;
+  el.nextBtn.hidden = false;
   showRunError("");
   hideNoDeviceLink();
   requestWakeLock();
@@ -572,9 +616,9 @@ function stopRun() {
   tracker = null;
   fixedRange = null;
   releaseWakeLock();
-  el.startBtn.hidden = false;
-  el.stopBtn.hidden = true;
-  el.playbackControls.hidden = true;
+  el.playPauseBtn.textContent = "▶ Play";
+  el.prevBtn.hidden = true;
+  el.nextBtn.hidden = true;
   el.cadenceValue.textContent = "—";
   el.trackValue.textContent = "—";
   hideNoDeviceLink();
@@ -584,9 +628,11 @@ function stopRun() {
 async function refreshAuthedUi() {
   el.connectBtn.hidden = true;
   el.disconnectBtn.hidden = false;
-  el.setupSection.hidden = false;
   setStatus("Conectado ao Spotify.");
   await loadPlaylistOptions();
+  // Cartão 1 concluído — avança pro cartão 2, ou direto pra corrida se o
+  // usuário já tinha passado por todos os cartões nesta sessão.
+  showScreen(onboardedToRun ? "run" : "library");
 }
 
 async function init() {
@@ -601,16 +647,30 @@ async function init() {
   });
   el.playlistSelect.addEventListener("change", updateCatalogGenreVisibility);
 
+  // Splash de abertura: ícone em fade-in por ~1,2s, depois some sozinho e
+  // revela a tela certa — sem depender de toque nenhum do usuário. O timer
+  // já começa a contar aqui, em paralelo com a checagem de login abaixo,
+  // pra não somar os dois tempos.
+  const minSplashDelay = new Promise((resolve) => setTimeout(resolve, 1200));
+
   try {
     const justLoggedIn = await auth.handleRedirectCallback();
     if (justLoggedIn || auth.isLoggedIn()) {
       await refreshAuthedUi();
     } else {
       setStatus("Não conectado.");
+      showScreen("connect");
     }
   } catch (err) {
     setStatus(`Erro no login: ${err.message}`);
+    showScreen("connect");
   }
+
+  await minSplashDelay;
+  el.splashScreen.classList.add("splash-hide");
+  setTimeout(() => {
+    el.splashScreen.hidden = true;
+  }, 400);
 
   el.connectBtn.addEventListener("click", () => {
     auth.startLogin().catch((err) => setStatus(err.message));
@@ -633,7 +693,31 @@ async function init() {
     });
   });
 
-  el.startBtn.addEventListener("click", async () => {
+  el.confirmPaceBtn.addEventListener("click", () => {
+    if (!onboardedToRun) {
+      onboardedToRun = true;
+      for (const btn of el.backToRunBtns) btn.hidden = false;
+    }
+    // Se a corrida já estiver rolando (usuário voltou aqui só pra trocar de
+    // ritmo no meio do caminho), a troca já foi aplicada ao vivo pelo
+    // listener de "change" do mode-select/pace-select — esse botão só
+    // precisa voltar pra tela de corrida.
+    showScreen("run");
+  });
+
+  for (const btn of el.backToRunBtns) {
+    btn.addEventListener("click", () => showScreen("run"));
+  }
+
+  for (const btn of el.editBtns) {
+    btn.addEventListener("click", () => showScreen(btn.dataset.editTarget));
+  }
+
+  el.playPauseBtn.addEventListener("click", async () => {
+    if (runActive) {
+      stopRun();
+      return;
+    }
     try {
       // Pede a permissão sempre, mesmo começando em ritmo fixo — o sensor
       // roda em paralelo pra poder alternar pro modo automático a qualquer
@@ -644,8 +728,6 @@ async function init() {
       showRunError(err.message);
     }
   });
-
-  el.stopBtn.addEventListener("click", stopRun);
 
   el.nextBtn.addEventListener("click", () => {
     skipToNext().catch((err) => showRunError(err.message));

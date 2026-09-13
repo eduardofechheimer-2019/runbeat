@@ -32,16 +32,14 @@
     </div>
   </header>
 
-  <section id="screen-connect" class="app-screen" hidden>
-    <button class="back-link back-to-run-btn" type="button" hidden>‹ Voltar à corrida</button>
+  <section id="card-connect" class="step-card" data-step="connect">
     <h2><span class="step-badge">1</span> Conecte ao Spotify</h2>
     <p id="status">Verificando login...</p>
     <button id="connect-btn">Conectar ao Spotify</button>
     <button id="disconnect-btn" hidden>Desconectar do Spotify</button>
   </section>
 
-  <section id="screen-library" class="app-screen" hidden>
-    <button class="back-link back-to-run-btn" type="button" hidden>‹ Voltar à corrida</button>
+  <section id="card-library" class="step-card" data-step="library" hidden>
     <h2><span class="step-badge">2</span> Escolha a fonte de músicas</h2>
     <label for="playlist-select">Playlists (toque pra marcar mais de uma)</label>
     <select id="playlist-select" multiple size="6"></select>
@@ -56,8 +54,7 @@
     <p id="pool-progress" hidden></p>
   </section>
 
-  <section id="screen-pace" class="app-screen" hidden>
-    <button class="back-link back-to-run-btn" type="button" hidden>‹ Voltar à corrida</button>
+  <section id="card-pace" class="step-card" data-step="pace" hidden>
     <h2><span class="step-badge">3</span> Escolha o ritmo</h2>
     <label for="mode-select">Ritmo</label>
     <select id="mode-select">
@@ -71,31 +68,8 @@
     <button id="confirm-pace-btn">Continuar</button>
   </section>
 
-  <section id="screen-run" class="app-screen" hidden>
+  <section id="card-run" class="step-card" data-step="run" hidden>
     <h2>Sua corrida</h2>
-    <div class="summary-list">
-      <div class="summary-row">
-        <div>
-          <span class="summary-label">1. Spotify</span>
-          <span id="summary-connect" class="summary-value">—</span>
-        </div>
-        <button class="summary-edit" data-edit-target="connect" type="button">Editar</button>
-      </div>
-      <div class="summary-row">
-        <div>
-          <span class="summary-label">2. Músicas</span>
-          <span id="summary-library" class="summary-value">—</span>
-        </div>
-        <button class="summary-edit" data-edit-target="library" type="button">Editar</button>
-      </div>
-      <div class="summary-row">
-        <div>
-          <span class="summary-label">3. Ritmo</span>
-          <span id="summary-pace" class="summary-value">—</span>
-        </div>
-        <button class="summary-edit" data-edit-target="pace" type="button">Editar</button>
-      </div>
-    </div>
 
     <div id="beat-visual" class="beat-visual" hidden>
       <p class="beat-label">Batida-alvo: <strong id="beat-bpm-value">—</strong></p>

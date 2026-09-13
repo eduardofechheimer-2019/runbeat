@@ -24,25 +24,30 @@ Toda vez que o app abre, aparece por ~1,5s uma tela de splash com o ícone do
 RunBeat em fade-in no meio da tela — depois some sozinha, sem precisar de
 toque nenhum, revelando a tela seguinte.
 
-O fluxo depois disso é em telas (uma por vez, como um assistente/wizard):
+Depois disso, os 4 cartões (Conectar, Músicas, Ritmo, Corrida) ficam
+empilhados na mesma página, um de cada vez em destaque:
 
-1. **Cartão 1 — Conectar ao Spotify.** Só esse botão. Depois de conectar,
-   avança sozinho pro cartão 2.
+1. **Cartão 1 — Conectar ao Spotify.** Só esse botão. Depois de conectar
+   (mesmo automaticamente, se você já estava logado), o cartão fica visível
+   mas "sem destaque" (cinza, controles desabilitados) acima do cartão 2,
+   que assume o destaque.
 2. **Cartão 2 — Escolha a fonte de músicas.** Os botões "Analisar BPM..." e
    "Analisar toda a biblioteca..." ficam lado a lado. Assim que o pool sai
-   com alguma faixa, avança sozinho pro cartão 3.
+   com alguma faixa, esse cartão também recua (sem destaque) e o cartão 3
+   assume.
 3. **Cartão 3 — Escolha o ritmo.** Último cartão — um botão **"Continuar"**
-   leva pra tela de corrida.
-4. **Tela de corrida.** Mostra um resumo dos 3 cartões (com o que foi
-   escolhido em cada um) — cada linha tem um botão **"Editar"** que volta
-   pro cartão correspondente pra trocar alguma coisa sem perder o restante.
-   Trocar o ritmo aqui no meio de uma corrida já em andamento aplica a
-   mudança na hora (não reinicia a corrida do zero); trocar as músicas
-   refaz a análise de BPM e volta direto pra essa tela. Embaixo do resumo
-   fica a medição de cadência, a faixa tocando agora, e os controles: um
-   botão central **▶ Play / ⏸ Pause** (substituindo os antigos "Iniciar
-   corrida"/"Parar") com **⏮ Anterior** / **⏭ Próxima** ao lado, que só
-   aparecem depois que a corrida começa.
+   recua ele também e revela o cartão de corrida.
+4. **Cartão de corrida.** Mostra a medição de cadência, a faixa tocando
+   agora, e os controles: um botão central **▶ Play / ⏸ Pause**
+   (substituindo os antigos "Iniciar corrida"/"Parar") com **⏮ Anterior** /
+   **⏭ Próxima** ao lado, que só aparecem depois que a corrida começa.
+
+Tocar no título de qualquer cartão já concluído (sem destaque) reabre ele
+pra editar — os cartões seguintes recuam/escondem de novo até você concluir
+esse de novo. Trocar o ritmo desse jeito com uma corrida já em andamento
+aplica a mudança na hora (não reinicia a corrida do zero, ela continua
+tocando em segundo plano); trocar as músicas refaz a análise de BPM e passa
+de novo pelo cartão de ritmo antes de voltar pra corrida.
 
 Na primeira visita, um tutorial guiado (5 passos) também explica esse fluxo
 antes de qualquer coisa — dá pra pular a qualquer momento ("Pular") e

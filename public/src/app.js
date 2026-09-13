@@ -19,10 +19,10 @@ const el = {
   status: document.getElementById("status"),
   connectBtn: document.getElementById("connect-btn"),
   disconnectBtn: document.getElementById("disconnect-btn"),
-  screenConnect: document.getElementById("screen-connect"),
-  screenLibrary: document.getElementById("screen-library"),
-  screenPace: document.getElementById("screen-pace"),
-  screenRun: document.getElementById("screen-run"),
+  cardConnect: document.getElementById("card-connect"),
+  cardLibrary: document.getElementById("card-library"),
+  cardPace: document.getElementById("card-pace"),
+  cardRun: document.getElementById("card-run"),
   playlistSelect: document.getElementById("playlist-select"),
   catalogGenreGroup: document.getElementById("catalog-genre-group"),
   catalogGenreSelect: document.getElementById("catalog-genre-select"),
@@ -44,44 +44,61 @@ const el = {
   beatBpmValue: document.getElementById("beat-bpm-value"),
   audiblePulseToggle: document.getElementById("audible-pulse-toggle"),
   audioStatus: document.getElementById("audio-status"),
-  summaryConnect: document.getElementById("summary-connect"),
-  summaryLibrary: document.getElementById("summary-library"),
-  summaryPace: document.getElementById("summary-pace"),
-  backToRunBtns: document.querySelectorAll(".back-to-run-btn"),
-  editBtns: document.querySelectorAll(".summary-edit"),
 };
 
-const SCREENS = {
-  connect: el.screenConnect,
-  library: el.screenLibrary,
-  pace: el.screenPace,
-  run: el.screenRun,
+// Os 4 cartões ficam todos montados na página, empilhados na ordem abaixo —
+// nunca é uma "troca de tela". Só um fica "active" (destacado, cor cheia) por
+// vez; os anteriores já concluídos ficam visíveis mas "completed" (sem
+// destaque, controles desabilitados) acima dele; os seguintes ainda nem
+// aparecem (hidden) até serem alcançados.
+const STEP_ORDER = ["connect", "library", "pace", "run"];
+const STEP_CARDS = {
+  connect: el.cardConnect,
+  library: el.cardLibrary,
+  pace: el.cardPace,
+  run: el.cardRun,
 };
 
-// true depois que o usuário passou pelo cartão 3 (Ritmo) ao menos uma vez
-// nesta sessão — a partir daí, voltar a logar/reconstruir o pool leva direto
-// pra tela de corrida em vez de repetir os cartões 2 e 3.
-let onboardedToRun = false;
-
-function showScreen(name) {
-  for (const [key, section] of Object.entries(SCREENS)) {
-    section.hidden = key !== name;
+function setStepControlsDisabled(card, disabled) {
+  for (const ctrl of card.querySelectorAll("button, select, input")) {
+    ctrl.disabled = disabled;
   }
-  if (name === "run") updateSummaries();
 }
 
-// Preenche o resumo dos 3 cartões na tela de corrida, com o que já foi
-// escolhido em cada um — cada linha tem um botão "Editar" que volta pro
-// cartão correspondente.
-function updateSummaries() {
-  el.summaryConnect.textContent = "Conectado ✓";
-  el.summaryLibrary.textContent = bpmPool.length > 0 ? `${bpmPool.length} faixas com BPM prontas` : "—";
-  if (el.modeSelect.value === "fixed") {
-    const opt = FIXED_PACE_OPTIONS.find((o) => o.id === el.paceSelect.value);
-    el.summaryPace.textContent = opt ? `Ritmo fixo — ${opt.label}` : "Ritmo fixo";
-  } else {
-    el.summaryPace.textContent = "Automático (minha cadência)";
-  }
+// Avança (ou recua, no caso de reabrir um cartão já concluído) pro cartão
+// `stepKey`: tudo antes dele na ordem fica "completed" (visível, sem
+// destaque, desabilitado); ele mesmo fica "active"; tudo depois ainda nem
+// foi alcançado, então fica escondido até ser a vez dele de novo.
+function advanceTo(stepKey) {
+  const idx = STEP_ORDER.indexOf(stepKey);
+  STEP_ORDER.forEach((key, i) => {
+    const card = STEP_CARDS[key];
+    if (i < idx) {
+      card.hidden = false;
+      card.dataset.state = "completed";
+      setStepControlsDisabled(card, true);
+    } else if (i === idx) {
+      card.hidden = false;
+      card.dataset.state = "active";
+      setStepControlsDisabled(card, false);
+    } else {
+      card.hidden = true;
+    }
+  });
+  STEP_CARDS[stepKey].scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// Tocar no título de um cartão já concluído (sem destaque) reabre ele pra
+// edição — esconde de novo tudo que vinha depois, já que essas escolhas
+// dependiam do que está sendo mudado agora. O gatilho fica só no <h2>, não
+// no cartão inteiro: um clique em qualquer botão/select lá dentro (ex.
+// "Continuar") já muda o cartão pra "completed" na hora, e como esse clique
+// também borbulha até o cartão, um listener no cartão inteiro acabaria
+// reabrindo o próprio cartão que acabou de avançar.
+for (const key of STEP_ORDER) {
+  STEP_CARDS[key].querySelector("h2").addEventListener("click", () => {
+    if (STEP_CARDS[key].dataset.state === "completed") advanceTo(key);
+  });
 }
 
 let bpmPool = [];
@@ -408,10 +425,10 @@ async function resolvePool(refs, failures = []) {
       el.poolProgress.textContent += ` [Diagnóstico: ${diagnostic}]`;
     }
   } else {
-    // Cartão 2 concluído — avança pro cartão 3 (Ritmo) na primeira vez, ou
-    // direto pra tela de corrida se o usuário já tinha passado por ali antes
-    // (ex. voltou aqui só pra trocar de playlist no meio da corrida).
-    showScreen(onboardedToRun ? "run" : "pace");
+    // Cartão 2 concluído — avança pro cartão 3 (Ritmo). Reabre e refaz o
+    // cartão 3 mesmo se o usuário só queria trocar de playlist com a
+    // corrida já em andamento — mantém o modelo simples e previsível.
+    advanceTo("pace");
   }
 }
 
@@ -630,9 +647,9 @@ async function refreshAuthedUi() {
   el.disconnectBtn.hidden = false;
   setStatus("Conectado ao Spotify.");
   await loadPlaylistOptions();
-  // Cartão 1 concluído — avança pro cartão 2, ou direto pra corrida se o
-  // usuário já tinha passado por todos os cartões nesta sessão.
-  showScreen(onboardedToRun ? "run" : "library");
+  // Cartão 1 concluído (já conectado, com ou sem interação do usuário) —
+  // avança pro cartão 2.
+  advanceTo("library");
 }
 
 async function init() {
@@ -659,11 +676,11 @@ async function init() {
       await refreshAuthedUi();
     } else {
       setStatus("Não conectado.");
-      showScreen("connect");
+      advanceTo("connect");
     }
   } catch (err) {
     setStatus(`Erro no login: ${err.message}`);
-    showScreen("connect");
+    advanceTo("connect");
   }
 
   await minSplashDelay;
@@ -694,24 +711,12 @@ async function init() {
   });
 
   el.confirmPaceBtn.addEventListener("click", () => {
-    if (!onboardedToRun) {
-      onboardedToRun = true;
-      for (const btn of el.backToRunBtns) btn.hidden = false;
-    }
-    // Se a corrida já estiver rolando (usuário voltou aqui só pra trocar de
-    // ritmo no meio do caminho), a troca já foi aplicada ao vivo pelo
-    // listener de "change" do mode-select/pace-select — esse botão só
-    // precisa voltar pra tela de corrida.
-    showScreen("run");
+    // Se a corrida já estiver rolando (usuário reabriu esse cartão só pra
+    // trocar de ritmo no meio do caminho), a troca já foi aplicada ao vivo
+    // pelo listener de "change" do mode-select/pace-select — esse botão só
+    // precisa avançar de volta pro cartão de corrida.
+    advanceTo("run");
   });
-
-  for (const btn of el.backToRunBtns) {
-    btn.addEventListener("click", () => showScreen("run"));
-  }
-
-  for (const btn of el.editBtns) {
-    btn.addEventListener("click", () => showScreen(btn.dataset.editTarget));
-  }
 
   el.playPauseBtn.addEventListener("click", async () => {
     if (runActive) {

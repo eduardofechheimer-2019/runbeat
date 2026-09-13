@@ -16,6 +16,7 @@ import { initOnboarding } from "./onboarding.js";
 
 const el = {
   splashScreen: document.getElementById("splash-screen"),
+  appHeader: document.getElementById("app-header"),
   status: document.getElementById("status"),
   connectBtn: document.getElementById("connect-btn"),
   disconnectBtn: document.getElementById("disconnect-btn"),
@@ -27,7 +28,6 @@ const el = {
   catalogGenreGroup: document.getElementById("catalog-genre-group"),
   catalogGenreSelect: document.getElementById("catalog-genre-select"),
   buildPoolBtn: document.getElementById("build-pool-btn"),
-  buildAllBtn: document.getElementById("build-pool-all-btn"),
   poolProgress: document.getElementById("pool-progress"),
   modeSelect: document.getElementById("mode-select"),
   paceGroup: document.getElementById("pace-group"),
@@ -74,9 +74,14 @@ function advanceTo(stepKey) {
   STEP_ORDER.forEach((key, i) => {
     const card = STEP_CARDS[key];
     if (i < idx) {
+      // Só "acabou de completar" (e merece o flash do check) se não estava
+      // já completed antes — evita repetir o flash em todo avanço que
+      // passa por um cartão já concluído há mais tempo.
+      const justCompleted = card.dataset.state !== "completed";
       card.hidden = false;
       card.dataset.state = "completed";
       setStepControlsDisabled(card, true);
+      if (justCompleted) flashStepCheck(card);
     } else if (i === idx) {
       card.hidden = false;
       card.dataset.state = "active";
@@ -86,6 +91,18 @@ function advanceTo(stepKey) {
     }
   });
   STEP_CARDS[stepKey].scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// Flash de confirmação (✓ verde) ao lado do título, no instante em que um
+// cartão é concluído — some sozinho logo em seguida, deixando só a
+// aparência "sem destaque" (ver .step-card[data-state="completed"] no CSS).
+function flashStepCheck(card) {
+  const check = card.querySelector(".step-check");
+  if (!check) return;
+  check.hidden = false;
+  setTimeout(() => {
+    check.hidden = true;
+  }, 900);
 }
 
 // Tocar no título de um cartão já concluído (sem destaque) reabre ele pra
@@ -298,10 +315,15 @@ function releaseWakeLock() {
 
 async function loadPlaylistOptions() {
   el.playlistSelect.innerHTML = "";
-  const likedOpt = document.createElement("option");
-  likedOpt.value = "__liked__";
-  likedOpt.textContent = "Músicas Curtidas";
-  el.playlistSelect.appendChild(likedOpt);
+
+  // "Toda a minha biblioteca" é uma opção exclusiva (ver
+  // enforceLibraryExclusivity) — vem primeiro, depois o Catálogo RunBeat,
+  // depois as playlists pessoais. "Músicas Curtidas" não aparece mais como
+  // opção separada (já entra dentro de "toda a biblioteca").
+  const libraryOpt = document.createElement("option");
+  libraryOpt.value = "__library__";
+  libraryOpt.textContent = "Analisar toda a minha biblioteca";
+  el.playlistSelect.appendChild(libraryOpt);
 
   const catalogOpt = document.createElement("option");
   catalogOpt.value = "__catalog__";
@@ -327,7 +349,38 @@ async function loadPlaylistOptions() {
   for (const opt of el.playlistSelect.options) {
     opt.selected = saved.includes(opt.value);
   }
+  syncPlaylistSelectionSnapshot();
   updateCatalogGenreVisibility();
+}
+
+// "Toda a minha biblioteca" é uma opção exclusiva dentro do <select
+// multiple> de playlists: marcar ela desmarca qualquer outra coisa, e
+// marcar qualquer outra coisa desmarca ela — um <select multiple> nativo
+// não tem esse conceito de exclusividade sozinho, por isso o rastreamento
+// abaixo (compara com a seleção anterior pra saber o que acabou de mudar).
+let previousPlaylistSelection = new Set();
+
+function syncPlaylistSelectionSnapshot() {
+  previousPlaylistSelection = new Set(
+    Array.from(el.playlistSelect.selectedOptions).map((o) => o.value)
+  );
+}
+
+function enforceLibraryExclusivity() {
+  const options = Array.from(el.playlistSelect.options);
+  const current = new Set(options.filter((o) => o.selected).map((o) => o.value));
+  const libraryJustSelected = current.has("__library__") && !previousPlaylistSelection.has("__library__");
+  const otherJustSelected = [...current].some(
+    (v) => v !== "__library__" && !previousPlaylistSelection.has(v)
+  );
+
+  if (libraryJustSelected) {
+    for (const o of options) o.selected = o.value === "__library__";
+  } else if (current.has("__library__") && otherJustSelected) {
+    options.find((o) => o.value === "__library__").selected = false;
+  }
+
+  syncPlaylistSelectionSnapshot();
 }
 
 let catalogGenresLoaded = false;
@@ -447,7 +500,6 @@ async function buildPool() {
   }
 
   el.buildPoolBtn.disabled = true;
-  el.buildAllBtn.disabled = true;
   el.poolProgress.hidden = false;
   el.poolProgress.textContent = "Buscando faixas...";
 
@@ -458,7 +510,6 @@ async function buildPool() {
   await resolvePool(dedupeRefs(results.map((r) => r.refs)), failures);
 
   el.buildPoolBtn.disabled = false;
-  el.buildAllBtn.disabled = false;
 }
 
 // Junta Músicas Curtidas + todas as playlists da conta, sem precisar
@@ -466,7 +517,6 @@ async function buildPool() {
 // sendo analisadas (o cache de BPM em bpmSource.js já persiste entre usos).
 async function buildPoolFromLibrary() {
   el.buildPoolBtn.disabled = true;
-  el.buildAllBtn.disabled = true;
   el.poolProgress.hidden = false;
   el.poolProgress.textContent = "Buscando playlists da biblioteca...";
 
@@ -493,7 +543,6 @@ async function buildPoolFromLibrary() {
   await resolvePool(dedupeRefs(refLists), failures);
 
   el.buildPoolBtn.disabled = false;
-  el.buildAllBtn.disabled = false;
 }
 
 function updateCadenceDisplay() {
@@ -662,7 +711,10 @@ async function init() {
   el.paceSelect.addEventListener("change", () => {
     if (el.modeSelect.value === "fixed") applyLiveModeChange();
   });
-  el.playlistSelect.addEventListener("change", updateCatalogGenreVisibility);
+  el.playlistSelect.addEventListener("change", () => {
+    enforceLibraryExclusivity();
+    updateCatalogGenreVisibility();
+  });
 
   // Splash de abertura: ícone em fade-in por ~1,2s, depois some sozinho e
   // revela a tela certa — sem depender de toque nenhum do usuário. O timer
@@ -685,6 +737,7 @@ async function init() {
 
   await minSplashDelay;
   el.splashScreen.classList.add("splash-hide");
+  el.appHeader.classList.add("fade-in"); // entra em crossfade com o splash saindo
   setTimeout(() => {
     el.splashScreen.hidden = true;
   }, 400);
@@ -699,13 +752,11 @@ async function init() {
   });
 
   el.buildPoolBtn.addEventListener("click", () => {
-    buildPool().catch((err) => {
-      el.poolProgress.textContent = `Erro: ${err.message}`;
-    });
-  });
-
-  el.buildAllBtn.addEventListener("click", () => {
-    buildPoolFromLibrary().catch((err) => {
+    const isLibraryMode = Array.from(el.playlistSelect.selectedOptions).some(
+      (o) => o.value === "__library__"
+    );
+    const action = isLibraryMode ? buildPoolFromLibrary() : buildPool();
+    action.catch((err) => {
       el.poolProgress.textContent = `Erro: ${err.message}`;
     });
   });

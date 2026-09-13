@@ -43,7 +43,13 @@ body::before {
   padding: 24px 20px 64px;
 }
 
-header { margin-bottom: 20px; }
+header {
+  margin-bottom: 20px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+header.fade-in { opacity: 1; }
 
 .header-row {
   display: flex;
@@ -152,6 +158,32 @@ h2 {
   flex-shrink: 0;
 }
 
+/* Flash de confirmação quando um cartão acaba de ser concluído — some de
+   novo assim que o cartão recua pro estado "sem destaque" (ver app.js). */
+.step-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-left: auto;
+  border-radius: 50%;
+  border: 2px solid #1db954;
+  color: #1db954;
+  font-size: 0.75rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  animation: check-pop 0.3s ease;
+}
+
+.step-check[hidden] { display: none; }
+
+@keyframes check-pop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
 label {
   display: block;
   font-size: 0.82rem;
@@ -191,15 +223,23 @@ button:disabled {
   transform: none;
 }
 
-.button-row {
-  display: flex;
-  gap: 8px;
+.select-wrap {
+  position: relative;
 }
 
-.button-row button {
-  flex: 1;
-  font-size: 0.85rem;
-  padding: 12px 8px;
+.select-wrap::after {
+  content: "⋯";
+  position: absolute;
+  top: 21px;
+  right: 16px;
+  color: var(--muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.select-wrap select {
+  padding-right: 34px;
 }
 
 .nested-group {

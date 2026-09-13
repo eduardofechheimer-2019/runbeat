@@ -28,13 +28,15 @@ Depois disso, os 4 cartões (Conectar, Músicas, Ritmo, Corrida) ficam
 empilhados na mesma página, um de cada vez em destaque:
 
 1. **Cartão 1 — Conectar ao Spotify.** Só esse botão. Depois de conectar
-   (mesmo automaticamente, se você já estava logado), o cartão fica visível
-   mas "sem destaque" (cinza, controles desabilitados) acima do cartão 2,
-   que assume o destaque.
-2. **Cartão 2 — Escolha a fonte de músicas.** Os botões "Analisar BPM..." e
-   "Analisar toda a biblioteca..." ficam lado a lado. Assim que o pool sai
-   com alguma faixa, esse cartão também recua (sem destaque) e o cartão 3
-   assume.
+   (mesmo automaticamente, se você já estava logado), aparece um flash de
+   confirmação (✓ verde) e o cartão recua "sem destaque" (cinza, controles
+   desabilitados) acima do cartão 2, que assume o destaque.
+2. **Cartão 2 — Escolha a fonte de músicas.** Um dropdown só decide a fonte:
+   "Analisar toda a minha biblioteca" (primeira opção, exclusiva — marcar
+   ela desmarca qualquer playlist específica, e vice-versa), o Catálogo
+   RunBeat, e as playlists pessoais, todas atrás de um botão único
+   ("Analisar BPM das faixas selecionadas"). Assim que o pool sai com
+   alguma faixa, esse cartão também recua e o cartão 3 assume.
 3. **Cartão 3 — Escolha o ritmo.** Último cartão — um botão **"Continuar"**
    recua ele também e revela o cartão de corrida.
 4. **Cartão de corrida.** Mostra a medição de cadência, a faixa tocando
@@ -60,23 +62,24 @@ dependem.
 ## Como funciona
 
 1. Você loga com sua conta Spotify (Premium — necessário pra controlar
-   playback pela API) e escolhe a fonte de faixas: uma ou mais playlists
-   específicas (+ "Músicas Curtidas"), o botão **"Analisar toda a minha
-   biblioteca"** (junta automaticamente todas as suas playlists e as
-   Curtidas de uma vez), e/ou o **"Catálogo RunBeat"** — uma opção extra na
-   mesma lista de playlists, com uma seleção própria de ~8 mil músicas com
-   BPM e gênero já classificados. Marcando essa opção aparece um segundo
-   dropdown pra filtrar por gênero musical (ex. Rock, Pagode, Sertanejo,
-   Funk) — nenhum gênero marcado usa o catálogo inteiro. É útil pra quem não
-   tem muitas playlists, ou pra preencher faixas de BPM que suas próprias
-   músicas não cobrem — cada entrada já vem com o ID real da faixa no
-   Spotify (`public/data/runbeat-catalog.json`), sem precisar buscar por
-   nome. Como a curadoria tem uma data própria, algumas faixas podem não
-   existir mais no catálogo do Spotify — o app trata isso como falha normal
-   e pula pra próxima candidata. Em qualquer caso, o pool junta as fontes
-   sem repetir faixa que apareça em mais de uma — e o BPM já resolvido fica
-   em cache local, então analisar de novo (com mais fontes) não perde o que
-   já foi calculado antes.
+   playback pela API) e escolhe a fonte de faixas num único dropdown:
+   **"Analisar toda a minha biblioteca"** (primeira opção — junta
+   automaticamente todas as suas playlists e as Curtidas de uma vez; é
+   exclusiva, marcar ela desmarca qualquer outra escolha), o **"Catálogo
+   RunBeat"** — uma seleção própria de ~8 mil músicas com BPM e gênero já
+   classificados (marcando essa opção aparece um segundo dropdown pra
+   filtrar por gênero musical, ex. Rock, Pagode, Sertanejo, Funk — nenhum
+   gênero marcado usa o catálogo inteiro), e/ou uma ou mais playlists
+   pessoais. O Catálogo é útil pra quem não tem muitas playlists, ou pra
+   preencher faixas de BPM que suas próprias músicas não cobrem — cada
+   entrada já vem com o ID real da faixa no Spotify
+   (`public/data/runbeat-catalog.json`), sem precisar buscar por nome. Como
+   a curadoria tem uma data própria, algumas faixas podem não existir mais
+   no catálogo do Spotify — o app trata isso como falha normal e pula pra
+   próxima candidata. Em qualquer caso (fora do modo "biblioteca inteira"),
+   o pool junta as fontes sem repetir faixa que apareça em mais de uma — e
+   o BPM já resolvido fica em cache local, então analisar de novo (com mais
+   fontes) não perde o que já foi calculado antes.
 2. O app resolve o BPM de cada faixa dessa fonte via [ReccoBeats](https://reccobeats.com/)
    (API gratuita, sem chave, que aceita o ID da faixa do Spotify diretamente
    — sem risco de casar com a versão errada de uma música).

@@ -34,6 +34,9 @@ const el = {
   paceSelect: document.getElementById("pace-select"),
   confirmPaceBtn: document.getElementById("confirm-pace-btn"),
   playPauseBtn: document.getElementById("play-pause-btn"),
+  playPauseLabel: document.getElementById("play-pause-label"),
+  iconPlay: document.querySelector("#play-pause-btn .icon-play"),
+  iconPause: document.querySelector("#play-pause-btn .icon-pause"),
   prevBtn: document.getElementById("prev-btn"),
   nextBtn: document.getElementById("next-btn"),
   cadenceValue: document.getElementById("cadence-value"),
@@ -122,7 +125,9 @@ function revealStep(stepKey, idx) {
   STEP_CARDS[stepKey].scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-// Cartão que acabou de ser concluído: mostra o check verde por meio
+const STEP_HOLD_MS = 1000;
+
+// Cartão que acabou de ser concluído: mostra o check verde por um
 // segundo, ainda com a aparência normal (em destaque) — só depois disso
 // recua pra "sem destaque" (ver .step-card[data-state="completed"] no
 // CSS) e só ENTÃO chama `onDone` (que revela o próximo cartão). O cartão 1
@@ -137,7 +142,7 @@ function finishStep(card, onDone) {
     setStepControlsDisabled(card, true);
     if (card === el.cardConnect) revealHeaderAndUncenter();
     onDone();
-  }, 500);
+  }, STEP_HOLD_MS);
 }
 
 // Tocar no título de um cartão já concluído (sem destaque) reabre ele pra
@@ -686,6 +691,21 @@ function waitForFirstCadence() {
   }, CADENCE_DISPLAY_INTERVAL_MS);
 }
 
+// SVG elements não refletem a propriedade `.hidden` pro atributo HTML
+// (ao contrário de elementos HTML normais), então setAttribute/
+// removeAttribute é usado direto pra garantir que o seletor CSS
+// `[hidden]` realmente funcione nesses ícones.
+function setSvgHidden(svg, hidden) {
+  if (hidden) svg.setAttribute("hidden", "");
+  else svg.removeAttribute("hidden");
+}
+
+function setPlayPauseIcon(isPlaying) {
+  setSvgHidden(el.iconPlay, isPlaying);
+  setSvgHidden(el.iconPause, !isPlaying);
+  el.playPauseLabel.textContent = isPlaying ? "Pause" : "Play";
+}
+
 function startRun() {
   activeMode = el.modeSelect.value;
   fixedRange = activeMode === "fixed" ? currentFixedRange() : null;
@@ -699,7 +719,7 @@ function startRun() {
   playedIds.clear();
   history = [];
   runActive = true;
-  el.playPauseBtn.textContent = "⏸ Pause";
+  setPlayPauseIcon(true);
   el.prevBtn.hidden = false;
   el.nextBtn.hidden = false;
   showRunError("");
@@ -718,7 +738,7 @@ function stopRun() {
   tracker = null;
   fixedRange = null;
   releaseWakeLock();
-  el.playPauseBtn.textContent = "▶ Play";
+  setPlayPauseIcon(false);
   el.prevBtn.hidden = true;
   el.nextBtn.hidden = true;
   el.cadenceValue.textContent = "—";

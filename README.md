@@ -29,7 +29,7 @@ Depois disso, os 4 cartões (Conectar, Músicas, Ritmo, Corrida) ficam
 empilhados na mesma página, um de cada vez em destaque, sempre com a mesma
 sequência de transição: ao concluir, o cartão mostra um flash de
 confirmação (✓ verde) — ainda com a aparência normal, em destaque, sem
-nada mais mudar na tela — por meio segundo, e **só depois** desse meio
+nada mais mudar na tela — por um segundo, e **só depois** desse um
 segundo o cartão recua "sem destaque" (cinza, controles desabilitados) e o
 próximo aparece. Os dois nunca acontecem ao mesmo tempo — o próximo cartão
 só é revelado depois que o anterior termina de recuar, pra sequência ficar
@@ -38,7 +38,7 @@ clara e perceptível, não uma trocação instantânea:
 1. **Cartão 1 — Conectar ao Spotify.** Só esse botão. Se a conta já estava
    conectada de uma visita anterior, o cartão ainda aparece centralizado
    mostrando "Conectado ao Spotify" e passa pela mesma sequência (check,
-   meio segundo, recuo) — o usuário sempre vê a confirmação, mesmo sem
+   um segundo, recuo) — o usuário sempre vê a confirmação, mesmo sem
    precisar tocar em nada. É só nesse instante (cartão 1 concluído) que o
    cabeçalho "RunBeat" aparece (fade-in) e a tela deixa de ficar
    centralizada, virando a lista rolável normal pros cartões seguintes.

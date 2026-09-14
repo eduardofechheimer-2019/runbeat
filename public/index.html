@@ -84,9 +84,17 @@
     <a id="open-spotify-link" class="button-link" hidden>▶ Abrir Spotify e começar</a>
 
     <div class="playpause-row">
-      <button id="prev-btn" class="side-btn" hidden>⏮</button>
-      <button id="play-pause-btn" class="play-pause-btn" type="button">▶ Play</button>
-      <button id="next-btn" class="side-btn" hidden>⏭</button>
+      <button id="prev-btn" class="side-btn" type="button" hidden aria-label="Faixa anterior">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14M20 5 8 12l12 7V5Z"/></svg>
+      </button>
+      <button id="play-pause-btn" class="play-pause-btn" type="button">
+        <svg class="icon icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7L8 5Z"/></svg>
+        <svg class="icon icon-pause" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+        <span id="play-pause-label">Play</span>
+      </button>
+      <button id="next-btn" class="side-btn" type="button" hidden aria-label="Próxima faixa">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 5v14M4 5l12 7-12 7V5Z"/></svg>
+      </button>
     </div>
   </section>
 </main>

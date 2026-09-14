@@ -83,28 +83,34 @@ function revealHeaderAndUncenter() {
 }
 
 // Avança (ou recua, no caso de reabrir um cartão já concluído) pro cartão
-// `stepKey`. O cartão que estava ativo até agora, se ficar pra trás do
-// novo alvo, "termina": mostra o check por meio segundo AINDA em destaque
-// (ver finishStep) e só depois recua pra "completed" (sem destaque,
-// desabilitado). Cartões que já estavam completed de antes não repetem
-// esse flash. Tudo depois do alvo ainda nem foi alcançado, então fica
-// escondido até ser a vez de novo.
+// `stepKey`. Se algum cartão estiver "terminando agora" (ficando pra trás
+// do novo alvo), o novo cartão só aparece DEPOIS do check + meio segundo
+// de espera do anterior (ver finishStep) — nunca ao mesmo tempo, senão os
+// dois surgem juntos e a sequência fica confusa/imperceptível.
 function advanceTo(stepKey) {
   const idx = STEP_ORDER.indexOf(stepKey);
   const finishingStep = activeStep;
   const finishingIdx = STEP_ORDER.indexOf(finishingStep);
   activeStep = stepKey;
 
+  if (finishingIdx >= 0 && finishingIdx < idx) {
+    finishStep(STEP_CARDS[finishingStep], () => revealStep(stepKey, idx));
+  } else {
+    revealStep(stepKey, idx);
+  }
+}
+
+// Mostra o cartão `stepKey` em destaque. Cartões antes dele na ordem já
+// deviam estar "completed" (finishStep cuida disso antes de chamar aqui) —
+// ao alcançar o cartão de corrida, eles passam pra "condensed" (resumidos
+// numa linha só, ver CSS), liberando a tela pros controles da corrida.
+// Tudo depois do alvo ainda nem foi alcançado, então fica escondido.
+function revealStep(stepKey, idx) {
   STEP_ORDER.forEach((key, i) => {
     const card = STEP_CARDS[key];
     if (i < idx) {
       card.hidden = false;
-      if (key !== finishingStep) {
-        card.dataset.state = "completed";
-        setStepControlsDisabled(card, true);
-      }
-      // key === finishingStep: deixa em destaque por enquanto — finishStep()
-      // (chamado abaixo) cuida de recuar ele depois do check.
+      if (stepKey === "run") card.dataset.state = "condensed";
     } else if (i === idx) {
       card.hidden = false;
       card.dataset.state = "active";
@@ -113,20 +119,16 @@ function advanceTo(stepKey) {
       card.hidden = true;
     }
   });
-
-  if (finishingIdx >= 0 && finishingIdx < idx) {
-    finishStep(STEP_CARDS[finishingStep]);
-  }
-
   STEP_CARDS[stepKey].scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 // Cartão que acabou de ser concluído: mostra o check verde por meio
 // segundo, ainda com a aparência normal (em destaque) — só depois disso
 // recua pra "sem destaque" (ver .step-card[data-state="completed"] no
-// CSS). O cartão 1 também dispara a revelação do cabeçalho nesse instante,
-// já que é quando ele deixa de ser a única coisa centralizada na tela.
-function finishStep(card) {
+// CSS) e só ENTÃO chama `onDone` (que revela o próximo cartão). O cartão 1
+// também dispara a revelação do cabeçalho nesse instante, já que é quando
+// ele deixa de ser a única coisa centralizada na tela.
+function finishStep(card, onDone) {
   const check = card.querySelector(".step-check");
   if (check) check.hidden = false;
   setTimeout(() => {
@@ -134,6 +136,7 @@ function finishStep(card) {
     card.dataset.state = "completed";
     setStepControlsDisabled(card, true);
     if (card === el.cardConnect) revealHeaderAndUncenter();
+    onDone();
   }, 500);
 }
 
@@ -146,7 +149,8 @@ function finishStep(card) {
 // reabrindo o próprio cartão que acabou de avançar.
 for (const key of STEP_ORDER) {
   STEP_CARDS[key].querySelector("h2").addEventListener("click", () => {
-    if (STEP_CARDS[key].dataset.state === "completed") advanceTo(key);
+    const state = STEP_CARDS[key].dataset.state;
+    if (state === "completed" || state === "condensed") advanceTo(key);
   });
 }
 

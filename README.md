@@ -28,9 +28,12 @@ toque nenhum, revelando o cartão 1 **centralizado na tela** (o cabeçalho
 Depois disso, os 4 cartões (Conectar, Músicas, Ritmo, Corrida) ficam
 empilhados na mesma página, um de cada vez em destaque, sempre com a mesma
 sequência de transição: ao concluir, o cartão mostra um flash de
-confirmação (✓ verde) — ainda com a aparência normal, em destaque — por
-meio segundo, e só depois disso recua "sem destaque" (cinza, controles
-desabilitados) pro topo da pilha, dando lugar ao próximo:
+confirmação (✓ verde) — ainda com a aparência normal, em destaque, sem
+nada mais mudar na tela — por meio segundo, e **só depois** desse meio
+segundo o cartão recua "sem destaque" (cinza, controles desabilitados) e o
+próximo aparece. Os dois nunca acontecem ao mesmo tempo — o próximo cartão
+só é revelado depois que o anterior termina de recuar, pra sequência ficar
+clara e perceptível, não uma trocação instantânea:
 
 1. **Cartão 1 — Conectar ao Spotify.** Só esse botão. Se a conta já estava
    conectada de uma visita anterior, o cartão ainda aparece centralizado
@@ -46,14 +49,18 @@ desabilitados) pro topo da pilha, dando lugar ao próximo:
    ("Analisar BPM das faixas selecionadas"). Assim que o pool sai com
    alguma faixa, esse cartão também recua e o cartão 3 assume.
 3. **Cartão 3 — Escolha o ritmo.** Último cartão — um botão **"Continuar"**
-   recua ele também e revela o cartão de corrida.
+   recua ele também e revela o cartão de corrida. Nesse momento os cartões
+   1, 2 e 3 **condensam** juntos numa linha cada (só o título, sem o
+   conteúdo interno) no topo da tela, liberando o resto do espaço pro
+   cartão de corrida.
 4. **Cartão de corrida.** Mostra a medição de cadência, a faixa tocando
    agora, e os controles: um botão central **▶ Play / ⏸ Pause**
    (substituindo os antigos "Iniciar corrida"/"Parar") com **⏮ Anterior** /
    **⏭ Próxima** ao lado, que só aparecem depois que a corrida começa.
 
-Tocar no título de qualquer cartão já concluído (sem destaque) reabre ele
-pra editar — os cartões seguintes recuam/escondem de novo até você concluir
+Tocar no título de qualquer cartão já concluído ou condensado (sem
+destaque) reabre ele pra editar (volta ao tamanho normal, com os controles
+de volta) — os cartões seguintes recuam/escondem de novo até você concluir
 esse de novo. Trocar o ritmo desse jeito com uma corrida já em andamento
 aplica a mudança na hora (não reinicia a corrida do zero, ela continua
 tocando em segundo plano); trocar as músicas refaz a análise de BPM e passa

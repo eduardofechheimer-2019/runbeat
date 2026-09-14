@@ -65,23 +65,46 @@ function setStepControlsDisabled(card, disabled) {
   }
 }
 
+// Cartão ativo no momento — precisa disso pra saber qual cartão está
+// "terminando agora" (o único que merece o check + a espera de meio
+// segundo antes de recuar) quando advanceTo() é chamado.
+let activeStep = STEP_ORDER[0];
+
+// true depois que o cartão 1 conclui pela primeira vez — é o gatilho pra
+// revelar o cabeçalho e sair do layout centralizado (ver
+// revealHeaderAndUncenter). Só acontece uma vez por sessão.
+let headerRevealed = false;
+
+function revealHeaderAndUncenter() {
+  if (headerRevealed) return;
+  headerRevealed = true;
+  document.body.classList.remove("centering-connect");
+  el.appHeader.classList.add("fade-in");
+}
+
 // Avança (ou recua, no caso de reabrir um cartão já concluído) pro cartão
-// `stepKey`: tudo antes dele na ordem fica "completed" (visível, sem
-// destaque, desabilitado); ele mesmo fica "active"; tudo depois ainda nem
-// foi alcançado, então fica escondido até ser a vez dele de novo.
+// `stepKey`. O cartão que estava ativo até agora, se ficar pra trás do
+// novo alvo, "termina": mostra o check por meio segundo AINDA em destaque
+// (ver finishStep) e só depois recua pra "completed" (sem destaque,
+// desabilitado). Cartões que já estavam completed de antes não repetem
+// esse flash. Tudo depois do alvo ainda nem foi alcançado, então fica
+// escondido até ser a vez de novo.
 function advanceTo(stepKey) {
   const idx = STEP_ORDER.indexOf(stepKey);
+  const finishingStep = activeStep;
+  const finishingIdx = STEP_ORDER.indexOf(finishingStep);
+  activeStep = stepKey;
+
   STEP_ORDER.forEach((key, i) => {
     const card = STEP_CARDS[key];
     if (i < idx) {
-      // Só "acabou de completar" (e merece o flash do check) se não estava
-      // já completed antes — evita repetir o flash em todo avanço que
-      // passa por um cartão já concluído há mais tempo.
-      const justCompleted = card.dataset.state !== "completed";
       card.hidden = false;
-      card.dataset.state = "completed";
-      setStepControlsDisabled(card, true);
-      if (justCompleted) flashStepCheck(card);
+      if (key !== finishingStep) {
+        card.dataset.state = "completed";
+        setStepControlsDisabled(card, true);
+      }
+      // key === finishingStep: deixa em destaque por enquanto — finishStep()
+      // (chamado abaixo) cuida de recuar ele depois do check.
     } else if (i === idx) {
       card.hidden = false;
       card.dataset.state = "active";
@@ -90,19 +113,28 @@ function advanceTo(stepKey) {
       card.hidden = true;
     }
   });
+
+  if (finishingIdx >= 0 && finishingIdx < idx) {
+    finishStep(STEP_CARDS[finishingStep]);
+  }
+
   STEP_CARDS[stepKey].scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-// Flash de confirmação (✓ verde) ao lado do título, no instante em que um
-// cartão é concluído — some sozinho logo em seguida, deixando só a
-// aparência "sem destaque" (ver .step-card[data-state="completed"] no CSS).
-function flashStepCheck(card) {
+// Cartão que acabou de ser concluído: mostra o check verde por meio
+// segundo, ainda com a aparência normal (em destaque) — só depois disso
+// recua pra "sem destaque" (ver .step-card[data-state="completed"] no
+// CSS). O cartão 1 também dispara a revelação do cabeçalho nesse instante,
+// já que é quando ele deixa de ser a única coisa centralizada na tela.
+function finishStep(card) {
   const check = card.querySelector(".step-check");
-  if (!check) return;
-  check.hidden = false;
+  if (check) check.hidden = false;
   setTimeout(() => {
-    check.hidden = true;
-  }, 900);
+    if (check) check.hidden = true;
+    card.dataset.state = "completed";
+    setStepControlsDisabled(card, true);
+    if (card === el.cardConnect) revealHeaderAndUncenter();
+  }, 500);
 }
 
 // Tocar no título de um cartão já concluído (sem destaque) reabre ele pra
@@ -695,10 +727,13 @@ async function refreshAuthedUi() {
   el.connectBtn.hidden = true;
   el.disconnectBtn.hidden = false;
   setStatus("Conectado ao Spotify.");
-  await loadPlaylistOptions();
   // Cartão 1 concluído (já conectado, com ou sem interação do usuário) —
-  // avança pro cartão 2.
+  // avança pro cartão 2 na hora, sem esperar a rede: o usuário precisa ver
+  // o check e a espera de meio segundo acontecerem de verdade, mesmo
+  // quando o login já estava pronto de antes. O dropdown do cartão 2
+  // termina de se popular assim que loadPlaylistOptions() responder.
   advanceTo("library");
+  await loadPlaylistOptions();
 }
 
 async function init() {
@@ -719,28 +754,34 @@ async function init() {
   // Splash de abertura: ícone em fade-in por ~1,2s, depois some sozinho e
   // revela a tela certa — sem depender de toque nenhum do usuário. O timer
   // já começa a contar aqui, em paralelo com a checagem de login abaixo,
-  // pra não somar os dois tempos.
+  // pra não somar os dois tempos. A checagem só decide QUAL card mostrar —
+  // a decisão de avançar (com o check e a espera de meio segundo) só
+  // acontece depois do splash sumir, pra o usuário sempre ver a sequência
+  // completa do cartão 1, mesmo quando já estava conectado de antes.
   const minSplashDelay = new Promise((resolve) => setTimeout(resolve, 1200));
 
+  let alreadyConnected = false;
+  let loginErrorMessage = null;
   try {
     const justLoggedIn = await auth.handleRedirectCallback();
-    if (justLoggedIn || auth.isLoggedIn()) {
-      await refreshAuthedUi();
-    } else {
-      setStatus("Não conectado.");
-      advanceTo("connect");
-    }
+    alreadyConnected = justLoggedIn || auth.isLoggedIn();
   } catch (err) {
-    setStatus(`Erro no login: ${err.message}`);
-    advanceTo("connect");
+    loginErrorMessage = err.message;
   }
 
   await minSplashDelay;
   el.splashScreen.classList.add("splash-hide");
-  el.appHeader.classList.add("fade-in"); // entra em crossfade com o splash saindo
   setTimeout(() => {
     el.splashScreen.hidden = true;
   }, 400);
+
+  if (loginErrorMessage) {
+    setStatus(`Erro no login: ${loginErrorMessage}`);
+  } else if (alreadyConnected) {
+    refreshAuthedUi().catch((err) => setStatus(`Erro: ${err.message}`));
+  } else {
+    setStatus("Não conectado.");
+  }
 
   el.connectBtn.addEventListener("click", () => {
     auth.startLogin().catch((err) => setStatus(err.message));

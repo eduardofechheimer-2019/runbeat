@@ -22,15 +22,23 @@ do conteúdo.
 
 Toda vez que o app abre, aparece por ~1,5s uma tela de splash com o ícone do
 RunBeat em fade-in no meio da tela — depois some sozinha, sem precisar de
-toque nenhum, revelando a tela seguinte.
+toque nenhum, revelando o cartão 1 **centralizado na tela** (o cabeçalho
+"RunBeat" ainda nem apareceu nesse momento).
 
 Depois disso, os 4 cartões (Conectar, Músicas, Ritmo, Corrida) ficam
-empilhados na mesma página, um de cada vez em destaque:
+empilhados na mesma página, um de cada vez em destaque, sempre com a mesma
+sequência de transição: ao concluir, o cartão mostra um flash de
+confirmação (✓ verde) — ainda com a aparência normal, em destaque — por
+meio segundo, e só depois disso recua "sem destaque" (cinza, controles
+desabilitados) pro topo da pilha, dando lugar ao próximo:
 
-1. **Cartão 1 — Conectar ao Spotify.** Só esse botão. Depois de conectar
-   (mesmo automaticamente, se você já estava logado), aparece um flash de
-   confirmação (✓ verde) e o cartão recua "sem destaque" (cinza, controles
-   desabilitados) acima do cartão 2, que assume o destaque.
+1. **Cartão 1 — Conectar ao Spotify.** Só esse botão. Se a conta já estava
+   conectada de uma visita anterior, o cartão ainda aparece centralizado
+   mostrando "Conectado ao Spotify" e passa pela mesma sequência (check,
+   meio segundo, recuo) — o usuário sempre vê a confirmação, mesmo sem
+   precisar tocar em nada. É só nesse instante (cartão 1 concluído) que o
+   cabeçalho "RunBeat" aparece (fade-in) e a tela deixa de ficar
+   centralizada, virando a lista rolável normal pros cartões seguintes.
 2. **Cartão 2 — Escolha a fonte de músicas.** Um dropdown só decide a fonte:
    "Analisar toda a minha biblioteca" (primeira opção, exclusiva — marcar
    ela desmarca qualquer playlist específica, e vice-versa), o Catálogo

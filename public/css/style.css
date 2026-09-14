@@ -43,6 +43,17 @@ body::before {
   padding: 24px 20px 64px;
 }
 
+/* Antes do cartão 1 concluir pela primeira vez, ele é a única coisa na
+   tela (cabeçalho ainda escondido) — fica centralizado verticalmente em
+   vez de colado no topo. Sai desse modo em revealHeaderAndUncenter() no
+   app.js, assim que o cartão 1 termina. */
+body.centering-connect .app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 header {
   margin-bottom: 20px;
   opacity: 0;

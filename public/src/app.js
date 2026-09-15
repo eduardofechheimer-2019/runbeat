@@ -16,7 +16,6 @@ import { initOnboarding } from "./onboarding.js";
 
 const el = {
   splashScreen: document.getElementById("splash-screen"),
-  appHeader: document.getElementById("app-header"),
   status: document.getElementById("status"),
   connectBtn: document.getElementById("connect-btn"),
   disconnectBtn: document.getElementById("disconnect-btn"),
@@ -25,6 +24,8 @@ const el = {
   cardPace: document.getElementById("card-pace"),
   cardRun: document.getElementById("card-run"),
   playlistSelect: document.getElementById("playlist-select"),
+  playlistSummaryBtn: document.getElementById("playlist-summary-btn"),
+  playlistOptionsPanel: document.getElementById("playlist-options-panel"),
   catalogGenreGroup: document.getElementById("catalog-genre-group"),
   catalogGenreSelect: document.getElementById("catalog-genre-select"),
   buildPoolBtn: document.getElementById("build-pool-btn"),
@@ -69,27 +70,15 @@ function setStepControlsDisabled(card, disabled) {
 }
 
 // Cartão ativo no momento — precisa disso pra saber qual cartão está
-// "terminando agora" (o único que merece o check + a espera de meio
-// segundo antes de recuar) quando advanceTo() é chamado.
+// "terminando agora" (o único que merece a espera + o check antes de
+// recuar) quando advanceTo() é chamado.
 let activeStep = STEP_ORDER[0];
-
-// true depois que o cartão 1 conclui pela primeira vez — é o gatilho pra
-// revelar o cabeçalho e sair do layout centralizado (ver
-// revealHeaderAndUncenter). Só acontece uma vez por sessão.
-let headerRevealed = false;
-
-function revealHeaderAndUncenter() {
-  if (headerRevealed) return;
-  headerRevealed = true;
-  document.body.classList.remove("centering-connect");
-  el.appHeader.classList.add("fade-in");
-}
 
 // Avança (ou recua, no caso de reabrir um cartão já concluído) pro cartão
 // `stepKey`. Se algum cartão estiver "terminando agora" (ficando pra trás
-// do novo alvo), o novo cartão só aparece DEPOIS do check + meio segundo
-// de espera do anterior (ver finishStep) — nunca ao mesmo tempo, senão os
-// dois surgem juntos e a sequência fica confusa/imperceptível.
+// do novo alvo), o novo cartão só aparece DEPOIS da espera + check do
+// anterior (ver finishStep) — nunca ao mesmo tempo, senão os dois surgem
+// juntos e a sequência fica confusa/imperceptível.
 function advanceTo(stepKey) {
   const idx = STEP_ORDER.indexOf(stepKey);
   const finishingStep = activeStep;
@@ -125,24 +114,26 @@ function revealStep(stepKey, idx) {
   STEP_CARDS[stepKey].scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-const STEP_HOLD_MS = 1000;
+// Depois da ação final do passo (ex. clicar "Conectar", "Continuar"), esse
+// é o tempo que o app espera EM SILÊNCIO, sem nada novo na tela, antes de
+// mostrar o sinal verde de confirmação.
+const STEP_PRE_CHECK_DELAY_MS = 1500;
+// Quanto tempo o sinal verde fica visível antes do cartão recuar pra
+// "sem destaque" (ver .step-card[data-state="completed"] no CSS) e só
+// ENTÃO chamar `onDone` (que revela o próximo cartão).
+const STEP_CHECK_HOLD_MS = 500;
 
-// Cartão que acabou de ser concluído: mostra o check verde por um
-// segundo, ainda com a aparência normal (em destaque) — só depois disso
-// recua pra "sem destaque" (ver .step-card[data-state="completed"] no
-// CSS) e só ENTÃO chama `onDone` (que revela o próximo cartão). O cartão 1
-// também dispara a revelação do cabeçalho nesse instante, já que é quando
-// ele deixa de ser a única coisa centralizada na tela.
 function finishStep(card, onDone) {
   const check = card.querySelector(".step-check");
-  if (check) check.hidden = false;
   setTimeout(() => {
-    if (check) check.hidden = true;
-    card.dataset.state = "completed";
-    setStepControlsDisabled(card, true);
-    if (card === el.cardConnect) revealHeaderAndUncenter();
-    onDone();
-  }, STEP_HOLD_MS);
+    if (check) check.hidden = false;
+    setTimeout(() => {
+      if (check) check.hidden = true;
+      card.dataset.state = "completed";
+      setStepControlsDisabled(card, true);
+      onDone();
+    }, STEP_CHECK_HOLD_MS);
+  }, STEP_PRE_CHECK_DELAY_MS);
 }
 
 // Tocar no título de um cartão já concluído (sem destaque) reabre ele pra
@@ -168,6 +159,11 @@ let currentTrackId = null;
 let activeMode = "auto"; // "auto" (cadência real) | "fixed" (faixa de BPM fixa)
 let fixedRange = null; // {min, max} quando activeMode === "fixed"
 let runActive = false; // true entre "Iniciar corrida" e "Parar"
+// true quando a última tentativa de tocar falhou por falta de dispositivo
+// ativo e está esperando RETRY_AFTER_ERROR_MS pra tentar de novo sozinha —
+// usado pra pular direto pra essa nova tentativa assim que o usuário volta
+// pro RunBeat (ver visibilitychange), sem esperar o intervalo inteiro.
+let noDeviceRetryPending = false;
 let playRequestSeq = 0; // invalida trocas de faixa que ficaram pra trás no tempo
 let history = []; // faixas já tocadas nesta corrida, em ordem — pra "Anterior"
 const playedIds = new Set();
@@ -392,6 +388,8 @@ async function loadPlaylistOptions() {
   }
   syncPlaylistSelectionSnapshot();
   updateCatalogGenreVisibility();
+  renderPlaylistOptionsPanel();
+  updatePlaylistSummary();
 }
 
 // "Toda a minha biblioteca" é uma opção exclusiva dentro do <select
@@ -422,6 +420,41 @@ function enforceLibraryExclusivity() {
   }
 
   syncPlaylistSelectionSnapshot();
+}
+
+// --- Multiselect de playlists (UI própria por cima do <select multiple>) ---
+// O <select id="playlist-select"> continua escondido no DOM como "fonte da
+// verdade" — toda a lógica de seleção/exclusividade acima continua lendo e
+// escrevendo nele normalmente. As funções abaixo só espelham o estado dele
+// numa lista de checkboxes que a gente controla de verdade (o resumo nativo
+// "N Items"/"..." do iOS pra <select multiple> não pode ser restilizado).
+function renderPlaylistOptionsPanel() {
+  el.playlistOptionsPanel.innerHTML = "";
+  for (const opt of el.playlistSelect.options) {
+    const row = document.createElement("label");
+    row.className = "multiselect-option";
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.dataset.value = opt.value;
+    checkbox.checked = opt.selected;
+    const span = document.createElement("span");
+    span.textContent = opt.textContent;
+    row.append(checkbox, span);
+    el.playlistOptionsPanel.appendChild(row);
+  }
+}
+
+function syncPlaylistOptionsPanelChecks() {
+  const selected = new Set(Array.from(el.playlistSelect.selectedOptions).map((o) => o.value));
+  for (const checkbox of el.playlistOptionsPanel.querySelectorAll("input[type=checkbox]")) {
+    checkbox.checked = selected.has(checkbox.dataset.value);
+  }
+}
+
+function updatePlaylistSummary() {
+  const n = el.playlistSelect.selectedOptions.length;
+  el.playlistSummaryBtn.textContent = n === 0 ? "Selecione" : `${n} Items`;
+  el.playlistSummaryBtn.classList.toggle("is-placeholder", n === 0);
 }
 
 let catalogGenresLoaded = false;
@@ -625,6 +658,9 @@ function scheduleEndOfTrack(track) {
 // Escolhe e toca a próxima faixa pra cadência atual (usado tanto pela troca
 // automática de fim de faixa quanto pelo botão "Próxima").
 async function playNextAndSchedule() {
+  // Qualquer chamada nova (manual ou automática) resolve a espera de retry
+  // pendente — ver o listener de visibilitychange mais abaixo.
+  noDeviceRetryPending = false;
   const requestId = ++playRequestSeq;
   const track =
     activeMode === "fixed"
@@ -645,7 +681,13 @@ async function playNextAndSchedule() {
   } catch (err) {
     if (requestId !== playRequestSeq) return;
     showRunError(err.message);
-    if (err.code === "NO_ACTIVE_DEVICE") showNoDeviceLink(track);
+    if (err.code === "NO_ACTIVE_DEVICE") {
+      showNoDeviceLink(track);
+      // Assim que o usuário voltar pro RunBeat depois de abrir o Spotify
+      // pelo link acima, o listener de visibilitychange já tenta de novo
+      // na hora, sem esperar esse intervalo inteiro (ver mais abaixo).
+      noDeviceRetryPending = true;
+    }
     // Não trava o loop — tenta de novo em breve (ex. dispositivo Spotify
     // pode ter ficado inativo temporariamente, ou a faixa não existe mais).
     endOfTrackTimer = setTimeout(playNextAndSchedule, RETRY_AFTER_ERROR_MS);
@@ -738,6 +780,9 @@ function stopRun() {
   tracker = null;
   fixedRange = null;
   releaseWakeLock();
+  // Até aqui o "Pause" só parava a troca automática de faixa — o áudio no
+  // Spotify continuava tocando. Pausa o dispositivo ativo de verdade.
+  api.pausePlayback().catch((err) => console.warn("Falha ao pausar no Spotify:", err.message));
   setPlayPauseIcon(false);
   el.prevBtn.hidden = true;
   el.nextBtn.hidden = true;
@@ -753,9 +798,9 @@ async function refreshAuthedUi() {
   setStatus("Conectado ao Spotify.");
   // Cartão 1 concluído (já conectado, com ou sem interação do usuário) —
   // avança pro cartão 2 na hora, sem esperar a rede: o usuário precisa ver
-  // o check e a espera de meio segundo acontecerem de verdade, mesmo
-  // quando o login já estava pronto de antes. O dropdown do cartão 2
-  // termina de se popular assim que loadPlaylistOptions() responder.
+  // a espera + o check acontecerem de verdade, mesmo quando o login já
+  // estava pronto de antes. O dropdown do cartão 2 termina de se popular
+  // assim que loadPlaylistOptions() responder.
   advanceTo("library");
   await loadPlaylistOptions();
 }
@@ -773,15 +818,29 @@ async function init() {
   el.playlistSelect.addEventListener("change", () => {
     enforceLibraryExclusivity();
     updateCatalogGenreVisibility();
+    syncPlaylistOptionsPanelChecks();
+    updatePlaylistSummary();
+  });
+
+  el.playlistSummaryBtn.addEventListener("click", () => {
+    el.playlistOptionsPanel.hidden = !el.playlistOptionsPanel.hidden;
+  });
+
+  el.playlistOptionsPanel.addEventListener("change", (event) => {
+    const checkbox = event.target;
+    if (checkbox.type !== "checkbox") return;
+    const opt = Array.from(el.playlistSelect.options).find((o) => o.value === checkbox.dataset.value);
+    if (opt) opt.selected = checkbox.checked;
+    el.playlistSelect.dispatchEvent(new Event("change"));
   });
 
   // Splash de abertura: ícone em fade-in por ~1,2s, depois some sozinho e
   // revela a tela certa — sem depender de toque nenhum do usuário. O timer
   // já começa a contar aqui, em paralelo com a checagem de login abaixo,
   // pra não somar os dois tempos. A checagem só decide QUAL card mostrar —
-  // a decisão de avançar (com o check e a espera de meio segundo) só
-  // acontece depois do splash sumir, pra o usuário sempre ver a sequência
-  // completa do cartão 1, mesmo quando já estava conectado de antes.
+  // a decisão de avançar (com a espera + o check) só acontece depois do
+  // splash sumir, pra o usuário sempre ver a sequência completa do cartão
+  // 1, mesmo quando já estava conectado de antes.
   const minSplashDelay = new Promise((resolve) => setTimeout(resolve, 1200));
 
   let alreadyConnected = false;
@@ -817,6 +876,7 @@ async function init() {
   });
 
   el.buildPoolBtn.addEventListener("click", () => {
+    el.playlistOptionsPanel.hidden = true;
     const isLibraryMode = Array.from(el.playlistSelect.selectedOptions).some(
       (o) => o.value === "__library__"
     );
@@ -876,8 +936,14 @@ async function init() {
   // fica em segundo plano (parte do spec) — reconquista sozinho ao voltar,
   // sem precisar que o usuário faça nada.
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && runActive && !wakeLock) {
-      requestWakeLock();
+    if (document.visibilityState !== "visible" || !runActive) return;
+    if (!wakeLock) requestWakeLock();
+    // O usuário voltou pro RunBeat depois de abrir o Spotify (ex. pelo link
+    // "Abrir Spotify e começar") — tenta tocar de novo agora, sem esperar o
+    // resto do intervalo de retry automático.
+    if (noDeviceRetryPending) {
+      clearTimeout(endOfTrackTimer);
+      playNextAndSchedule().catch((err) => showRunError(err.message));
     }
   });
 }

@@ -40,33 +40,33 @@ body::before {
   z-index: 1;
   max-width: 480px;
   margin: 0 auto;
-  padding: 24px 20px 64px;
-}
-
-/* Antes do cartão 1 concluir pela primeira vez, ele é a única coisa na
-   tela (cabeçalho ainda escondido) — fica centralizado verticalmente em
-   vez de colado no topo. Sai desse modo em revealHeaderAndUncenter() no
-   app.js, assim que o cartão 1 termina. */
-body.centering-connect .app {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  /* max() com env(safe-area-inset-top) evita que o cabeçalho fique atrás
+     do relógio/notch no topo da tela (iOS "black-translucent" deixa o
+     conteúdo correr por baixo da status bar por padrão). */
+  padding: max(48px, calc(env(safe-area-inset-top) + 28px)) 20px 64px;
 }
 
 header {
   margin-bottom: 20px;
-  opacity: 0;
-  transition: opacity 0.5s ease;
 }
-
-header.fade-in { opacity: 1; }
 
 .header-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-logo {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
 }
 
 header h1 {
@@ -255,23 +255,74 @@ button:disabled {
   transform: none;
 }
 
-.select-wrap {
+/* --- Multiselect de playlists (substitui o <select multiple> nativo, cujo
+   resumo "N Items"/"..." no iOS é chrome do sistema e não pode ser
+   restilizado ou traduzido — o <select> original continua no DOM, só
+   escondido, servindo de "banco de dados" pra toda a lógica existente de
+   seleção/exclusividade em app.js). */
+.multiselect {
   position: relative;
 }
 
-.select-wrap::after {
-  content: "⋯";
-  position: absolute;
-  top: 21px;
-  right: 16px;
-  color: var(--muted);
-  font-size: 1.2rem;
-  line-height: 1;
-  pointer-events: none;
+.multiselect-summary {
+  width: 100%;
+  padding: 13px 34px 13px 14px;
+  margin-top: 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-border);
+  background: var(--input-bg);
+  color: var(--fg);
+  font-family: inherit;
+  font-weight: 400;
+  font-size: 0.95rem;
+  text-align: left;
+  position: relative;
 }
 
-.select-wrap select {
-  padding-right: 34px;
+.multiselect-summary.is-placeholder {
+  color: var(--muted);
+}
+
+.multiselect-summary::after {
+  content: "⌄";
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.multiselect-panel {
+  margin-top: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+}
+
+.multiselect-panel[hidden] { display: none; }
+
+.multiselect-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.multiselect-option:last-child {
+  border-bottom: none;
+}
+
+.multiselect-option input {
+  width: auto;
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .nested-group {

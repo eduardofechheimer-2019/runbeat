@@ -105,6 +105,19 @@ export async function getPlaybackState() {
   return request("/me/player");
 }
 
+// Pausa o dispositivo ativo do usuário — chamada quando o "Pause" do
+// RunBeat é apertado, já que ele só controlava a troca de faixa até aqui
+// (o áudio do Spotify continuava tocando normalmente).
+export async function pausePlayback() {
+  try {
+    await request("/me/player/pause", { method: "PUT" });
+  } catch (err) {
+    // Sem dispositivo ativo = nada tocando pra pausar mesmo; ignora.
+    if (err.status === 404) return;
+    throw err;
+  }
+}
+
 // Toca uma faixa imediatamente no dispositivo ativo do usuário (o app Spotify
 // do celular, por ex.) — chamada automática do motor de matching, sem
 // intervenção manual.

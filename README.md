@@ -16,38 +16,39 @@ variações de intensidade `--accent-soft`/`--accent-strong`) em vez do verde
 do Spotify — usada em botões, ícone do app e nos indicadores numerados dos
 cartões. Os cartões (seções) têm fundo semitransparente com desfoque
 (`backdrop-filter`), deixando a textura do fundo aparecer sutilmente atrás
-do conteúdo.
+do conteúdo. O logo (`icon.svg`) aparece ao lado do nome "RunBeat" no
+cabeçalho, que fica com um respiro extra no topo (`env(safe-area-inset-top)`)
+pra não ficar atrás do relógio/notch do celular.
 
 ## Abrindo o app
 
-Toda vez que o app abre, aparece por ~1,5s uma tela de splash com o ícone do
+Toda vez que o app abre, aparece por ~1,2s uma tela de splash com o ícone do
 RunBeat em fade-in no meio da tela — depois some sozinha, sem precisar de
-toque nenhum, revelando o cartão 1 **centralizado na tela** (o cabeçalho
-"RunBeat" ainda nem apareceu nesse momento).
+toque nenhum, revelando o cabeçalho e o cartão 1, já nas posições finais
+deles na página (sem nenhuma dança de centralização/recuo do cabeçalho).
 
 Depois disso, os 4 cartões (Conectar, Músicas, Ritmo, Corrida) ficam
 empilhados na mesma página, um de cada vez em destaque, sempre com a mesma
-sequência de transição: ao concluir, o cartão mostra um flash de
-confirmação (✓ verde) — ainda com a aparência normal, em destaque, sem
-nada mais mudar na tela — por um segundo, e **só depois** desse um
-segundo o cartão recua "sem destaque" (cinza, controles desabilitados) e o
-próximo aparece. Os dois nunca acontecem ao mesmo tempo — o próximo cartão
-só é revelado depois que o anterior termina de recuar, pra sequência ficar
-clara e perceptível, não uma trocação instantânea:
+sequência de transição: depois da ação final do passo, o app espera **1,5s**
+em silêncio e só então mostra um flash de confirmação (✓ verde) — ainda com
+a aparência normal, em destaque — por meio segundo, e **só depois** desse
+meio segundo o cartão recua "sem destaque" (cinza, controles desabilitados)
+e o próximo aparece. Os dois nunca acontecem ao mesmo tempo — o próximo
+cartão só é revelado depois que o anterior termina de recuar, pra sequência
+ficar clara e perceptível, não uma trocação instantânea:
 
 1. **Cartão 1 — Conectar ao Spotify.** Só esse botão. Se a conta já estava
-   conectada de uma visita anterior, o cartão ainda aparece centralizado
-   mostrando "Conectado ao Spotify" e passa pela mesma sequência (check,
-   um segundo, recuo) — o usuário sempre vê a confirmação, mesmo sem
-   precisar tocar em nada. É só nesse instante (cartão 1 concluído) que o
-   cabeçalho "RunBeat" aparece (fade-in) e a tela deixa de ficar
-   centralizada, virando a lista rolável normal pros cartões seguintes.
-2. **Cartão 2 — Escolha a fonte de músicas.** Um dropdown só decide a fonte:
+   conectada de uma visita anterior, o cartão passa pela mesma sequência
+   (espera, check, recuo) mostrando "Conectado ao Spotify" — o usuário
+   sempre vê a confirmação, mesmo sem precisar tocar em nada.
+2. **Cartão 2 — Escolha as Playlists.** Um multiseletor próprio (não o
+   "N Items"/"..." nativo do iOS, que não dá pra estilizar) decide a fonte:
    "Analisar toda a minha biblioteca" (primeira opção, exclusiva — marcar
    ela desmarca qualquer playlist específica, e vice-versa), o Catálogo
    RunBeat, e as playlists pessoais, todas atrás de um botão único
-   ("Analisar BPM das faixas selecionadas"). Assim que o pool sai com
-   alguma faixa, esse cartão também recua e o cartão 3 assume.
+   ("Analisar BPM das faixas selecionadas"). O resumo mostra "Selecione"
+   sem nada marcado, e "N Items" depois de qualquer seleção. Assim que o
+   pool sai com alguma faixa, esse cartão também recua e o cartão 3 assume.
 3. **Cartão 3 — Escolha o ritmo.** Último cartão — um botão **"Continuar"**
    recua ele também e revela o cartão de corrida. Nesse momento os cartões
    1, 2 e 3 **condensam** juntos numa linha cada (só o título, sem o
@@ -125,13 +126,21 @@ dependem.
    sem precisar perguntar ao Spotify "quanto falta".
 5. Os botões **⏮ Anterior** / **⏭ Próxima** (visíveis só com a corrida em
    andamento) deixam pular manualmente pra faixa seguinte do pool (recalcula
-   pela cadência atual) ou voltar pra última que já tocou nessa corrida.
+   pela cadência atual) ou voltar pra última que já tocou nessa corrida. O
+   botão central **Pause** também pausa de verdade o dispositivo ativo do
+   Spotify (`PUT /me/player/pause`) — antes só parava a troca automática de
+   faixa, mas o áudio continuava tocando.
 6. Se o Spotify não tiver nenhum dispositivo ativo (app fechado, nada
    tocando ainda), aparece um botão **"▶ Abrir Spotify e começar"** — um
    toque só abre o app Spotify direto na faixa certa e já começa a tocar
    sozinho (link `spotify:track:<id>`, que só precisa de 1 toque porque
-   nada mais está tocando ainda). O botão some assim que a próxima troca de
-   faixa funcionar normalmente.
+   nada mais está tocando ainda). Abrir esse link tira o RunBeat de primeiro
+   plano — não tem como o próprio app trazer o celular de volta pra ele
+   sozinho (restrição do sistema, não só do navegador). Quando o usuário
+   volta pro RunBeat manualmente, o app detecta e tenta tocar de novo na
+   hora (em vez de esperar o intervalo normal de retry), então na prática
+   basta voltar pro RunBeat que a troca de faixa já retoma sozinha. O botão
+   some assim que a próxima troca de faixa funcionar normalmente.
 7. Enquanto a corrida está ativa, o app pede à tela pra não apagar sozinha
    (Screen Wake Lock). Isso evita que o navegador pare de rodar em segundo
    plano por *timeout* automático de tela. **Limite importante**: isso não

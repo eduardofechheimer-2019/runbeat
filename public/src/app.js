@@ -24,9 +24,11 @@ const el = {
   cardPace: document.getElementById("card-pace"),
   cardRun: document.getElementById("card-run"),
   playlistSelect: document.getElementById("playlist-select"),
+  playlistSummaryBtn: document.getElementById("playlist-summary-btn"),
   playlistOptionsPanel: document.getElementById("playlist-options-panel"),
   catalogGenreGroup: document.getElementById("catalog-genre-group"),
   catalogGenreSelect: document.getElementById("catalog-genre-select"),
+  catalogGenreSummaryBtn: document.getElementById("catalog-genre-summary-btn"),
   catalogGenreOptionsPanel: document.getElementById("catalog-genre-options-panel"),
   buildPoolBtn: document.getElementById("build-pool-btn"),
   poolProgress: document.getElementById("pool-progress"),
@@ -374,18 +376,12 @@ async function loadPlaylistOptions() {
     el.playlistSelect.appendChild(opt);
   }
 
-  let saved = [];
-  try {
-    saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.sourcePlaylist) || "[]");
-  } catch {
-    saved = [];
-  }
-  for (const opt of el.playlistSelect.options) {
-    opt.selected = saved.includes(opt.value);
-  }
+  // Nenhuma opção começa marcada — o passo 2 sempre abre em branco, sem
+  // herdar seleção de uma visita anterior.
   syncPlaylistSelectionSnapshot();
   updateCatalogGenreVisibility();
   renderMultiselectPanel(el.playlistSelect, el.playlistOptionsPanel);
+  updateMultiselectSummary(el.playlistSelect, el.playlistSummaryBtn);
 }
 
 // "Toda a minha biblioteca" é uma opção exclusiva dentro do <select
@@ -461,6 +457,20 @@ function wireMultiselectPanel(selectEl, panelEl) {
   });
 }
 
+// Campo fechado por padrão — o resumo mostra "Selecione" sem nada marcado,
+// ou a contagem depois de qualquer seleção; tocar nele abre/fecha o painel.
+function updateMultiselectSummary(selectEl, summaryBtnEl) {
+  const n = selectEl.selectedOptions.length;
+  summaryBtnEl.textContent = n === 0 ? "Selecione" : `${n} Items`;
+  summaryBtnEl.classList.toggle("is-placeholder", n === 0);
+}
+
+function wireMultiselectSummary(summaryBtnEl, panelEl) {
+  summaryBtnEl.addEventListener("click", () => {
+    panelEl.hidden = !panelEl.hidden;
+  });
+}
+
 let catalogGenresLoaded = false;
 
 // Mostra/esconde o dropdown de gêneros do Catálogo RunBeat conforme ele
@@ -490,16 +500,9 @@ async function populateCatalogGenreOptions() {
     el.catalogGenreSelect.appendChild(opt);
   }
 
-  let saved = [];
-  try {
-    saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.catalogGenres) || "[]");
-  } catch {
-    saved = [];
-  }
-  for (const opt of el.catalogGenreSelect.options) {
-    opt.selected = saved.includes(opt.value);
-  }
+  // Idem: nenhum gênero começa marcado.
   renderMultiselectPanel(el.catalogGenreSelect, el.catalogGenreOptionsPanel);
+  updateMultiselectSummary(el.catalogGenreSelect, el.catalogGenreSummaryBtn);
 }
 
 function selectedCatalogGenres() {
@@ -571,12 +574,7 @@ async function buildPool() {
     el.poolProgress.textContent = "Escolha ao menos uma playlist.";
     return;
   }
-  localStorage.setItem(STORAGE_KEYS.sourcePlaylist, JSON.stringify(selectedOptions.map((o) => o.value)));
-
   const catalogGenres = selectedCatalogGenres();
-  if (selectedOptions.some((o) => o.value === "__catalog__")) {
-    localStorage.setItem(STORAGE_KEYS.catalogGenres, JSON.stringify(catalogGenres));
-  }
 
   el.buildPoolBtn.disabled = true;
   el.poolProgress.hidden = false;
@@ -824,9 +822,15 @@ async function init() {
     enforceLibraryExclusivity();
     updateCatalogGenreVisibility();
     syncMultiselectSelection(el.playlistSelect, el.playlistOptionsPanel);
+    updateMultiselectSummary(el.playlistSelect, el.playlistSummaryBtn);
+  });
+  el.catalogGenreSelect.addEventListener("change", () => {
+    updateMultiselectSummary(el.catalogGenreSelect, el.catalogGenreSummaryBtn);
   });
   wireMultiselectPanel(el.playlistSelect, el.playlistOptionsPanel);
   wireMultiselectPanel(el.catalogGenreSelect, el.catalogGenreOptionsPanel);
+  wireMultiselectSummary(el.playlistSummaryBtn, el.playlistOptionsPanel);
+  wireMultiselectSummary(el.catalogGenreSummaryBtn, el.catalogGenreOptionsPanel);
 
   // Splash de abertura: ícone em fade-in por ~1,2s, depois some sozinho e
   // revela a tela certa — sem depender de toque nenhum do usuário. O timer
@@ -842,13 +846,6 @@ async function init() {
   try {
     const justLoggedIn = await auth.handleRedirectCallback();
     alreadyConnected = justLoggedIn || auth.isLoggedIn();
-    // Um login novo (não só a sessão anterior continuando) reseta a
-    // seleção de playlists/gêneros salva — evita que a escolha de uma
-    // conta Spotify vaze pra próxima que logar nesse mesmo aparelho.
-    if (justLoggedIn) {
-      localStorage.removeItem(STORAGE_KEYS.sourcePlaylist);
-      localStorage.removeItem(STORAGE_KEYS.catalogGenres);
-    }
   } catch (err) {
     loginErrorMessage = err.message;
   }
@@ -877,6 +874,8 @@ async function init() {
   });
 
   el.buildPoolBtn.addEventListener("click", () => {
+    el.playlistOptionsPanel.hidden = true;
+    el.catalogGenreOptionsPanel.hidden = true;
     const isLibraryMode = Array.from(el.playlistSelect.selectedOptions).some(
       (o) => o.value === "__library__"
     );

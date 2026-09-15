@@ -258,18 +258,50 @@ button:disabled {
 
 /* --- Multiselect de playlists/gêneros (substitui o <select multiple>
    nativo, cujo resumo "N Items"/"..." no iOS é chrome do sistema e não pode
-   ser restilizado ou traduzido — sempre expandido, do jeito "maior" que já
-   era antes de existir esse controle próprio. O <select> original continua
-   no DOM, só escondido, servindo de "banco de dados" pra toda a lógica
-   existente de seleção/exclusividade em app.js). */
-.multiselect-panel {
+   ser restilizado ou traduzido). Campo fechado por padrão — o painel só
+   abre quando o campo é tocado, igual um dropdown comum. O <select>
+   original continua no DOM, só escondido, servindo de "banco de dados" pra
+   toda a lógica existente de seleção/exclusividade em app.js). */
+.multiselect-summary {
+  width: 100%;
+  padding: 13px 34px 13px 14px;
   margin-top: 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-border);
+  background: var(--input-bg);
+  color: var(--fg);
+  font-family: inherit;
+  font-weight: 400;
+  font-size: 0.95rem;
+  text-align: left;
+  position: relative;
+}
+
+.multiselect-summary.is-placeholder {
+  color: var(--muted);
+}
+
+.multiselect-summary::after {
+  content: "⌄";
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.multiselect-panel {
+  margin-top: 6px;
   max-height: 260px;
   overflow-y: auto;
   border: 1px solid var(--card-border);
   border-radius: var(--radius-sm);
   background: var(--input-bg);
 }
+
+.multiselect-panel[hidden] { display: none; }
 
 .multiselect-option {
   padding: 14px 16px;

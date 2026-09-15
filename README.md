@@ -41,17 +41,18 @@ uma trocação instantânea:
    conectada de uma visita anterior, o cartão passa pela mesma sequência
    (check, 1,5s, recuo) mostrando "Conectado ao Spotify" — o usuário sempre
    vê a confirmação, mesmo sem precisar tocar em nada.
-2. **Cartão 2 — Escolha as Playlists.** Um multiseletor próprio, sempre
-   expandido (não o "N Items"/"..." nativo do iOS pra `<select multiple>`,
-   que não dá pra estilizar nem traduzir) decide a fonte: "Toda a
-   biblioteca" (primeira opção, exclusiva — marcar ela desmarca qualquer
-   playlist específica, e vice-versa), "Playlist RunBeat" (o Catálogo), e as
-   playlists de propriedade do próprio usuário (playlists de outras contas
-   que ele só segue/colabora não aparecem na lista, embora continuem
-   incluídas em "Toda a biblioteca") — todas atrás de um botão único
-   ("Analisar BPM das faixas selecionadas"). Um novo login (não a mesma
-   sessão continuando) reseta essa seleção, pra não vazar a escolha de uma
-   conta Spotify pra próxima que logar no mesmo aparelho. Assim que o pool
+2. **Cartão 2 — Escolha as Playlists.** Um multiseletor próprio (não o
+   "N Items"/"..." nativo do iOS pra `<select multiple>`, que não dá pra
+   estilizar nem traduzir) decide a fonte: campo fechado por padrão
+   ("Selecione"), abre a lista só quando tocado, marcar/desmarcar destaca a
+   linha inteira com a cor de destaque — igual um dropdown comum, sempre
+   começando em branco (nenhuma opção pré-marcada, nem de uma visita
+   anterior). As opções: "Toda a biblioteca" (primeira, exclusiva — marcar
+   ela desmarca qualquer playlist específica, e vice-versa), "Playlist
+   RunBeat" (o Catálogo), e as playlists de propriedade do próprio usuário
+   (playlists de outras contas que ele só segue/colabora não aparecem na
+   lista, embora continuem incluídas em "Toda a biblioteca") — todas atrás
+   de um botão único ("Analisar BPM das faixas selecionadas"). Assim que o pool
    sai com alguma faixa, esse cartão também recua e o cartão 3 assume.
 3. **Cartão 3 — Escolha o ritmo.** Último cartão — um botão **"Continuar"**
    recua ele também e revela o cartão de corrida. Nesse momento os cartões
@@ -101,8 +102,8 @@ dependem.
    inteira"), o pool junta as fontes sem repetir faixa que apareça em mais
    de uma — e o BPM já resolvido fica em cache local, então analisar de novo
    (com mais fontes) não perde o que já foi calculado antes. Essa seleção
-   (playlists e gêneros) fica salva entre visitas, mas é resetada
-   automaticamente sempre que um login novo acontece.
+   de playlists/gêneros nunca fica salva entre visitas — o passo 2 sempre
+   abre em branco, e a escolha de fonte é feita de novo a cada corrida.
 2. O app resolve o BPM de cada faixa dessa fonte via [ReccoBeats](https://reccobeats.com/)
    (API gratuita, sem chave, que aceita o ID da faixa do Spotify diretamente
    — sem risco de casar com a versão errada de uma música).

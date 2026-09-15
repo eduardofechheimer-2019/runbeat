@@ -45,11 +45,13 @@
   <section id="card-library" class="step-card" data-step="library" hidden>
     <h2><span class="step-badge">2</span> Escolha as Playlists <span class="step-check" hidden>✓</span></h2>
     <label>Playlists (toque pra marcar mais de uma)</label>
-    <div id="playlist-options-panel" class="multiselect-panel"></div>
+    <button type="button" id="playlist-summary-btn" class="multiselect-summary" aria-haspopup="listbox">Selecione</button>
+    <div id="playlist-options-panel" class="multiselect-panel" hidden></div>
     <select id="playlist-select" multiple size="6" hidden></select>
     <div id="catalog-genre-group" class="nested-group" hidden>
       <label>Gêneros Playlist RunBeat</label>
-      <div id="catalog-genre-options-panel" class="multiselect-panel"></div>
+      <button type="button" id="catalog-genre-summary-btn" class="multiselect-summary" aria-haspopup="listbox">Selecione</button>
+      <div id="catalog-genre-options-panel" class="multiselect-panel" hidden></div>
       <select id="catalog-genre-select" multiple size="6" hidden></select>
     </div>
     <button id="build-pool-btn">Analisar BPM das faixas selecionadas</button>

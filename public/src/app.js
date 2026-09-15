@@ -420,44 +420,43 @@ function enforceLibraryExclusivity() {
 
 // --- Multiselect de playlists/gêneros (UI própria por cima do <select
 // multiple>, sempre expandida — o resumo nativo "N Items"/"..." do iOS pra
-// <select multiple> não pode ser restilizado nem traduzido). O <select>
-// original continua escondido no DOM como "fonte da verdade" — toda a
-// lógica de seleção/exclusividade continua lendo e escrevendo nele
-// normalmente; as funções abaixo só espelham o estado dele numa lista de
-// checkboxes que a gente controla de verdade.
+// <select multiple> não pode ser restilizado nem traduzido). Cada linha é
+// tocável por inteiro e marca/desmarca com destaque de cor, igual à
+// listagem de um <select multiple> nativo — sem ícone de checkbox
+// separado. O <select> original continua escondido no DOM como "fonte da
+// verdade" — toda a lógica de seleção/exclusividade continua lendo e
+// escrevendo nele normalmente; as funções abaixo só espelham o estado dele.
 function renderMultiselectPanel(selectEl, panelEl) {
   panelEl.innerHTML = "";
   for (const opt of selectEl.options) {
-    const row = document.createElement("label");
+    const row = document.createElement("div");
     row.className = "multiselect-option";
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.dataset.value = opt.value;
-    checkbox.checked = opt.selected;
-    const span = document.createElement("span");
-    span.textContent = opt.textContent;
-    row.append(checkbox, span);
+    row.dataset.value = opt.value;
+    row.textContent = opt.textContent;
+    row.classList.toggle("is-selected", opt.selected);
     panelEl.appendChild(row);
   }
 }
 
-function syncMultiselectChecks(selectEl, panelEl) {
+function syncMultiselectSelection(selectEl, panelEl) {
   const selected = new Set(Array.from(selectEl.selectedOptions).map((o) => o.value));
-  for (const checkbox of panelEl.querySelectorAll("input[type=checkbox]")) {
-    checkbox.checked = selected.has(checkbox.dataset.value);
+  for (const row of panelEl.querySelectorAll(".multiselect-option")) {
+    row.classList.toggle("is-selected", selected.has(row.dataset.value));
   }
 }
 
-// Delega o clique nos checkboxes do painel de volta pro <select> escondido
-// (marca/desmarca a option correspondente e dispara "change" nele), assim
-// toda a lógica existente que escuta esse "change" continua funcionando
-// sem saber que a interação veio de um checkbox e não do <select> nativo.
+// Delega o toque em qualquer linha do painel de volta pro <select>
+// escondido (marca/desmarca a option correspondente e dispara "change"
+// nele), assim toda a lógica existente que escuta esse "change" continua
+// funcionando sem saber que a interação veio do painel e não do <select>
+// nativo.
 function wireMultiselectPanel(selectEl, panelEl) {
-  panelEl.addEventListener("change", (event) => {
-    const checkbox = event.target;
-    if (checkbox.type !== "checkbox") return;
-    const opt = Array.from(selectEl.options).find((o) => o.value === checkbox.dataset.value);
-    if (opt) opt.selected = checkbox.checked;
+  panelEl.addEventListener("click", (event) => {
+    const row = event.target.closest(".multiselect-option");
+    if (!row) return;
+    const opt = Array.from(selectEl.options).find((o) => o.value === row.dataset.value);
+    if (!opt) return;
+    opt.selected = !opt.selected;
     selectEl.dispatchEvent(new Event("change"));
   });
 }
@@ -824,7 +823,7 @@ async function init() {
   el.playlistSelect.addEventListener("change", () => {
     enforceLibraryExclusivity();
     updateCatalogGenreVisibility();
-    syncMultiselectChecks(el.playlistSelect, el.playlistOptionsPanel);
+    syncMultiselectSelection(el.playlistSelect, el.playlistOptionsPanel);
   });
   wireMultiselectPanel(el.playlistSelect, el.playlistOptionsPanel);
   wireMultiselectPanel(el.catalogGenreSelect, el.catalogGenreOptionsPanel);

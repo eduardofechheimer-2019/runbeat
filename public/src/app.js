@@ -24,10 +24,10 @@ const el = {
   cardPace: document.getElementById("card-pace"),
   cardRun: document.getElementById("card-run"),
   playlistSelect: document.getElementById("playlist-select"),
-  playlistSummaryBtn: document.getElementById("playlist-summary-btn"),
   playlistOptionsPanel: document.getElementById("playlist-options-panel"),
   catalogGenreGroup: document.getElementById("catalog-genre-group"),
   catalogGenreSelect: document.getElementById("catalog-genre-select"),
+  catalogGenreOptionsPanel: document.getElementById("catalog-genre-options-panel"),
   buildPoolBtn: document.getElementById("build-pool-btn"),
   poolProgress: document.getElementById("pool-progress"),
   modeSelect: document.getElementById("mode-select"),
@@ -114,26 +114,20 @@ function revealStep(stepKey, idx) {
   STEP_CARDS[stepKey].scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-// Depois da ação final do passo (ex. clicar "Conectar", "Continuar"), esse
-// é o tempo que o app espera EM SILÊNCIO, sem nada novo na tela, antes de
-// mostrar o sinal verde de confirmação.
-const STEP_PRE_CHECK_DELAY_MS = 1500;
-// Quanto tempo o sinal verde fica visível antes do cartão recuar pra
-// "sem destaque" (ver .step-card[data-state="completed"] no CSS) e só
-// ENTÃO chamar `onDone` (que revela o próximo cartão).
-const STEP_CHECK_HOLD_MS = 500;
+// Quanto tempo o sinal verde de passo concluído fica visível antes do
+// cartão recuar pra "sem destaque" (ver .step-card[data-state="completed"]
+// no CSS) e só ENTÃO chamar `onDone` (que revela o próximo cartão).
+const STEP_CHECK_HOLD_MS = 1500;
 
 function finishStep(card, onDone) {
   const check = card.querySelector(".step-check");
+  if (check) check.hidden = false;
   setTimeout(() => {
-    if (check) check.hidden = false;
-    setTimeout(() => {
-      if (check) check.hidden = true;
-      card.dataset.state = "completed";
-      setStepControlsDisabled(card, true);
-      onDone();
-    }, STEP_CHECK_HOLD_MS);
-  }, STEP_PRE_CHECK_DELAY_MS);
+    if (check) check.hidden = true;
+    card.dataset.state = "completed";
+    setStepControlsDisabled(card, true);
+    onDone();
+  }, STEP_CHECK_HOLD_MS);
 }
 
 // Tocar no título de um cartão já concluído (sem destaque) reabre ele pra
@@ -353,27 +347,30 @@ function releaseWakeLock() {
 async function loadPlaylistOptions() {
   el.playlistSelect.innerHTML = "";
 
-  // "Toda a minha biblioteca" é uma opção exclusiva (ver
-  // enforceLibraryExclusivity) — vem primeiro, depois o Catálogo RunBeat,
-  // depois as playlists pessoais. "Músicas Curtidas" não aparece mais como
+  // "Toda a biblioteca" é uma opção exclusiva (ver enforceLibraryExclusivity)
+  // — vem primeiro, depois a Playlist RunBeat (Catálogo), depois as
+  // playlists próprias do usuário. "Músicas Curtidas" não aparece mais como
   // opção separada (já entra dentro de "toda a biblioteca").
   const libraryOpt = document.createElement("option");
   libraryOpt.value = "__library__";
-  libraryOpt.textContent = "Analisar toda a minha biblioteca";
+  libraryOpt.textContent = "Toda a biblioteca";
   el.playlistSelect.appendChild(libraryOpt);
 
   const catalogOpt = document.createElement("option");
   catalogOpt.value = "__catalog__";
-  catalogOpt.textContent = "Catálogo RunBeat (~8 mil músicas por BPM e gênero)";
+  catalogOpt.textContent = "Playlist RunBeat";
   el.playlistSelect.appendChild(catalogOpt);
 
   const myUserId = await api.getCurrentUserId();
   const playlists = await api.getMyPlaylists();
-  for (const p of playlists) {
+  // Só as playlists de propriedade do usuário aparecem na lista — playlists
+  // de outras contas que ele segue/colabora ficam de fora (continuam
+  // incluídas em "Toda a biblioteca", só não viram opção individual aqui).
+  const ownPlaylists = playlists.filter((p) => p.ownerId === myUserId);
+  for (const p of ownPlaylists) {
     const opt = document.createElement("option");
     opt.value = p.id;
-    const ownerTag = p.ownerId && p.ownerId !== myUserId ? ` — de ${p.ownerName}` : "";
-    opt.textContent = `${p.name} (${p.trackCount})${ownerTag}`;
+    opt.textContent = `${p.name} (${p.trackCount})`;
     el.playlistSelect.appendChild(opt);
   }
 
@@ -388,8 +385,7 @@ async function loadPlaylistOptions() {
   }
   syncPlaylistSelectionSnapshot();
   updateCatalogGenreVisibility();
-  renderPlaylistOptionsPanel();
-  updatePlaylistSummary();
+  renderMultiselectPanel(el.playlistSelect, el.playlistOptionsPanel);
 }
 
 // "Toda a minha biblioteca" é uma opção exclusiva dentro do <select
@@ -422,15 +418,16 @@ function enforceLibraryExclusivity() {
   syncPlaylistSelectionSnapshot();
 }
 
-// --- Multiselect de playlists (UI própria por cima do <select multiple>) ---
-// O <select id="playlist-select"> continua escondido no DOM como "fonte da
-// verdade" — toda a lógica de seleção/exclusividade acima continua lendo e
-// escrevendo nele normalmente. As funções abaixo só espelham o estado dele
-// numa lista de checkboxes que a gente controla de verdade (o resumo nativo
-// "N Items"/"..." do iOS pra <select multiple> não pode ser restilizado).
-function renderPlaylistOptionsPanel() {
-  el.playlistOptionsPanel.innerHTML = "";
-  for (const opt of el.playlistSelect.options) {
+// --- Multiselect de playlists/gêneros (UI própria por cima do <select
+// multiple>, sempre expandida — o resumo nativo "N Items"/"..." do iOS pra
+// <select multiple> não pode ser restilizado nem traduzido). O <select>
+// original continua escondido no DOM como "fonte da verdade" — toda a
+// lógica de seleção/exclusividade continua lendo e escrevendo nele
+// normalmente; as funções abaixo só espelham o estado dele numa lista de
+// checkboxes que a gente controla de verdade.
+function renderMultiselectPanel(selectEl, panelEl) {
+  panelEl.innerHTML = "";
+  for (const opt of selectEl.options) {
     const row = document.createElement("label");
     row.className = "multiselect-option";
     const checkbox = document.createElement("input");
@@ -440,21 +437,29 @@ function renderPlaylistOptionsPanel() {
     const span = document.createElement("span");
     span.textContent = opt.textContent;
     row.append(checkbox, span);
-    el.playlistOptionsPanel.appendChild(row);
+    panelEl.appendChild(row);
   }
 }
 
-function syncPlaylistOptionsPanelChecks() {
-  const selected = new Set(Array.from(el.playlistSelect.selectedOptions).map((o) => o.value));
-  for (const checkbox of el.playlistOptionsPanel.querySelectorAll("input[type=checkbox]")) {
+function syncMultiselectChecks(selectEl, panelEl) {
+  const selected = new Set(Array.from(selectEl.selectedOptions).map((o) => o.value));
+  for (const checkbox of panelEl.querySelectorAll("input[type=checkbox]")) {
     checkbox.checked = selected.has(checkbox.dataset.value);
   }
 }
 
-function updatePlaylistSummary() {
-  const n = el.playlistSelect.selectedOptions.length;
-  el.playlistSummaryBtn.textContent = n === 0 ? "Selecione" : `${n} Items`;
-  el.playlistSummaryBtn.classList.toggle("is-placeholder", n === 0);
+// Delega o clique nos checkboxes do painel de volta pro <select> escondido
+// (marca/desmarca a option correspondente e dispara "change" nele), assim
+// toda a lógica existente que escuta esse "change" continua funcionando
+// sem saber que a interação veio de um checkbox e não do <select> nativo.
+function wireMultiselectPanel(selectEl, panelEl) {
+  panelEl.addEventListener("change", (event) => {
+    const checkbox = event.target;
+    if (checkbox.type !== "checkbox") return;
+    const opt = Array.from(selectEl.options).find((o) => o.value === checkbox.dataset.value);
+    if (opt) opt.selected = checkbox.checked;
+    selectEl.dispatchEvent(new Event("change"));
+  });
 }
 
 let catalogGenresLoaded = false;
@@ -495,6 +500,7 @@ async function populateCatalogGenreOptions() {
   for (const opt of el.catalogGenreSelect.options) {
     opt.selected = saved.includes(opt.value);
   }
+  renderMultiselectPanel(el.catalogGenreSelect, el.catalogGenreOptionsPanel);
 }
 
 function selectedCatalogGenres() {
@@ -818,21 +824,10 @@ async function init() {
   el.playlistSelect.addEventListener("change", () => {
     enforceLibraryExclusivity();
     updateCatalogGenreVisibility();
-    syncPlaylistOptionsPanelChecks();
-    updatePlaylistSummary();
+    syncMultiselectChecks(el.playlistSelect, el.playlistOptionsPanel);
   });
-
-  el.playlistSummaryBtn.addEventListener("click", () => {
-    el.playlistOptionsPanel.hidden = !el.playlistOptionsPanel.hidden;
-  });
-
-  el.playlistOptionsPanel.addEventListener("change", (event) => {
-    const checkbox = event.target;
-    if (checkbox.type !== "checkbox") return;
-    const opt = Array.from(el.playlistSelect.options).find((o) => o.value === checkbox.dataset.value);
-    if (opt) opt.selected = checkbox.checked;
-    el.playlistSelect.dispatchEvent(new Event("change"));
-  });
+  wireMultiselectPanel(el.playlistSelect, el.playlistOptionsPanel);
+  wireMultiselectPanel(el.catalogGenreSelect, el.catalogGenreOptionsPanel);
 
   // Splash de abertura: ícone em fade-in por ~1,2s, depois some sozinho e
   // revela a tela certa — sem depender de toque nenhum do usuário. O timer
@@ -848,6 +843,13 @@ async function init() {
   try {
     const justLoggedIn = await auth.handleRedirectCallback();
     alreadyConnected = justLoggedIn || auth.isLoggedIn();
+    // Um login novo (não só a sessão anterior continuando) reseta a
+    // seleção de playlists/gêneros salva — evita que a escolha de uma
+    // conta Spotify vaze pra próxima que logar nesse mesmo aparelho.
+    if (justLoggedIn) {
+      localStorage.removeItem(STORAGE_KEYS.sourcePlaylist);
+      localStorage.removeItem(STORAGE_KEYS.catalogGenres);
+    }
   } catch (err) {
     loginErrorMessage = err.message;
   }
@@ -876,7 +878,6 @@ async function init() {
   });
 
   el.buildPoolBtn.addEventListener("click", () => {
-    el.playlistOptionsPanel.hidden = true;
     const isLibraryMode = Array.from(el.playlistSelect.selectedOptions).some(
       (o) => o.value === "__library__"
     );

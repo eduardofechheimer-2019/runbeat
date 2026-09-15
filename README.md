@@ -29,26 +29,30 @@ deles na página (sem nenhuma dança de centralização/recuo do cabeçalho).
 
 Depois disso, os 4 cartões (Conectar, Músicas, Ritmo, Corrida) ficam
 empilhados na mesma página, um de cada vez em destaque, sempre com a mesma
-sequência de transição: depois da ação final do passo, o app espera **1,5s**
-em silêncio e só então mostra um flash de confirmação (✓ verde) — ainda com
-a aparência normal, em destaque — por meio segundo, e **só depois** desse
-meio segundo o cartão recua "sem destaque" (cinza, controles desabilitados)
-e o próximo aparece. Os dois nunca acontecem ao mesmo tempo — o próximo
-cartão só é revelado depois que o anterior termina de recuar, pra sequência
-ficar clara e perceptível, não uma trocação instantânea:
+sequência de transição: assim que a ação final do passo acontece, o app
+mostra um flash de confirmação (✓ verde) — ainda com a aparência normal, em
+destaque — por **1,5s**, e **só depois** desse 1,5s o cartão recua "sem
+destaque" (cinza, controles desabilitados) e o próximo aparece. Os dois
+nunca acontecem ao mesmo tempo — o próximo cartão só é revelado depois que
+o anterior termina de recuar, pra sequência ficar clara e perceptível, não
+uma trocação instantânea:
 
 1. **Cartão 1 — Conectar ao Spotify.** Só esse botão. Se a conta já estava
    conectada de uma visita anterior, o cartão passa pela mesma sequência
-   (espera, check, recuo) mostrando "Conectado ao Spotify" — o usuário
-   sempre vê a confirmação, mesmo sem precisar tocar em nada.
-2. **Cartão 2 — Escolha as Playlists.** Um multiseletor próprio (não o
-   "N Items"/"..." nativo do iOS, que não dá pra estilizar) decide a fonte:
-   "Analisar toda a minha biblioteca" (primeira opção, exclusiva — marcar
-   ela desmarca qualquer playlist específica, e vice-versa), o Catálogo
-   RunBeat, e as playlists pessoais, todas atrás de um botão único
-   ("Analisar BPM das faixas selecionadas"). O resumo mostra "Selecione"
-   sem nada marcado, e "N Items" depois de qualquer seleção. Assim que o
-   pool sai com alguma faixa, esse cartão também recua e o cartão 3 assume.
+   (check, 1,5s, recuo) mostrando "Conectado ao Spotify" — o usuário sempre
+   vê a confirmação, mesmo sem precisar tocar em nada.
+2. **Cartão 2 — Escolha as Playlists.** Um multiseletor próprio, sempre
+   expandido (não o "N Items"/"..." nativo do iOS pra `<select multiple>`,
+   que não dá pra estilizar nem traduzir) decide a fonte: "Toda a
+   biblioteca" (primeira opção, exclusiva — marcar ela desmarca qualquer
+   playlist específica, e vice-versa), "Playlist RunBeat" (o Catálogo), e as
+   playlists de propriedade do próprio usuário (playlists de outras contas
+   que ele só segue/colabora não aparecem na lista, embora continuem
+   incluídas em "Toda a biblioteca") — todas atrás de um botão único
+   ("Analisar BPM das faixas selecionadas"). Um novo login (não a mesma
+   sessão continuando) reseta essa seleção, pra não vazar a escolha de uma
+   conta Spotify pra próxima que logar no mesmo aparelho. Assim que o pool
+   sai com alguma faixa, esse cartão também recua e o cartão 3 assume.
 3. **Cartão 3 — Escolha o ritmo.** Último cartão — um botão **"Continuar"**
    recua ele também e revela o cartão de corrida. Nesse momento os cartões
    1, 2 e 3 **condensam** juntos numa linha cada (só o título, sem o
@@ -78,24 +82,27 @@ dependem.
 ## Como funciona
 
 1. Você loga com sua conta Spotify (Premium — necessário pra controlar
-   playback pela API) e escolhe a fonte de faixas num único dropdown:
-   **"Analisar toda a minha biblioteca"** (primeira opção — junta
-   automaticamente todas as suas playlists e as Curtidas de uma vez; é
-   exclusiva, marcar ela desmarca qualquer outra escolha), o **"Catálogo
-   RunBeat"** — uma seleção própria de ~8 mil músicas com BPM e gênero já
-   classificados (marcando essa opção aparece um segundo dropdown pra
-   filtrar por gênero musical, ex. Rock, Pagode, Sertanejo, Funk — nenhum
-   gênero marcado usa o catálogo inteiro), e/ou uma ou mais playlists
-   pessoais. O Catálogo é útil pra quem não tem muitas playlists, ou pra
-   preencher faixas de BPM que suas próprias músicas não cobrem — cada
-   entrada já vem com o ID real da faixa no Spotify
-   (`public/data/runbeat-catalog.json`), sem precisar buscar por nome. Como
-   a curadoria tem uma data própria, algumas faixas podem não existir mais
-   no catálogo do Spotify — o app trata isso como falha normal e pula pra
-   próxima candidata. Em qualquer caso (fora do modo "biblioteca inteira"),
-   o pool junta as fontes sem repetir faixa que apareça em mais de uma — e
-   o BPM já resolvido fica em cache local, então analisar de novo (com mais
-   fontes) não perde o que já foi calculado antes.
+   playback pela API) e escolhe a fonte de faixas num único multiseletor:
+   **"Toda a biblioteca"** (primeira opção — junta automaticamente todas as
+   suas playlists e as Curtidas de uma vez; é exclusiva, marcar ela desmarca
+   qualquer outra escolha), **"Playlist RunBeat"** — uma seleção própria de
+   ~8 mil músicas com BPM e gênero já classificados (marcando essa opção
+   aparece um segundo painel pra filtrar por gênero musical, ex. Rock,
+   Pagode, Sertanejo, Funk — nenhum gênero marcado usa o catálogo inteiro),
+   e/ou uma ou mais playlists de propriedade do usuário (playlists de outras
+   contas que ele só segue/colabora não aparecem na lista, embora continuem
+   entrando em "Toda a biblioteca"). A Playlist RunBeat é útil pra quem não
+   tem muitas playlists, ou pra preencher faixas de BPM que suas próprias
+   músicas não cobrem — cada entrada já vem com o ID real da faixa no
+   Spotify (`public/data/runbeat-catalog.json`), sem precisar buscar por
+   nome. Como a curadoria tem uma data própria, algumas faixas podem não
+   existir mais no catálogo do Spotify — o app trata isso como falha normal
+   e pula pra próxima candidata. Em qualquer caso (fora do modo "biblioteca
+   inteira"), o pool junta as fontes sem repetir faixa que apareça em mais
+   de uma — e o BPM já resolvido fica em cache local, então analisar de novo
+   (com mais fontes) não perde o que já foi calculado antes. Essa seleção
+   (playlists e gêneros) fica salva entre visitas, mas é resetada
+   automaticamente sempre que um login novo acontece.
 2. O app resolve o BPM de cada faixa dessa fonte via [ReccoBeats](https://reccobeats.com/)
    (API gratuita, sem chave, que aceita o ID da faixa do Spotify diretamente
    — sem risco de casar com a versão errada de uma música).
@@ -134,13 +141,22 @@ dependem.
    tocando ainda), aparece um botão **"▶ Abrir Spotify e começar"** — um
    toque só abre o app Spotify direto na faixa certa e já começa a tocar
    sozinho (link `spotify:track:<id>`, que só precisa de 1 toque porque
-   nada mais está tocando ainda). Abrir esse link tira o RunBeat de primeiro
-   plano — não tem como o próprio app trazer o celular de volta pra ele
-   sozinho (restrição do sistema, não só do navegador). Quando o usuário
-   volta pro RunBeat manualmente, o app detecta e tenta tocar de novo na
-   hora (em vez de esperar o intervalo normal de retry), então na prática
-   basta voltar pro RunBeat que a troca de faixa já retoma sozinha. O botão
-   some assim que a próxima troca de faixa funcionar normalmente.
+   nada mais está tocando ainda). **Isso só é necessário nesse momento
+   inicial**, quando não existe nenhum dispositivo Spotify ativo pra API
+   comandar — depois que o Spotify vira o dispositivo ativo, toda troca de
+   faixa seguinte acontece direto pela API, sem precisar abrir o Spotify de
+   novo. Abrir esse link tira o RunBeat de primeiro plano — **nenhum app ou
+   site consegue se trazer de volta ao primeiro plano sozinho** (restrição
+   do próprio sistema operacional, iOS e Android, não uma limitação do
+   RunBeat ou do navegador — nem o app nativo do Spotify conseguiria fazer
+   isso). Quando o usuário volta pro RunBeat manualmente, o app detecta e
+   tenta tocar de novo na hora (em vez de esperar o intervalo normal de
+   retry), então basta voltar que a troca de faixa já retoma sozinha, sem
+   precisar tocar em mais nada. **Dica pra nunca precisar sair do RunBeat**:
+   se você abrir o Spotify manualmente (mesmo sem tocar nada) antes de
+   apertar "Play" no RunBeat, ele já conta como dispositivo ativo desde o
+   início da corrida, e o botão "Abrir Spotify" nunca chega a aparecer. O
+   botão some assim que a próxima troca de faixa funcionar normalmente.
 7. Enquanto a corrida está ativa, o app pede à tela pra não apagar sozinha
    (Screen Wake Lock). Isso evita que o navegador pare de rodar em segundo
    plano por *timeout* automático de tela. **Limite importante**: isso não

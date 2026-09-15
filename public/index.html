@@ -44,15 +44,13 @@
 
   <section id="card-library" class="step-card" data-step="library" hidden>
     <h2><span class="step-badge">2</span> Escolha as Playlists <span class="step-check" hidden>✓</span></h2>
-    <label for="playlist-summary-btn">Playlists (toque pra marcar mais de uma)</label>
-    <div class="multiselect">
-      <button type="button" id="playlist-summary-btn" class="multiselect-summary" aria-haspopup="listbox">Selecione</button>
-      <div id="playlist-options-panel" class="multiselect-panel" hidden></div>
-      <select id="playlist-select" multiple size="6" hidden></select>
-    </div>
+    <label>Playlists (toque pra marcar mais de uma)</label>
+    <div id="playlist-options-panel" class="multiselect-panel"></div>
+    <select id="playlist-select" multiple size="6" hidden></select>
     <div id="catalog-genre-group" class="nested-group" hidden>
-      <label for="catalog-genre-select">Gêneros do Catálogo RunBeat (toque pra marcar mais de um; nenhum marcado = todos)</label>
-      <select id="catalog-genre-select" multiple size="6"></select>
+      <label>Gêneros Playlist RunBeat</label>
+      <div id="catalog-genre-options-panel" class="multiselect-panel"></div>
+      <select id="catalog-genre-select" multiple size="6" hidden></select>
     </div>
     <button id="build-pool-btn">Analisar BPM das faixas selecionadas</button>
     <p id="pool-progress" hidden></p>
@@ -120,7 +118,7 @@
       <div class="onboarding-step" data-step="3" hidden>
         <p class="onboarding-emoji">🎵</p>
         <h3>Escolha suas músicas</h3>
-        <p>No dropdown, escolha "Analisar toda a minha biblioteca" pra juntar tudo de uma vez, o <strong>Catálogo RunBeat</strong> (com filtro por gênero) pra mais opções de BPM, ou marque uma ou mais playlists suas.</p>
+        <p>Na lista, marque "Toda a biblioteca" pra juntar tudo de uma vez, a <strong>Playlist RunBeat</strong> (com filtro por gênero) pra mais opções de BPM, ou uma ou mais playlists suas.</p>
       </div>
       <div class="onboarding-step" data-step="4" hidden>
         <p class="onboarding-emoji">⚙️</p>

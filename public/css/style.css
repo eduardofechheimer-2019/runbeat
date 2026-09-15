@@ -258,10 +258,11 @@ button:disabled {
 
 /* --- Multiselect de playlists/gêneros (substitui o <select multiple>
    nativo, cujo resumo "N Items"/"..." no iOS é chrome do sistema e não pode
-   ser restilizado ou traduzido). Campo fechado por padrão — o painel só
-   abre quando o campo é tocado, igual um dropdown comum. O <select>
-   original continua no DOM, só escondido, servindo de "banco de dados" pra
-   toda a lógica existente de seleção/exclusividade em app.js). */
+   ser restilizado ou traduzido). O campo fica fechado por padrão; tocar
+   nele abre um pop-up modal (ver #multiselect-modal) com a lista de
+   marcar/desmarcar. O <select> original continua no DOM, só escondido,
+   servindo de "banco de dados" pra toda a lógica existente de
+   seleção/exclusividade em app.js. */
 .multiselect-summary {
   width: 100%;
   padding: 13px 34px 13px 14px;
@@ -292,17 +293,6 @@ button:disabled {
   line-height: 1;
 }
 
-.multiselect-panel {
-  margin-top: 6px;
-  max-height: 260px;
-  overflow-y: auto;
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm);
-  background: var(--input-bg);
-}
-
-.multiselect-panel[hidden] { display: none; }
-
 .multiselect-option {
   padding: 14px 16px;
   font-size: 0.95rem;
@@ -323,11 +313,72 @@ button:disabled {
   font-weight: 700;
 }
 
-/* Some com a interação assim que o cartão sai do estado "active" (ver
-   setStepControlsDisabled em app.js, que já desabilita botões/selects —
-   as linhas do painel são <div>s comuns, então precisam da própria regra). */
-.step-card:not([data-state="active"]) .multiselect-panel {
-  pointer-events: none;
+/* --- Pop-up de marcar/desmarcar (compartilhado entre playlists e gêneros —
+   só um fica aberto por vez, ver app.js) --- */
+.multiselect-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 6, 9, 0.72);
+  padding: 20px;
+}
+
+.multiselect-modal[hidden] {
+  display: none;
+}
+
+.multiselect-modal-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
+  max-height: 80vh;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.multiselect-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--card-border);
+  flex-shrink: 0;
+}
+
+.multiselect-modal-header h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.multiselect-modal-close {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  padding: 0;
+  margin-top: 0;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.multiselect-modal .multiselect-panel {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--input-bg);
 }
 
 .nested-group {

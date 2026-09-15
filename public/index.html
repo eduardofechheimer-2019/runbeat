@@ -45,13 +45,11 @@
   <section id="card-library" class="step-card" data-step="library" hidden>
     <h2><span class="step-badge">2</span> Escolha as Playlists <span class="step-check" hidden>✓</span></h2>
     <label>Playlists (toque pra marcar mais de uma)</label>
-    <button type="button" id="playlist-summary-btn" class="multiselect-summary" aria-haspopup="listbox">Selecione</button>
-    <div id="playlist-options-panel" class="multiselect-panel" hidden></div>
+    <button type="button" id="playlist-summary-btn" class="multiselect-summary" aria-haspopup="dialog">Selecione</button>
     <select id="playlist-select" multiple size="6" hidden></select>
     <div id="catalog-genre-group" class="nested-group" hidden>
       <label>Gêneros Playlist RunBeat</label>
-      <button type="button" id="catalog-genre-summary-btn" class="multiselect-summary" aria-haspopup="listbox">Selecione</button>
-      <div id="catalog-genre-options-panel" class="multiselect-panel" hidden></div>
+      <button type="button" id="catalog-genre-summary-btn" class="multiselect-summary" aria-haspopup="dialog">Selecione</button>
       <select id="catalog-genre-select" multiple size="6" hidden></select>
     </div>
     <button id="build-pool-btn">Analisar BPM das faixas selecionadas</button>
@@ -103,6 +101,16 @@
     </div>
   </section>
 </main>
+
+<div id="multiselect-modal" class="multiselect-modal" hidden>
+  <div class="multiselect-modal-card">
+    <div class="multiselect-modal-header">
+      <h3 id="multiselect-modal-title"></h3>
+      <button type="button" id="multiselect-modal-close" class="multiselect-modal-close" aria-label="Fechar">✕</button>
+    </div>
+    <div id="multiselect-modal-panel" class="multiselect-panel"></div>
+  </div>
+</div>
 
 <div id="onboarding-overlay" class="onboarding-overlay" hidden>
   <div class="onboarding-card">

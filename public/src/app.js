@@ -25,11 +25,13 @@ const el = {
   cardRun: document.getElementById("card-run"),
   playlistSelect: document.getElementById("playlist-select"),
   playlistSummaryBtn: document.getElementById("playlist-summary-btn"),
-  playlistOptionsPanel: document.getElementById("playlist-options-panel"),
   catalogGenreGroup: document.getElementById("catalog-genre-group"),
   catalogGenreSelect: document.getElementById("catalog-genre-select"),
   catalogGenreSummaryBtn: document.getElementById("catalog-genre-summary-btn"),
-  catalogGenreOptionsPanel: document.getElementById("catalog-genre-options-panel"),
+  multiselectModal: document.getElementById("multiselect-modal"),
+  multiselectModalTitle: document.getElementById("multiselect-modal-title"),
+  multiselectModalPanel: document.getElementById("multiselect-modal-panel"),
+  multiselectModalClose: document.getElementById("multiselect-modal-close"),
   buildPoolBtn: document.getElementById("build-pool-btn"),
   poolProgress: document.getElementById("pool-progress"),
   modeSelect: document.getElementById("mode-select"),
@@ -380,7 +382,6 @@ async function loadPlaylistOptions() {
   // herdar seleção de uma visita anterior.
   syncPlaylistSelectionSnapshot();
   updateCatalogGenreVisibility();
-  renderMultiselectPanel(el.playlistSelect, el.playlistOptionsPanel);
   updateMultiselectSummary(el.playlistSelect, el.playlistSummaryBtn);
 }
 
@@ -415,13 +416,17 @@ function enforceLibraryExclusivity() {
 }
 
 // --- Multiselect de playlists/gêneros (UI própria por cima do <select
-// multiple>, sempre expandida — o resumo nativo "N Items"/"..." do iOS pra
-// <select multiple> não pode ser restilizado nem traduzido). Cada linha é
-// tocável por inteiro e marca/desmarca com destaque de cor, igual à
-// listagem de um <select multiple> nativo — sem ícone de checkbox
-// separado. O <select> original continua escondido no DOM como "fonte da
-// verdade" — toda a lógica de seleção/exclusividade continua lendo e
-// escrevendo nele normalmente; as funções abaixo só espelham o estado dele.
+// multiple> — o resumo nativo "N Items"/"..." do iOS pra <select multiple>
+// não pode ser restilizado nem traduzido). O campo fica fechado por
+// padrão; tocar nele abre um pop-up modal (compartilhado entre playlists e
+// gêneros, só um por vez) com a lista de marcar/desmarcar — cada linha é
+// tocável por inteiro e marca/desmarca com destaque de cor, sem ícone de
+// checkbox separado. O <select> original continua escondido no DOM como
+// "fonte da verdade" — toda a lógica de seleção/exclusividade continua
+// lendo e escrevendo nele normalmente; as funções abaixo só espelham o
+// estado dele no pop-up.
+let activeMultiselect = null; // { selectEl, summaryBtnEl } — qual campo está aberto no modal agora
+
 function renderMultiselectPanel(selectEl, panelEl) {
   panelEl.innerHTML = "";
   for (const opt of selectEl.options) {
@@ -441,34 +446,34 @@ function syncMultiselectSelection(selectEl, panelEl) {
   }
 }
 
-// Delega o toque em qualquer linha do painel de volta pro <select>
-// escondido (marca/desmarca a option correspondente e dispara "change"
-// nele), assim toda a lógica existente que escuta esse "change" continua
-// funcionando sem saber que a interação veio do painel e não do <select>
-// nativo.
-function wireMultiselectPanel(selectEl, panelEl) {
-  panelEl.addEventListener("click", (event) => {
-    const row = event.target.closest(".multiselect-option");
-    if (!row) return;
-    const opt = Array.from(selectEl.options).find((o) => o.value === row.dataset.value);
-    if (!opt) return;
-    opt.selected = !opt.selected;
-    selectEl.dispatchEvent(new Event("change"));
-  });
-}
-
 // Campo fechado por padrão — o resumo mostra "Selecione" sem nada marcado,
-// ou a contagem depois de qualquer seleção; tocar nele abre/fecha o painel.
+// ou a contagem depois de qualquer seleção.
 function updateMultiselectSummary(selectEl, summaryBtnEl) {
   const n = selectEl.selectedOptions.length;
   summaryBtnEl.textContent = n === 0 ? "Selecione" : `${n} Items`;
   summaryBtnEl.classList.toggle("is-placeholder", n === 0);
 }
 
-function wireMultiselectSummary(summaryBtnEl, panelEl) {
-  summaryBtnEl.addEventListener("click", () => {
-    panelEl.hidden = !panelEl.hidden;
-  });
+// Se `selectEl` for o campo aberto no momento no modal, re-renderiza o
+// destaque das linhas — necessário porque uma mudança pode vir de outro
+// lugar além de um toque direto no pop-up (ex. exclusividade de "toda a
+// biblioteca" desmarcando outras opções).
+function refreshMultiselectModalIfOpen(selectEl) {
+  if (activeMultiselect?.selectEl === selectEl) {
+    syncMultiselectSelection(selectEl, el.multiselectModalPanel);
+  }
+}
+
+function openMultiselectModal(selectEl, summaryBtnEl, title) {
+  activeMultiselect = { selectEl, summaryBtnEl };
+  el.multiselectModalTitle.textContent = title;
+  renderMultiselectPanel(selectEl, el.multiselectModalPanel);
+  el.multiselectModal.hidden = false;
+}
+
+function closeMultiselectModal() {
+  el.multiselectModal.hidden = true;
+  activeMultiselect = null;
 }
 
 let catalogGenresLoaded = false;
@@ -501,7 +506,6 @@ async function populateCatalogGenreOptions() {
   }
 
   // Idem: nenhum gênero começa marcado.
-  renderMultiselectPanel(el.catalogGenreSelect, el.catalogGenreOptionsPanel);
   updateMultiselectSummary(el.catalogGenreSelect, el.catalogGenreSummaryBtn);
 }
 
@@ -821,16 +825,33 @@ async function init() {
   el.playlistSelect.addEventListener("change", () => {
     enforceLibraryExclusivity();
     updateCatalogGenreVisibility();
-    syncMultiselectSelection(el.playlistSelect, el.playlistOptionsPanel);
+    refreshMultiselectModalIfOpen(el.playlistSelect);
     updateMultiselectSummary(el.playlistSelect, el.playlistSummaryBtn);
   });
   el.catalogGenreSelect.addEventListener("change", () => {
+    refreshMultiselectModalIfOpen(el.catalogGenreSelect);
     updateMultiselectSummary(el.catalogGenreSelect, el.catalogGenreSummaryBtn);
   });
-  wireMultiselectPanel(el.playlistSelect, el.playlistOptionsPanel);
-  wireMultiselectPanel(el.catalogGenreSelect, el.catalogGenreOptionsPanel);
-  wireMultiselectSummary(el.playlistSummaryBtn, el.playlistOptionsPanel);
-  wireMultiselectSummary(el.catalogGenreSummaryBtn, el.catalogGenreOptionsPanel);
+
+  el.playlistSummaryBtn.addEventListener("click", () => {
+    openMultiselectModal(el.playlistSelect, el.playlistSummaryBtn, "Playlists");
+  });
+  el.catalogGenreSummaryBtn.addEventListener("click", () => {
+    openMultiselectModal(el.catalogGenreSelect, el.catalogGenreSummaryBtn, "Gêneros Playlist RunBeat");
+  });
+  el.multiselectModalPanel.addEventListener("click", (event) => {
+    const row = event.target.closest(".multiselect-option");
+    if (!row || !activeMultiselect) return;
+    const { selectEl } = activeMultiselect;
+    const opt = Array.from(selectEl.options).find((o) => o.value === row.dataset.value);
+    if (!opt) return;
+    opt.selected = !opt.selected;
+    selectEl.dispatchEvent(new Event("change"));
+  });
+  el.multiselectModalClose.addEventListener("click", closeMultiselectModal);
+  el.multiselectModal.addEventListener("click", (event) => {
+    if (event.target === el.multiselectModal) closeMultiselectModal();
+  });
 
   // Splash de abertura: ícone em fade-in por ~1,2s, depois some sozinho e
   // revela a tela certa — sem depender de toque nenhum do usuário. O timer
@@ -874,8 +895,7 @@ async function init() {
   });
 
   el.buildPoolBtn.addEventListener("click", () => {
-    el.playlistOptionsPanel.hidden = true;
-    el.catalogGenreOptionsPanel.hidden = true;
+    closeMultiselectModal();
     const isLibraryMode = Array.from(el.playlistSelect.selectedOptions).some(
       (o) => o.value === "__library__"
     );

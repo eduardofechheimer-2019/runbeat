@@ -44,15 +44,19 @@ uma trocação instantânea:
 2. **Cartão 2 — Escolha as Playlists.** Um multiseletor próprio (não o
    "N Items"/"..." nativo do iOS pra `<select multiple>`, que não dá pra
    estilizar nem traduzir) decide a fonte: campo fechado por padrão
-   ("Selecione"), abre a lista só quando tocado, marcar/desmarcar destaca a
-   linha inteira com a cor de destaque — igual um dropdown comum, sempre
-   começando em branco (nenhuma opção pré-marcada, nem de uma visita
-   anterior). As opções: "Toda a biblioteca" (primeira, exclusiva — marcar
-   ela desmarca qualquer playlist específica, e vice-versa), "Playlist
-   RunBeat" (o Catálogo), e as playlists de propriedade do próprio usuário
-   (playlists de outras contas que ele só segue/colabora não aparecem na
-   lista, embora continuem incluídas em "Toda a biblioteca") — todas atrás
-   de um botão único ("Analisar BPM das faixas selecionadas"). Assim que o pool
+   ("Selecione"), tocar nele abre um **pop-up modal** com a lista de
+   marcar/desmarcar (marcar/desmarcar destaca a linha inteira com a cor de
+   destaque, sem ícone de checkbox) — fecha pelo "✕", tocando fora dele, ou
+   automaticamente ao analisar o BPM. Sempre começa em branco (nenhuma opção
+   pré-marcada, nem de uma visita anterior). As opções: "Toda a biblioteca"
+   (primeira, exclusiva — marcar ela desmarca qualquer playlist específica,
+   e vice-versa), "Playlist RunBeat" (o Catálogo), e as playlists de
+   propriedade do próprio usuário (playlists de outras contas que ele só
+   segue/colabora não aparecem na lista, embora continuem incluídas em
+   "Toda a biblioteca") — todas atrás de um botão único ("Analisar BPM das
+   faixas selecionadas"). O painel de gêneros do Catálogo (dentro desse
+   mesmo cartão, só quando "Playlist RunBeat" está marcada) segue o mesmo
+   formato de pop-up. Assim que o pool
    sai com alguma faixa, esse cartão também recua e o cartão 3 assume.
 3. **Cartão 3 — Escolha o ritmo.** Último cartão — um botão **"Continuar"**
    recua ele também e revela o cartão de corrida. Nesse momento os cartões

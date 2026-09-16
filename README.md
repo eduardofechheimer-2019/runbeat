@@ -96,9 +96,9 @@ dependem.
    **"Toda a biblioteca"** (primeira opção — junta automaticamente todas as
    suas playlists e as Curtidas de uma vez; é exclusiva, marcar ela desmarca
    qualquer outra escolha), **"Playlist RunBeat"** — uma seleção própria de
-   ~8 mil músicas com BPM e gênero já classificados (marcando essa opção
+   ~750 músicas com BPM e gênero já classificados (marcando essa opção
    aparece um segundo painel pra filtrar por gênero musical, ex. Rock,
-   Pagode, Sertanejo, Funk — nenhum gênero marcado usa o catálogo inteiro),
+   Pagode, Samba, Funk — nenhum gênero marcado usa o catálogo inteiro),
    e/ou uma ou mais playlists de propriedade do usuário (playlists de outras
    contas que ele só segue/colabora não aparecem na lista, embora continuem
    entrando em "Toda a biblioteca"). A Playlist RunBeat é útil pra quem não
@@ -217,7 +217,7 @@ runbeat/
     ├── img/
     │   └── bg-marble.webp    # textura de fundo
     ├── data/
-    │   └── runbeat-catalog.json # Catálogo RunBeat (~8 mil músicas, BPM + gênero)
+    │   └── runbeat-catalog.json # Catálogo RunBeat (~750 músicas, BPM + gênero)
     └── src/
         ├── config.js         # client ID do Spotify e parâmetros ajustáveis
         ├── spotifyAuth.js     # login OAuth (Authorization Code + PKCE)

@@ -64,8 +64,10 @@ header {
 }
 
 .header-logo {
-  width: 36px;
+  /* A logo (fundo transparente) não é quadrada — altura fixa e largura
+     automática preserva a proporção original em vez de esticar. */
   height: 36px;
+  width: auto;
   flex-shrink: 0;
 }
 

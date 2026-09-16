@@ -6,6 +6,15 @@
 <title>RunBeat</title>
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icon.svg" type="image/svg+xml" />
+<!-- iOS ignora o manifest.json pra decidir o ícone da tela de início — só
+     olha esses links "apple-touch-icon". Sem o atributo "sizes" (como
+     estava antes, só um <link> genérico) alguns iOS caem pro fallback de
+     gerar uma letra sozinho em vez de usar o ícone de verdade; 180x180 é o
+     tamanho "padrão" que a Apple documenta pra iPhone. -->
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png" />
+<link rel="apple-touch-icon" sizes="167x167" href="icon-167.png" />
+<link rel="apple-touch-icon" sizes="152x152" href="icon-152.png" />
+<link rel="apple-touch-icon" sizes="120x120" href="icon-120.png" />
 <link rel="apple-touch-icon" href="icon-192.png" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

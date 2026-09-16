@@ -3,12 +3,16 @@
 // nova da rede primeiro, e só caindo pro cache se a rede falhar. Um app em
 // desenvolvimento ativo muda de código com frequência; cache-first faria o
 // usuário ficar preso numa versão antiga mesmo depois de um deploy novo.
-const CACHE_NAME = "runbeat-shell-v6";
+const CACHE_NAME = "runbeat-shell-v7";
 const SHELL_FILES = [
   "./",
   "./index.html",
   "./manifest.json",
   "./icon.svg",
+  "./icon-120.png",
+  "./icon-152.png",
+  "./icon-167.png",
+  "./icon-180.png",
   "./icon-192.png",
   "./icon-512.png",
   "./img/bg-marble.webp",

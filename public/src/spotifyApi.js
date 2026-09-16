@@ -105,14 +105,39 @@ export async function getPlaybackState() {
 }
 
 // Pausa o dispositivo ativo do usuário — chamada quando o "Pause" do
-// RunBeat é apertado, já que ele só controlava a troca de faixa até aqui
-// (o áudio do Spotify continuava tocando normalmente).
+// RunBeat é apertado.
 export async function pausePlayback() {
   try {
     await request("/me/player/pause", { method: "PUT" });
   } catch (err) {
     // Sem dispositivo ativo = nada tocando pra pausar mesmo; ignora.
     if (err.status === 404) return;
+    throw err;
+  }
+}
+
+// 404 com "device" na mensagem = nenhum dispositivo Spotify ativo — o
+// mesmo caso vale tanto pra tocar uma faixa nova quanto pra retomar.
+function isNoActiveDeviceError(err) {
+  return err.status === 404 && /device/i.test(err.message);
+}
+
+function noActiveDeviceError() {
+  const err = new Error(
+    "Nenhum dispositivo Spotify ativo. Toque no botão abaixo pra abrir o Spotify e começar."
+  );
+  err.code = "NO_ACTIVE_DEVICE";
+  return err;
+}
+
+// Retoma o dispositivo ativo de onde parou (sem `uris` no corpo) — diferente
+// de playTrackUri, que sempre começa uma faixa do zero. Chamada quando o
+// "Play" do RunBeat é apertado de novo depois de um "Pause".
+export async function resumePlayback() {
+  try {
+    await request("/me/player/play", { method: "PUT" });
+  } catch (err) {
+    if (isNoActiveDeviceError(err)) throw noActiveDeviceError();
     throw err;
   }
 }
@@ -130,14 +155,7 @@ export async function playTrackUri(uri) {
     // 404 cobre dois casos bem diferentes: nenhum dispositivo Spotify ativo,
     // ou o ID da faixa não existe mais no catálogo (pode acontecer com
     // faixas do Catálogo RunBeat, que tem uma data de curadoria própria).
-    // Só assume "sem dispositivo" se a mensagem realmente falar de device.
-    if (err.status === 404 && /device/i.test(err.message)) {
-      const noDeviceErr = new Error(
-        "Nenhum dispositivo Spotify ativo. Toque no botão abaixo pra abrir o Spotify e começar."
-      );
-      noDeviceErr.code = "NO_ACTIVE_DEVICE";
-      throw noDeviceErr;
-    }
+    if (isNoActiveDeviceError(err)) throw noActiveDeviceError();
     if (err.status === 404) {
       throw new Error(`Faixa não encontrada no Spotify (pode ter sido removida do catálogo): ${uri}`);
     }

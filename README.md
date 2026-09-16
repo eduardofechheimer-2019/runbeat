@@ -65,9 +65,13 @@ uma trocação instantânea:
    conteúdo interno) no topo da tela, liberando o resto do espaço pro
    cartão de corrida.
 4. **Cartão de corrida.** Mostra a medição de cadência, a faixa tocando
-   agora, e os controles: um botão central **▶ Play / ⏸ Pause**
-   (substituindo os antigos "Iniciar corrida"/"Parar") com **⏮ Anterior** /
-   **⏭ Próxima** ao lado, que só aparecem depois que a corrida começa.
+   agora, e os controles: um botão central **▶ Play / ⏸ Pause** com
+   **⏮ Anterior** / **⏭ Próxima** ao lado, que só aparecem depois que a
+   corrida começa. O primeiro toque em "Play" começa a corrida de verdade
+   (sensor de passos, primeira faixa); depois disso, Play/Pause só controla
+   a música — pausa/retoma o Spotify de onde parou, sem reiniciar a medição
+   de cadência nem recomeçar a faixa atual do zero (ver "Como funciona",
+   item 5).
 
 Tocar no título de qualquer cartão já concluído ou condensado (sem
 destaque) reabre ele pra editar (volta ao tamanho normal, com os controles
@@ -140,9 +144,15 @@ dependem.
 5. Os botões **⏮ Anterior** / **⏭ Próxima** (visíveis só com a corrida em
    andamento) deixam pular manualmente pra faixa seguinte do pool (recalcula
    pela cadência atual) ou voltar pra última que já tocou nessa corrida. O
-   botão central **Pause** também pausa de verdade o dispositivo ativo do
-   Spotify (`PUT /me/player/pause`) — antes só parava a troca automática de
-   faixa, mas o áudio continuava tocando.
+   botão central **Play/Pause**, depois do primeiro toque (que começa a
+   corrida de verdade), passa a ser só um controle de música: "Pause" pausa
+   o dispositivo ativo do Spotify de verdade (`PUT /me/player/pause`) e
+   suspende a troca automática de faixa; "Play" retoma o Spotify de onde
+   parou (`PUT /me/player/play` sem corpo, que resume em vez de recomeçar) e
+   reagenda a próxima troca pelo tempo que **faltava** na faixa (não a
+   duração inteira de novo) — sem reiniciar a medição de cadência nem
+   escolher uma faixa nova. O sensor de passos nunca para durante uma pausa,
+   só a troca de faixa e o pulso sonoro (se estiver ligado).
 6. Se o Spotify não tiver nenhum dispositivo ativo (app fechado, nada
    tocando ainda), aparece um botão **"▶ Abrir Spotify e começar"** — um
    toque só abre o app Spotify direto na faixa certa e já começa a tocar

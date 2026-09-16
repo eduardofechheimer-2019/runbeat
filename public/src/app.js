@@ -156,7 +156,18 @@ let endOfTrackTimer = null;
 let currentTrackId = null;
 let activeMode = "auto"; // "auto" (cadência real) | "fixed" (faixa de BPM fixa)
 let fixedRange = null; // {min, max} quando activeMode === "fixed"
-let runActive = false; // true entre "Iniciar corrida" e "Parar"
+let runActive = false; // true desde o primeiro "Play" até fechar/recarregar a página
+// true enquanto pausado (Spotify pausado + troca automática de faixa
+// suspensa) — não confundir com runActive=false, que é o estado inicial
+// antes de qualquer "Play". Ver pauseRun()/resumeRun().
+let runPaused = false;
+// Quanto tempo (ms) falta pra faixa atual acabar, contado a partir de
+// trackSegmentStartedAt — usado pra retomar o agendamento de troca de
+// faixa no ponto certo depois de um pause, em vez de recomeçar a
+// contagem do zero. Atualizado em pauseRun() (desconta o tempo já
+// tocado) e lido em resumeRun() (reagenda com o que sobrou).
+let trackRemainingMs = null;
+let trackSegmentStartedAt = null;
 // true quando a última tentativa de tocar falhou por falta de dispositivo
 // ativo e está esperando RETRY_AFTER_ERROR_MS pra tentar de novo sozinha —
 // usado pra pular direto pra essa nova tentativa assim que o usuário volta
@@ -215,13 +226,6 @@ function startBeatPulse(effectiveBpm) {
   el.beatBpmValue.textContent = `${Math.round(effectiveBpm)} /min`;
   el.beatVisual.hidden = false;
   startAudiblePulse(effectiveBpm);
-}
-
-function stopBeatPulse() {
-  el.beatVisual.hidden = true;
-  currentEffectiveBpm = null;
-  stopAudiblePulse();
-  el.audioStatus.hidden = true;
 }
 
 // --- Pulso sonoro ---
@@ -649,15 +653,26 @@ async function playSpecificTrack(track, requestId) {
   showRunError("");
   hideNoDeviceLink();
   startBeatPulse(track.effectiveBpm);
+  // playTrackUri sempre começa a faixa do zero — se estava pausado (ex.
+  // troca de faixa manual ou automática durante uma pausa), volta a
+  // "tocando" de verdade, senão o botão ficaria mostrando "Play" com a
+  // música já rolando.
+  if (runPaused) {
+    runPaused = false;
+    setPlayPauseIcon(true);
+  }
   return true;
 }
 
 // Agenda a troca seguinte pra pouco antes do fim da faixa — sem nunca
 // precisar perguntar ao Spotify "quanto falta", já que sabemos a duração da
-// faixa que mandamos tocar.
+// faixa que mandamos tocar. Guarda o ponto de partida e a duração restante
+// pra dar pra retomar certo depois de um pause (ver pauseRun()).
 function scheduleEndOfTrack(track) {
   clearTimeout(endOfTrackTimer);
   const durationMs = track.durationMs || FALLBACK_TRACK_DURATION_MS;
+  trackSegmentStartedAt = Date.now();
+  trackRemainingMs = durationMs;
   const delay = Math.max(durationMs - END_OF_TRACK_LEAD_MS, 1000);
   endOfTrackTimer = setTimeout(playNextAndSchedule, delay);
 }
@@ -768,6 +783,9 @@ function startRun() {
   playedIds.clear();
   history = [];
   runActive = true;
+  runPaused = false;
+  trackRemainingMs = null;
+  trackSegmentStartedAt = null;
   setPlayPauseIcon(true);
   el.prevBtn.hidden = false;
   el.nextBtn.hidden = false;
@@ -778,25 +796,39 @@ function startRun() {
   waitForFirstCadence();
 }
 
-function stopRun() {
-  runActive = false;
-  clearInterval(displayTimer);
+// "Pause" agora só controla a música — pausa o Spotify de verdade e
+// suspende a troca automática de faixa, mas mantém a corrida "ativa"
+// (sensor de passos, faixas já tocadas, faixa atual) intacta, pra "Play"
+// poder só retomar de onde parou em vez de recomeçar a corrida do zero.
+function pauseRun() {
+  runPaused = true;
   clearInterval(bootstrapTimer);
   clearTimeout(endOfTrackTimer);
-  tracker?.stop();
-  tracker = null;
-  fixedRange = null;
-  releaseWakeLock();
-  // Até aqui o "Pause" só parava a troca automática de faixa — o áudio no
-  // Spotify continuava tocando. Pausa o dispositivo ativo de verdade.
+  if (trackSegmentStartedAt != null && trackRemainingMs != null) {
+    const elapsed = Date.now() - trackSegmentStartedAt;
+    trackRemainingMs = Math.max(trackRemainingMs - elapsed, 0);
+  }
   api.pausePlayback().catch((err) => console.warn("Falha ao pausar no Spotify:", err.message));
+  stopAudiblePulse();
   setPlayPauseIcon(false);
-  el.prevBtn.hidden = true;
-  el.nextBtn.hidden = true;
-  el.cadenceValue.textContent = "—";
-  el.trackValue.textContent = "—";
-  hideNoDeviceLink();
-  stopBeatPulse();
+}
+
+function resumeRun() {
+  runPaused = false;
+  api.resumePlayback().catch((err) => {
+    showRunError(err.message);
+    if (err.code === "NO_ACTIVE_DEVICE") showNoDeviceLink({ id: currentTrackId });
+  });
+  setPlayPauseIcon(true);
+  if (currentEffectiveBpm) startAudiblePulse(currentEffectiveBpm);
+  // Retoma o agendamento de troca de faixa de onde parou, em vez de
+  // recontar a duração inteira da faixa (que já estava parcialmente
+  // tocada antes do pause).
+  if (trackRemainingMs != null) {
+    trackSegmentStartedAt = Date.now();
+    const delay = Math.max(trackRemainingMs - END_OF_TRACK_LEAD_MS, 1000);
+    endOfTrackTimer = setTimeout(playNextAndSchedule, delay);
+  }
 }
 
 async function refreshAuthedUi() {
@@ -914,8 +946,12 @@ async function init() {
   });
 
   el.playPauseBtn.addEventListener("click", async () => {
+    if (runActive && runPaused) {
+      resumeRun();
+      return;
+    }
     if (runActive) {
-      stopRun();
+      pauseRun();
       return;
     }
     try {

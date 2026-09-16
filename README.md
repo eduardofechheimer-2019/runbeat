@@ -11,12 +11,13 @@ de cadência e troca automática de faixa testados numa corrida de verdade.
 
 Fundo com textura marmorizada preta (imagem em `public/img/bg-marble.webp`),
 tipografia em itálico bold (Google Fonts "Archivo") no nome "RunBeat" e nos
-títulos, e laranja como cor de destaque (`--accent` em `style.css`, com
-variações de intensidade `--accent-soft`/`--accent-strong`) em vez do verde
-do Spotify — usada em botões, ícone do app e nos indicadores numerados dos
-cartões. Os cartões (seções) têm fundo semitransparente com desfoque
+títulos, e amarelo/dourado como cor de destaque (`--accent` em `style.css`,
+com variações de intensidade `--accent-soft`/`--accent-strong`) em vez do
+verde do Spotify — usada em botões, ícone do app e nos indicadores numerados
+dos cartões. Os cartões (seções) têm fundo semitransparente com desfoque
 (`backdrop-filter`), deixando a textura do fundo aparecer sutilmente atrás
-do conteúdo. O logo (`icon.svg`) aparece ao lado do nome "RunBeat" no
+do conteúdo. O logo (`icon.svg`) — um círculo com linhas de movimento e uma
+nota musical — aparece ao lado do nome "RunBeat" no
 cabeçalho, que fica com um respiro extra no topo (`env(safe-area-inset-top)`)
 pra não ficar atrás do relógio/notch do celular.
 

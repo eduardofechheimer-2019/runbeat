@@ -43,7 +43,6 @@ export async function getMyPlaylists() {
     .map((p) => ({
       id: p.id,
       name: p.name,
-      trackCount: p.tracks?.total ?? 0,
       ownerId: p.owner?.id ?? null,
       ownerName: p.owner?.display_name ?? p.owner?.id ?? "desconhecido",
     }));

@@ -374,7 +374,7 @@ async function loadPlaylistOptions() {
   for (const p of ownPlaylists) {
     const opt = document.createElement("option");
     opt.value = p.id;
-    opt.textContent = `${p.name} (${p.trackCount})`;
+    opt.textContent = p.name;
     el.playlistSelect.appendChild(opt);
   }
 

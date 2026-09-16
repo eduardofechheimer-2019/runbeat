@@ -2,8 +2,15 @@
 // https://developer.spotify.com/dashboard (ver README para o passo a passo).
 export const SPOTIFY_CLIENT_ID = "323bfd05cb3546aaa12bb96ea702404b";
 
-// Precisa bater exatamente com uma Redirect URI cadastrada no app do Spotify.
-export const SPOTIFY_REDIRECT_URI = window.location.origin + window.location.pathname;
+// Precisa bater exatamente com uma Redirect URI cadastrada no app do
+// Spotify. Fixo em "/index.html" (em vez de usar window.location.pathname
+// direto) porque o caminho real muda dependendo de como o app é aberto —
+// pela URL raiz no navegador vs. pelo ícone instalado na tela de início
+// (que sempre abre em "/index.html", conforme o start_url do
+// manifest.json) — e o Spotify exige que a URL bata exatamente, gerando o
+// erro "redirect_uri: Not matching configuration" quando os dois caminhos
+// divergem. Fixando aqui, é sempre a mesma URL não importa a origem.
+export const SPOTIFY_REDIRECT_URI = window.location.origin + "/index.html";
 
 export const SPOTIFY_SCOPES = [
   "user-read-playback-state",

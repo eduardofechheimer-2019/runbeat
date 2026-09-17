@@ -160,27 +160,34 @@ dependem.
    duração inteira de novo) — sem reiniciar a medição de cadência nem
    escolher uma faixa nova. O sensor de passos nunca para durante uma pausa,
    só a troca de faixa e o pulso sonoro (se estiver ligado).
-6. Se o Spotify não tiver nenhum dispositivo ativo (app fechado, nada
-   tocando ainda), aparece um botão **"▶ Abrir Spotify e começar"** — um
-   toque só abre o app Spotify direto na faixa certa e já começa a tocar
-   sozinho (link `spotify:track:<id>`, que só precisa de 1 toque porque
-   nada mais está tocando ainda). **Isso só é necessário nesse momento
-   inicial**, quando não existe nenhum dispositivo Spotify ativo pra API
-   comandar — depois que o Spotify vira o dispositivo ativo, toda troca de
-   faixa seguinte acontece direto pela API, sem precisar abrir o Spotify de
-   novo. Abrir esse link tira o RunBeat de primeiro plano — **nenhum app ou
-   site consegue se trazer de volta ao primeiro plano sozinho** (restrição
-   do próprio sistema operacional, iOS e Android, não uma limitação do
-   RunBeat ou do navegador — nem o app nativo do Spotify conseguiria fazer
-   isso). Quando o usuário volta pro RunBeat manualmente, o app detecta e
-   tenta tocar de novo na hora (em vez de esperar o intervalo normal de
-   retry), então basta voltar que a troca de faixa já retoma sozinha, sem
-   precisar tocar em mais nada. **Dica pra nunca precisar sair do RunBeat**:
-   se você abrir o Spotify manualmente (mesmo sem tocar nada) antes de
-   apertar "Play" no RunBeat, ele já conta como dispositivo ativo desde o
-   início da corrida, e o botão "Abrir Spotify" nunca chega a aparecer. O
-   botão some assim que a próxima troca de faixa funcionar normalmente.
-7. Enquanto a corrida está ativa, o app pede à tela pra não apagar sozinha
+6. Antes de apertar "Play" pela primeira vez, o cartão de corrida mostra um
+   botão secundário **"🔥 Aquecer o Spotify"** — resolve de antemão, sem
+   sair da tela do RunBeat, o caso mais comum de não ter nenhum dispositivo
+   Spotify ativo. Ele chama `GET /me/player/devices` (lista qualquer app
+   Spotify que ainda esteja rodando, mesmo em segundo plano e mesmo sem
+   tocar nada) e, achando um, já manda tocar uma faixa direto nele via
+   `PUT /me/player/play?device_id=<id>` — o Spotify passa a tocar sozinho,
+   em segundo plano, sem precisar abrir o app manualmente nem trocar de
+   tela. Só não funciona se o Spotify já tiver sido suspenso/encerrado pelo
+   sistema (aí nenhum dispositivo aparece na lista) — nesse caso o botão
+   avisa pra abrir o Spotify manualmente uma vez. O botão some assim que a
+   corrida realmente começa (não é mais necessário depois disso).
+7. Se mesmo assim o Spotify não tiver nenhum dispositivo ativo quando uma
+   troca de faixa precisar tocar (app já encerrado pelo sistema, ex.
+   segundo plano suspenso), aparece um botão **"▶ Abrir Spotify e
+   começar"** — um toque só abre o app Spotify direto na faixa certa e já
+   começa a tocar sozinho (link `spotify:track:<id>`, que só precisa de 1
+   toque porque nada mais está tocando ainda). Abrir esse link tira o
+   RunBeat de primeiro plano — **nenhum app ou site consegue se trazer de
+   volta ao primeiro plano sozinho** (restrição do próprio sistema
+   operacional, iOS e Android, não uma limitação do RunBeat ou do
+   navegador — nem o app nativo do Spotify conseguiria fazer isso). Quando
+   o usuário volta pro RunBeat manualmente, o app detecta e tenta tocar de
+   novo na hora (em vez de esperar o intervalo normal de retry), então
+   basta voltar que a troca de faixa já retoma sozinha, sem precisar tocar
+   em mais nada. O botão some assim que a próxima troca de faixa funcionar
+   normalmente.
+8. Enquanto a corrida está ativa, o app pede à tela pra não apagar sozinha
    (Screen Wake Lock). Isso evita que o navegador pare de rodar em segundo
    plano por *timeout* automático de tela. **Limite importante**: isso não
    evita que a tela apague se você apertar o botão físico de bloquear o
@@ -188,7 +195,7 @@ dependem.
    continua tocando normalmente (é o app Spotify nativo, não a página do
    RunBeat, que toca o áudio), mas a troca automática de faixa só volta a
    acontecer quando você desbloquear e voltar pro RunBeat.
-8. Um **pulso sonoro** (checkbox, opt-in) toca um clique curto no navegador
+9. Um **pulso sonoro** (checkbox, opt-in) toca um clique curto no navegador
    a cada batida do BPM-alvo, pra ajudar a sincronizar o passo com a
    batida. Não é sincronizado com o áudio real da faixa (a API do Spotify
    não expõe posição/fase de batida) — é um guia de ritmo constante a
@@ -267,11 +274,15 @@ ou HTTPS — batendo com o que foi cadastrado no app).
 
 ### 3. Durante o uso
 
-- Se você tocar em "▶ Play" sem nenhum dispositivo Spotify ativo (app
-  fechado, nada tocando), o RunBeat mostra um botão **"▶ Abrir Spotify e
-  começar"** — um toque nele abre o app Spotify já tocando a faixa certa,
-  sem precisar procurar nada lá dentro (o app não usa o Web Playback SDK, só
-  comanda o dispositivo ativo).
+- Antes de "▶ Play", o botão **"🔥 Aquecer o Spotify"** tenta resolver o
+  caso de nenhum dispositivo ativo sem sair do RunBeat — só funciona se o
+  Spotify ainda estiver rodando em segundo plano (`GET
+  /me/player/devices` não vem vazio).
+- Se mesmo assim você tocar em "▶ Play" sem nenhum dispositivo Spotify
+  ativo (app já encerrado pelo sistema), o RunBeat mostra um botão **"▶
+  Abrir Spotify e começar"** — um toque nele abre o app Spotify já tocando
+  a faixa certa, sem precisar procurar nada lá dentro (o app não usa o Web
+  Playback SDK, só comanda o dispositivo ativo).
 - O RunBeat pede pra tela não apagar sozinha enquanto a corrida está ativa
   (Screen Wake Lock), mas isso não segura o botão físico de bloquear o
   celular — bloqueando manualmente, o sensor de passos e a troca automática

@@ -48,6 +48,9 @@ const el = {
   trackValue: document.getElementById("track-value"),
   runError: document.getElementById("run-error"),
   openSpotifyLink: document.getElementById("open-spotify-link"),
+  warmupRow: document.getElementById("warmup-row"),
+  warmupBtn: document.getElementById("warmup-btn"),
+  warmupStatus: document.getElementById("warmup-status"),
   beatVisual: document.getElementById("beat-visual"),
   beatBpmValue: document.getElementById("beat-bpm-value"),
   audiblePulseToggle: document.getElementById("audible-pulse-toggle"),
@@ -333,6 +336,47 @@ function showNoDeviceLink(track) {
 
 function hideNoDeviceLink() {
   el.openSpotifyLink.hidden = true;
+}
+
+// "Aquece" o Spotify sem sair da tela do RunBeat: procura um dispositivo
+// Spotify que ainda esteja rodando (mesmo em segundo plano) e já manda tocar
+// uma faixa direto nele pela API — se der certo, o Spotify passa a tocar
+// essa faixa sozinho, sem precisar abrir o app manualmente. Só funciona se o
+// Spotify ainda não tiver sido suspenso/encerrado pelo sistema; senão, cai
+// de volta no fluxo antigo (link "Abrir Spotify e começar") quando a corrida
+// realmente começar.
+async function warmUpSpotify() {
+  if (bpmPool.length === 0) {
+    el.warmupStatus.hidden = false;
+    el.warmupStatus.textContent = "Monte o pool de músicas primeiro (cartão 2).";
+    return;
+  }
+
+  el.warmupBtn.disabled = true;
+  el.warmupStatus.hidden = false;
+  el.warmupStatus.textContent = "Procurando o Spotify...";
+
+  try {
+    const devices = await api.getAvailableDevices();
+    if (devices.length === 0) {
+      el.warmupStatus.textContent =
+        "Nenhum Spotify encontrado rodando no celular — abra o app do Spotify uma vez e tente de novo.";
+      return;
+    }
+
+    const device = devices.find((d) => d.is_active) ?? devices[0];
+    const range = el.modeSelect.value === "fixed" ? currentFixedRange() : null;
+    const track = range
+      ? pickTrackForRange(bpmPool, range, new Set())
+      : bpmPool[Math.floor(Math.random() * bpmPool.length)];
+
+    await api.playTrackUriOnDevice(track.uri, device.id);
+    el.warmupStatus.textContent = `Spotify ativado em "${device.name}" — pode tocar em Play pra começar a corrida.`;
+  } catch (err) {
+    el.warmupStatus.textContent = `Erro: ${err.message}`;
+  } finally {
+    el.warmupBtn.disabled = false;
+  }
 }
 
 async function requestWakeLock() {
@@ -847,6 +891,7 @@ function startRun() {
   el.nextBtn.hidden = false;
   showRunError("");
   hideNoDeviceLink();
+  el.warmupRow.hidden = true;
   requestWakeLock();
   displayTimer = setInterval(updateCadenceDisplay, CADENCE_DISPLAY_INTERVAL_MS);
   waitForFirstCadence();
@@ -938,6 +983,12 @@ async function init() {
     if (!opt) return;
     opt.selected = !opt.selected;
     selectEl.dispatchEvent(new Event("change"));
+  });
+  el.warmupBtn.addEventListener("click", () => {
+    warmUpSpotify().catch((err) => {
+      el.warmupStatus.hidden = false;
+      el.warmupStatus.textContent = `Erro: ${err.message}`;
+    });
   });
   el.multiselectModalClose.addEventListener("click", closeMultiselectModal);
   el.multiselectModal.addEventListener("click", (event) => {

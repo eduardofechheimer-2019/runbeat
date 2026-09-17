@@ -104,6 +104,17 @@ export async function getPlaybackState() {
   return request("/me/player");
 }
 
+// Lista os dispositivos Spotify Connect disponíveis pra essa conta — inclui
+// qualquer app Spotify que ainda esteja "vivo" (conectado nos servidores do
+// Spotify), mesmo em segundo plano e mesmo que não esteja tocando nada no
+// momento (`is_active: false`). Um dispositivo só aparece aqui enquanto o
+// app Spotify continuar rodando; se o iOS já suspendeu/encerrou o processo,
+// ele some da lista e não tem como reativar sem abrir o app manualmente.
+export async function getAvailableDevices() {
+  const data = await request("/me/player/devices");
+  return data?.devices ?? [];
+}
+
 // Pausa o dispositivo ativo do usuário — chamada quando o "Pause" do
 // RunBeat é apertado.
 export async function pausePlayback() {
@@ -159,6 +170,25 @@ export async function playTrackUri(uri) {
     if (err.status === 404) {
       throw new Error(`Faixa não encontrada no Spotify (pode ter sido removida do catálogo): ${uri}`);
     }
+    throw err;
+  }
+}
+
+// "Aquece" o Spotify sem precisar abrir o app manualmente: toca uma faixa
+// direto num dispositivo específico (por ID, vindo de getAvailableDevices),
+// mesmo que ele não esteja ativo no momento — diferente de playTrackUri, que
+// depende de já existir um dispositivo ativo escolhido pelo próprio Spotify.
+// Só funciona enquanto o dispositivo ainda aparecer na lista (app Spotify
+// ainda rodando em segundo plano); se ele já tiver sido encerrado pelo
+// sistema nesse meio tempo, cai no mesmo 404 de sempre.
+export async function playTrackUriOnDevice(uri, deviceId) {
+  try {
+    await request(`/me/player/play?device_id=${encodeURIComponent(deviceId)}`, {
+      method: "PUT",
+      body: JSON.stringify({ uris: [uri] }),
+    });
+  } catch (err) {
+    if (isNoActiveDeviceError(err)) throw noActiveDeviceError();
     throw err;
   }
 }

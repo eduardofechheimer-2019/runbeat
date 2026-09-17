@@ -430,6 +430,33 @@ button:disabled {
 
 .nested-group label:first-of-type { margin-top: 0; }
 
+.warmup-row {
+  margin-top: 8px;
+}
+
+.warmup-row[hidden] {
+  display: none;
+}
+
+/* Botão secundário — não deve competir visualmente com o Play/Pause,
+   que é a ação principal desse cartão. */
+.warmup-btn {
+  background: transparent;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+}
+
+.warmup-status {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.warmup-status[hidden] {
+  display: none;
+}
+
 .button-link {
   display: block;
   width: 100%;

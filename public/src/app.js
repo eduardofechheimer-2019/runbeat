@@ -355,14 +355,15 @@ function releaseWakeLock() {
 async function loadPlaylistOptions() {
   el.playlistSelect.innerHTML = "";
 
-  // "Toda a biblioteca" é uma opção exclusiva (ver enforceLibraryExclusivity)
-  // — vem primeiro, depois a Playlist RunBeat (Catálogo), depois as
-  // playlists próprias do usuário. "Músicas Curtidas" não aparece mais como
-  // opção separada (já entra dentro de "toda a biblioteca").
-  const libraryOpt = document.createElement("option");
-  libraryOpt.value = "__library__";
-  libraryOpt.textContent = "Toda a biblioteca";
-  el.playlistSelect.appendChild(libraryOpt);
+  // "Todos" é uma opção exclusiva (ver playlistExclusivity) — seleciona de
+  // uma vez só tudo que existe: toda a biblioteca do Spotify (playlists
+  // próprias + Músicas Curtidas) E a Playlist RunBeat com todos os gêneros.
+  // Vem primeiro, depois a Playlist RunBeat (Catálogo) isolada, depois as
+  // playlists próprias do usuário.
+  const allOpt = document.createElement("option");
+  allOpt.value = "__all__";
+  allOpt.textContent = "Todos";
+  el.playlistSelect.appendChild(allOpt);
 
   const catalogOpt = document.createElement("option");
   catalogOpt.value = "__catalog__";
@@ -373,7 +374,7 @@ async function loadPlaylistOptions() {
   const playlists = await api.getMyPlaylists();
   // Só as playlists de propriedade do usuário aparecem na lista — playlists
   // de outras contas que ele segue/colabora ficam de fora (continuam
-  // incluídas em "Toda a biblioteca", só não viram opção individual aqui).
+  // incluídas em "Todos", só não viram opção individual aqui).
   const ownPlaylists = playlists.filter((p) => p.ownerId === myUserId);
   for (const p of ownPlaylists) {
     const opt = document.createElement("option");
@@ -384,39 +385,64 @@ async function loadPlaylistOptions() {
 
   // Nenhuma opção começa marcada — o passo 2 sempre abre em branco, sem
   // herdar seleção de uma visita anterior.
-  syncPlaylistSelectionSnapshot();
+  playlistExclusivity.sync();
   updateCatalogGenreVisibility();
   updateMultiselectSummary(el.playlistSelect, el.playlistSummaryBtn);
+  updateBuildPoolAvailability();
 }
 
-// "Toda a minha biblioteca" é uma opção exclusiva dentro do <select
-// multiple> de playlists: marcar ela desmarca qualquer outra coisa, e
-// marcar qualquer outra coisa desmarca ela — um <select multiple> nativo
-// não tem esse conceito de exclusividade sozinho, por isso o rastreamento
-// abaixo (compara com a seleção anterior pra saber o que acabou de mudar).
-let previousPlaylistSelection = new Set();
+// Marcar uma opção "exclusiva" (ex. "Todos") dentro de um <select multiple>
+// desmarca qualquer outra coisa, e marcar qualquer outra coisa desmarca a
+// opção exclusiva — um <select multiple> nativo não tem esse conceito de
+// exclusividade sozinho, por isso o rastreamento da seleção anterior (pra
+// saber o que acabou de mudar). Reaproveitado tanto pro <select> de
+// playlists ("Todos") quanto pro de gêneros do Catálogo ("Todos").
+function makeExclusivityEnforcer(selectEl, exclusiveValue) {
+  let previous = new Set();
 
-function syncPlaylistSelectionSnapshot() {
-  previousPlaylistSelection = new Set(
-    Array.from(el.playlistSelect.selectedOptions).map((o) => o.value)
-  );
-}
-
-function enforceLibraryExclusivity() {
-  const options = Array.from(el.playlistSelect.options);
-  const current = new Set(options.filter((o) => o.selected).map((o) => o.value));
-  const libraryJustSelected = current.has("__library__") && !previousPlaylistSelection.has("__library__");
-  const otherJustSelected = [...current].some(
-    (v) => v !== "__library__" && !previousPlaylistSelection.has(v)
-  );
-
-  if (libraryJustSelected) {
-    for (const o of options) o.selected = o.value === "__library__";
-  } else if (current.has("__library__") && otherJustSelected) {
-    options.find((o) => o.value === "__library__").selected = false;
+  function sync() {
+    previous = new Set(Array.from(selectEl.selectedOptions).map((o) => o.value));
   }
 
-  syncPlaylistSelectionSnapshot();
+  function enforce() {
+    const options = Array.from(selectEl.options);
+    const current = new Set(options.filter((o) => o.selected).map((o) => o.value));
+    const exclusiveJustSelected = current.has(exclusiveValue) && !previous.has(exclusiveValue);
+    const otherJustSelected = [...current].some(
+      (v) => v !== exclusiveValue && !previous.has(v)
+    );
+
+    if (exclusiveJustSelected) {
+      for (const o of options) o.selected = o.value === exclusiveValue;
+    } else if (current.has(exclusiveValue) && otherJustSelected) {
+      options.find((o) => o.value === exclusiveValue).selected = false;
+    }
+
+    sync();
+  }
+
+  return { sync, enforce };
+}
+
+const playlistExclusivity = makeExclusivityEnforcer(el.playlistSelect, "__all__");
+const genreExclusivity = makeExclusivityEnforcer(el.catalogGenreSelect, "__all__");
+
+// O passo 2 só libera "Analisar BPM..." com uma seleção válida — playlist
+// escolhida (ou "Todos") e, se a Playlist RunBeat estiver marcada
+// isoladamente, também ao menos um gênero (ou "Todos" dentre eles). Sem
+// seleção nenhuma, o botão fica desabilitado — não existe mais um estado
+// implícito de "nada marcado = tudo incluído".
+function hasValidPoolSelection() {
+  if (el.playlistSelect.selectedOptions.length === 0) return false;
+  const catalogAloneSelected = Array.from(el.playlistSelect.selectedOptions).some(
+    (o) => o.value === "__catalog__"
+  );
+  if (catalogAloneSelected && el.catalogGenreSelect.selectedOptions.length === 0) return false;
+  return true;
+}
+
+function updateBuildPoolAvailability() {
+  el.buildPoolBtn.disabled = !hasValidPoolSelection();
 }
 
 // --- Multiselect de playlists/gêneros (UI própria por cima do <select
@@ -424,8 +450,8 @@ function enforceLibraryExclusivity() {
 // não pode ser restilizado nem traduzido). O campo fica fechado por
 // padrão; tocar nele abre um pop-up modal (compartilhado entre playlists e
 // gêneros, só um por vez) com a lista de marcar/desmarcar — cada linha é
-// tocável por inteiro e marca/desmarca com destaque de cor, sem ícone de
-// checkbox separado. O <select> original continua escondido no DOM como
+// tocável por inteiro e marca/desmarca com destaque de cor e um checkbox
+// próprio ao lado do texto. O <select> original continua escondido no DOM como
 // "fonte da verdade" — toda a lógica de seleção/exclusividade continua
 // lendo e escrevendo nele normalmente; as funções abaixo só espelham o
 // estado dele no pop-up.
@@ -437,8 +463,17 @@ function renderMultiselectPanel(selectEl, panelEl) {
     const row = document.createElement("div");
     row.className = "multiselect-option";
     row.dataset.value = opt.value;
-    row.textContent = opt.textContent;
     row.classList.toggle("is-selected", opt.selected);
+
+    const check = document.createElement("span");
+    check.className = "multiselect-check";
+    row.appendChild(check);
+
+    const label = document.createElement("span");
+    label.className = "multiselect-label";
+    label.textContent = opt.textContent;
+    row.appendChild(label);
+
     panelEl.appendChild(row);
   }
 }
@@ -482,8 +517,10 @@ function closeMultiselectModal() {
 
 let catalogGenresLoaded = false;
 
-// Mostra/esconde o dropdown de gêneros do Catálogo RunBeat conforme ele
-// estiver marcado ou não entre as fontes selecionadas — e popula o
+// Mostra/esconde o dropdown de gêneros do Catálogo RunBeat conforme a
+// Playlist RunBeat estiver marcada isoladamente entre as fontes
+// selecionadas — quando "Todos" está marcado, todos os gêneros já estão
+// implícitos, então o dropdown de gêneros fica escondido. Popula o
 // dropdown na primeira vez que ficar visível.
 function updateCatalogGenreVisibility() {
   const catalogSelected = Array.from(el.playlistSelect.selectedOptions).some(
@@ -502,6 +539,14 @@ function updateCatalogGenreVisibility() {
 async function populateCatalogGenreOptions() {
   const genres = await loadCatalogGenres();
   el.catalogGenreSelect.innerHTML = "";
+
+  // "Todos" é uma opção exclusiva (ver genreExclusivity), igual à de
+  // playlists — marcar ela desmarca os gêneros individuais e vice-versa.
+  const allOpt = document.createElement("option");
+  allOpt.value = "__all__";
+  allOpt.textContent = "Todos";
+  el.catalogGenreSelect.appendChild(allOpt);
+
   for (const genre of genres) {
     const opt = document.createElement("option");
     opt.value = genre;
@@ -509,12 +554,19 @@ async function populateCatalogGenreOptions() {
     el.catalogGenreSelect.appendChild(opt);
   }
 
-  // Idem: nenhum gênero começa marcado.
+  // Idem: nenhum gênero começa marcado — só libera "Analisar BPM..." depois
+  // de uma escolha explícita (específica ou "Todos").
+  genreExclusivity.sync();
   updateMultiselectSummary(el.catalogGenreSelect, el.catalogGenreSummaryBtn);
+  updateBuildPoolAvailability();
 }
 
+// "__all__" vira lista vazia pro catalogSource.js — que já trata "sem
+// filtro" como "catálogo inteiro" — já que a exclusividade garante que
+// "Todos" nunca fica marcado junto com gêneros específicos.
 function selectedCatalogGenres() {
-  return Array.from(el.catalogGenreSelect.selectedOptions).map((o) => o.value);
+  const values = Array.from(el.catalogGenreSelect.selectedOptions).map((o) => o.value);
+  return values.includes("__all__") ? [] : values;
 }
 
 function dedupeRefs(listOfRefLists) {
@@ -577,9 +629,10 @@ async function resolvePool(refs, failures = []) {
 
 async function buildPool() {
   const selectedOptions = Array.from(el.playlistSelect.selectedOptions);
-  if (selectedOptions.length === 0) {
+  if (!hasValidPoolSelection()) {
     el.poolProgress.hidden = false;
-    el.poolProgress.textContent = "Escolha ao menos uma playlist.";
+    el.poolProgress.textContent =
+      selectedOptions.length === 0 ? "Escolha ao menos uma playlist." : "Escolha ao menos um gênero.";
     return;
   }
   const catalogGenres = selectedCatalogGenres();
@@ -594,13 +647,15 @@ async function buildPool() {
   const failures = results.map((r) => r.failure).filter(Boolean);
   await resolvePool(dedupeRefs(results.map((r) => r.refs)), failures);
 
-  el.buildPoolBtn.disabled = false;
+  updateBuildPoolAvailability();
 }
 
-// Junta Músicas Curtidas + todas as playlists da conta, sem precisar
-// escolher uma por uma — o "banco de BPM" cresce conforme mais faixas vão
-// sendo analisadas (o cache de BPM em bpmSource.js já persiste entre usos).
-async function buildPoolFromLibrary() {
+// "Todos" junta literalmente tudo: Músicas Curtidas + todas as playlists da
+// conta + a Playlist RunBeat inteira (todos os gêneros do catálogo) — sem
+// precisar escolher uma por uma. O "banco de BPM" cresce conforme mais
+// faixas vão sendo analisadas (o cache de BPM em bpmSource.js já persiste
+// entre usos).
+async function buildPoolFromEverything() {
   el.buildPoolBtn.disabled = true;
   el.poolProgress.hidden = false;
   el.poolProgress.textContent = "Buscando playlists da biblioteca...";
@@ -613,6 +668,7 @@ async function buildPoolFromLibrary() {
       id: p.id,
       name: p.ownerId && p.ownerId !== myUserId ? `${p.name} (de ${p.ownerName})` : p.name,
     })),
+    { id: "__catalog__", name: "Playlist RunBeat" },
   ];
 
   const refLists = [];
@@ -620,14 +676,14 @@ async function buildPoolFromLibrary() {
   for (let i = 0; i < sources.length; i++) {
     const source = sources[i];
     el.poolProgress.textContent = `Buscando faixas: fonte ${i + 1}/${sources.length} (${source.name})...`;
-    const { refs, failure } = await fetchSourceRefs(source.id, source.name);
+    const { refs, failure } = await fetchSourceRefs(source.id, source.name, []);
     refLists.push(refs);
     if (failure) failures.push(failure);
   }
 
   await resolvePool(dedupeRefs(refLists), failures);
 
-  el.buildPoolBtn.disabled = false;
+  updateBuildPoolAvailability();
 }
 
 function updateCadenceDisplay() {
@@ -855,14 +911,17 @@ async function init() {
     if (el.modeSelect.value === "fixed") applyLiveModeChange();
   });
   el.playlistSelect.addEventListener("change", () => {
-    enforceLibraryExclusivity();
+    playlistExclusivity.enforce();
     updateCatalogGenreVisibility();
     refreshMultiselectModalIfOpen(el.playlistSelect);
     updateMultiselectSummary(el.playlistSelect, el.playlistSummaryBtn);
+    updateBuildPoolAvailability();
   });
   el.catalogGenreSelect.addEventListener("change", () => {
+    genreExclusivity.enforce();
     refreshMultiselectModalIfOpen(el.catalogGenreSelect);
     updateMultiselectSummary(el.catalogGenreSelect, el.catalogGenreSummaryBtn);
+    updateBuildPoolAvailability();
   });
 
   el.playlistSummaryBtn.addEventListener("click", () => {
@@ -928,10 +987,10 @@ async function init() {
 
   el.buildPoolBtn.addEventListener("click", () => {
     closeMultiselectModal();
-    const isLibraryMode = Array.from(el.playlistSelect.selectedOptions).some(
-      (o) => o.value === "__library__"
+    const isAllMode = Array.from(el.playlistSelect.selectedOptions).some(
+      (o) => o.value === "__all__"
     );
-    const action = isLibraryMode ? buildPoolFromLibrary() : buildPool();
+    const action = isAllMode ? buildPoolFromEverything() : buildPool();
     action.catch((err) => {
       el.poolProgress.textContent = `Erro: ${err.message}`;
     });

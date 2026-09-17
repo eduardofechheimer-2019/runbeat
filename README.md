@@ -46,19 +46,24 @@ uma trocação instantânea:
    "N Items"/"..." nativo do iOS pra `<select multiple>`, que não dá pra
    estilizar nem traduzir) decide a fonte: campo fechado por padrão
    ("Selecione"), tocar nele abre um **pop-up modal** com a lista de
-   marcar/desmarcar (marcar/desmarcar destaca a linha inteira com a cor de
-   destaque, sem ícone de checkbox) — fecha pelo "✕", tocando fora dele, ou
-   automaticamente ao analisar o BPM. Sempre começa em branco (nenhuma opção
-   pré-marcada, nem de uma visita anterior). As opções: "Toda a biblioteca"
-   (primeira, exclusiva — marcar ela desmarca qualquer playlist específica,
-   e vice-versa), "Playlist RunBeat" (o Catálogo), e as playlists de
-   propriedade do próprio usuário (playlists de outras contas que ele só
-   segue/colabora não aparecem na lista, embora continuem incluídas em
-   "Toda a biblioteca") — todas atrás de um botão único ("Analisar BPM das
-   faixas selecionadas"). O painel de gêneros do Catálogo (dentro desse
-   mesmo cartão, só quando "Playlist RunBeat" está marcada) segue o mesmo
-   formato de pop-up. Assim que o pool
-   sai com alguma faixa, esse cartão também recua e o cartão 3 assume.
+   marcar/desmarcar (cada linha tem um checkbox próprio ao lado do texto, além
+   de destacar a linha inteira com a cor de destaque quando marcada) — fecha
+   pelo "✕", tocando fora dele, ou automaticamente ao analisar o BPM. Sempre
+   começa em branco (nenhuma opção pré-marcada, nem de uma visita anterior) —
+   e o botão "Analisar BPM das faixas selecionadas" só libera depois de uma
+   escolha explícita (não existe "nada marcado = tudo incluído" em lugar
+   nenhum). As opções: "Todos" (primeira, exclusiva — marcar ela desmarca
+   qualquer playlist específica, e vice-versa; junta toda a biblioteca do
+   Spotify E a Playlist RunBeat inteira de uma vez), "Playlist RunBeat" (o
+   Catálogo, sozinho), e as playlists de propriedade do próprio usuário
+   (playlists de outras contas que ele só segue/colabora não aparecem na
+   lista, embora continuem incluídas em "Todos") — todas atrás de um botão
+   único ("Analisar BPM das faixas selecionadas"). O painel de gêneros do
+   Catálogo (dentro desse mesmo cartão, só quando "Playlist RunBeat" está
+   marcada sozinha) segue o mesmo formato de pop-up, com sua própria opção
+   "Todos" exclusiva — e também exige uma escolha explícita antes de liberar
+   o botão. Assim que o pool sai com alguma faixa, esse cartão também recua e
+   o cartão 3 assume.
 3. **Cartão 3 — Escolha o ritmo.** Último cartão — um botão **"Continuar"**
    recua ele também e revela o cartão de corrida. Nesse momento os cartões
    1, 2 e 3 **condensam** juntos numa linha cada (só o título, sem o
@@ -93,26 +98,28 @@ dependem.
 
 1. Você loga com sua conta Spotify (Premium — necessário pra controlar
    playback pela API) e escolhe a fonte de faixas num único multiseletor:
-   **"Toda a biblioteca"** (primeira opção — junta automaticamente todas as
-   suas playlists e as Curtidas de uma vez; é exclusiva, marcar ela desmarca
-   qualquer outra escolha), **"Playlist RunBeat"** — uma seleção própria de
-   ~750 músicas com BPM e gênero já classificados (marcando essa opção
-   aparece um segundo painel pra filtrar por gênero musical, ex. Rock,
-   Pagode, Samba, Funk — nenhum gênero marcado usa o catálogo inteiro),
-   e/ou uma ou mais playlists de propriedade do usuário (playlists de outras
-   contas que ele só segue/colabora não aparecem na lista, embora continuem
-   entrando em "Toda a biblioteca"). A Playlist RunBeat é útil pra quem não
-   tem muitas playlists, ou pra preencher faixas de BPM que suas próprias
-   músicas não cobrem — cada entrada já vem com o ID real da faixa no
-   Spotify (`public/data/runbeat-catalog.json`), sem precisar buscar por
-   nome. Como a curadoria tem uma data própria, algumas faixas podem não
-   existir mais no catálogo do Spotify — o app trata isso como falha normal
-   e pula pra próxima candidata. Em qualquer caso (fora do modo "biblioteca
-   inteira"), o pool junta as fontes sem repetir faixa que apareça em mais
-   de uma — e o BPM já resolvido fica em cache local, então analisar de novo
-   (com mais fontes) não perde o que já foi calculado antes. Essa seleção
-   de playlists/gêneros nunca fica salva entre visitas — o passo 2 sempre
-   abre em branco, e a escolha de fonte é feita de novo a cada corrida.
+   **"Todos"** (primeira opção — junta automaticamente todas as suas
+   playlists, as Curtidas, e a Playlist RunBeat inteira de uma vez; é
+   exclusiva, marcar ela desmarca qualquer outra escolha), **"Playlist
+   RunBeat"** — uma seleção própria de ~750 músicas com BPM e gênero já
+   classificados (marcando essa opção sozinha aparece um segundo painel pra
+   filtrar por gênero musical, ex. Rock, Pagode, Samba, Funk, com sua
+   própria opção "Todos" — é obrigatório marcar ao menos um gênero, ou
+   "Todos", pra liberar a análise), e/ou uma ou mais playlists de
+   propriedade do usuário (playlists de outras contas que ele só
+   segue/colabora não aparecem na lista, embora continuem entrando em
+   "Todos"). A Playlist RunBeat é útil pra quem não tem muitas playlists, ou
+   pra preencher faixas de BPM que suas próprias músicas não cobrem — cada
+   entrada já vem com o ID real da faixa no Spotify
+   (`public/data/runbeat-catalog.json`), sem precisar buscar por nome. Como
+   a curadoria tem uma data própria, algumas faixas podem não existir mais
+   no catálogo do Spotify — o app trata isso como falha normal e pula pra
+   próxima candidata. Em qualquer caso (fora do modo "Todos"), o pool junta
+   as fontes sem repetir faixa que apareça em mais de uma — e o BPM já
+   resolvido fica em cache local, então analisar de novo (com mais fontes)
+   não perde o que já foi calculado antes. Essa seleção de playlists/gêneros
+   nunca fica salva entre visitas — o passo 2 sempre abre em branco, e a
+   escolha de fonte é feita de novo a cada corrida.
 2. O app resolve o BPM de cada faixa dessa fonte via [ReccoBeats](https://reccobeats.com/)
    (API gratuita, sem chave, que aceita o ID da faixa do Spotify diretamente
    — sem risco de casar com a versão errada de uma música).

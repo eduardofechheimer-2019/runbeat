@@ -20,7 +20,18 @@ async function request(path, options = {}) {
     throw err;
   }
   const text = await res.text();
-  return text ? JSON.parse(text) : null;
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    // Resposta com HTTP de sucesso mas corpo que não é JSON válido — já visto
+    // no retomar (PUT /me/player/play sem corpo), que às vezes volta 200 com
+    // um corpo que não é JSON (em vez do 204 de costume). Nenhuma chamada
+    // depende do valor de volta nesse caso, então ignora em silêncio em vez
+    // de estourar o erro cru do JSON.parse pra tela (que não indica nenhum
+    // problema real — o comando em si já foi aceito, daí o HTTP de sucesso).
+    return null;
+  }
 }
 
 export async function getCurrentUserId() {

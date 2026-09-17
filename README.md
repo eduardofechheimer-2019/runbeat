@@ -50,7 +50,7 @@ uma trocação instantânea:
    de destacar a linha inteira com a cor de destaque quando marcada) — fecha
    pelo "✕", tocando fora dele, ou automaticamente ao analisar o BPM. Sempre
    começa em branco (nenhuma opção pré-marcada, nem de uma visita anterior) —
-   e o botão "Analisar BPM das faixas selecionadas" só libera depois de uma
+   e o botão "Carregar BPM" só libera depois de uma
    escolha explícita (não existe "nada marcado = tudo incluído" em lugar
    nenhum). As opções: "Todos" (primeira, exclusiva — marcar ela desmarca
    qualquer playlist específica, e vice-versa; junta toda a biblioteca do
@@ -58,7 +58,7 @@ uma trocação instantânea:
    Catálogo, sozinho), e as playlists de propriedade do próprio usuário
    (playlists de outras contas que ele só segue/colabora não aparecem na
    lista, embora continuem incluídas em "Todos") — todas atrás de um botão
-   único ("Analisar BPM das faixas selecionadas"). O painel de gêneros do
+   único ("Carregar BPM"). O painel de gêneros do
    Catálogo (dentro desse mesmo cartão, só quando "Playlist RunBeat" está
    marcada sozinha) segue o mesmo formato de pop-up, com sua própria opção
    "Todos" exclusiva — e também exige uma escolha explícita antes de liberar

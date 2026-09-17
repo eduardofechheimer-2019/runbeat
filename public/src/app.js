@@ -114,6 +114,12 @@ function revealStep(stepKey, idx) {
       card.hidden = false;
       card.dataset.state = "active";
       setStepControlsDisabled(card, false);
+      // "Carregar BPM" tem uma regra própria de habilitado/desabilitado
+      // (só libera com uma seleção válida) — a linha acima reabilita todos
+      // os controles do cartão de forma genérica, então precisa reaplicar
+      // essa regra específica na hora, senão o botão reabre sempre
+      // clicável mesmo sem nada selecionado.
+      if (key === "library") updateBuildPoolAvailability();
     } else {
       card.hidden = true;
     }
@@ -471,7 +477,7 @@ function makeExclusivityEnforcer(selectEl, exclusiveValue) {
 const playlistExclusivity = makeExclusivityEnforcer(el.playlistSelect, "__all__");
 const genreExclusivity = makeExclusivityEnforcer(el.catalogGenreSelect, "__all__");
 
-// O passo 2 só libera "Analisar BPM..." com uma seleção válida — playlist
+// O passo 2 só libera "Carregar BPM" com uma seleção válida — playlist
 // escolhida (ou "Todos") e, se a Playlist RunBeat estiver marcada
 // isoladamente, também ao menos um gênero (ou "Todos" dentre eles). Sem
 // seleção nenhuma, o botão fica desabilitado — não existe mais um estado
@@ -598,7 +604,7 @@ async function populateCatalogGenreOptions() {
     el.catalogGenreSelect.appendChild(opt);
   }
 
-  // Idem: nenhum gênero começa marcado — só libera "Analisar BPM..." depois
+  // Idem: nenhum gênero começa marcado — só libera "Carregar BPM" depois
   // de uma escolha explícita (específica ou "Todos").
   genreExclusivity.sync();
   updateMultiselectSummary(el.catalogGenreSelect, el.catalogGenreSummaryBtn);

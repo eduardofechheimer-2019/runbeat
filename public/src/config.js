@@ -37,10 +37,10 @@ export const CADENCE_WINDOW_MS = 8000;
 export const END_OF_TRACK_LEAD_MS = 2000;
 
 // Duração assumida quando uma faixa não vem com duração conhecida —
-// principalmente entradas do Catálogo/Playlist RunBeat sem duration_ms na
-// planilha de origem (a maioria delas, atualmente). Usa uma média
-// razoável de música (~3min20s) em vez de travar o agendamento ou trocar
-// de faixa cedo demais.
+// hoje praticamente só um caso residual sem duration_ms na planilha de
+// origem do Catálogo/Playlist RunBeat. Usa uma média razoável de música
+// (~3min20s) em vez de travar o agendamento ou trocar de faixa cedo
+// demais.
 export const FALLBACK_TRACK_DURATION_MS = 200000;
 
 // Intervalo de atualização do texto de cadência na tela (só exibição —

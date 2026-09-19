@@ -417,19 +417,32 @@ async function warmUpSpotify() {
     // alguns alto-falantes), ou já estiver em 0, ou a chamada falhar, segue
     // tocando audível mesmo — silenciar é um bônus, não bloqueia o sync.
     let muted = false;
-    if (!mutedWarmupDevice && device.supports_volume && device.volume_percent > 0) {
+    let muteSkipReason = "";
+    let muteError = "";
+    if (mutedWarmupDevice) {
+      muteSkipReason = "já mutado antes";
+    } else if (!device.supports_volume) {
+      muteSkipReason = "supports_volume=false";
+    } else if (!(device.volume_percent > 0)) {
+      muteSkipReason = `volume_percent=${JSON.stringify(device.volume_percent)}`;
+    } else {
       try {
         await api.setVolume(0, device.id);
         mutedWarmupDevice = { deviceId: device.id, originalVolume: device.volume_percent };
         muted = true;
       } catch (err) {
-        console.warn("Não deu pra silenciar o Spotify durante o aquecimento:", err.message);
+        muteError = err.message;
       }
     }
 
     await api.playTrackUriOnDevice(track.uri, device.id);
     const mutedNote = muted || mutedWarmupDevice ? " (sem som até você apertar Play)" : "";
-    el.warmupStatus.textContent = `Spotify ativado em "${device.name}"${mutedNote} — pode tocar em Play pra começar a corrida.`;
+    // DIAGNÓSTICO TEMPORÁRIO — remover assim que descobrirmos por que o
+    // silenciar não está pegando no aparelho do usuário (ver conversa).
+    const debugNote = muted
+      ? ""
+      : ` [debug: supports_volume=${JSON.stringify(device.supports_volume)}, volume_percent=${JSON.stringify(device.volume_percent)}${muteSkipReason ? `, motivo=${muteSkipReason}` : ""}${muteError ? `, erro=${muteError}` : ""}]`;
+    el.warmupStatus.textContent = `Spotify ativado em "${device.name}"${mutedNote} — pode tocar em Play pra começar a corrida.${debugNote}`;
     setSyncHighlight(false);
     // O Spotify já está tocando a faixa de aquecimento sozinho nesse ponto —
     // o Play pulsa até o primeiro toque pra deixar claro que precisa apertar

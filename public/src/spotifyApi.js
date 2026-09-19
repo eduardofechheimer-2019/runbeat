@@ -39,6 +39,17 @@ export async function getCurrentUserId() {
   return me.id;
 }
 
+// Busca faixas por texto — usada só pra achar uma faixa "silenciosa" real
+// (ver findSilentWarmupTrack em app.js), já que nem todo dispositivo Spotify
+// aceita comando de volume remoto (`supports_volume: false`, comum em
+// celulares) pra silenciar a faixa de aquecimento do "Spotify sync" por
+// software.
+export async function searchTracks(query, limit = 10) {
+  const params = new URLSearchParams({ q: query, type: "track", limit: String(limit) });
+  const data = await request(`/search?${params.toString()}`);
+  return data?.tracks?.items ?? [];
+}
+
 export async function getMyPlaylists() {
   const items = [];
   let url = "/me/playlists?limit=50";

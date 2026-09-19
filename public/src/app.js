@@ -378,6 +378,36 @@ function restoreWarmupVolume() {
   });
 }
 
+// Cache da faixa "silenciosa" encontrada (ver findSilentWarmupTrack) — só
+// pesquisa uma vez por sessão.
+let silentWarmupTrackUri = null;
+let silentWarmupSearchDone = false;
+
+// Muitos celulares reportam `supports_volume: false` pro Spotify Connect
+// (confirmado num iPhone real) — nesses casos o endpoint de volume
+// (setVolume) simplesmente não tem efeito, e não tem API nenhuma que deixe
+// uma página web abaixar o volume do sistema do aparelho. Pra silenciar a
+// faixa de aquecimento mesmo assim, busca no catálogo do Spotify uma faixa
+// que já seja silêncio de verdade (existem várias, feitas propositalmente
+// pra isso) em vez de usar uma música real do pool. Filtra por duração bem
+// curta (<= 6s) — filtro simples, mas reduz bastante o risco de pegar uma
+// música de verdade que só tenha "silêncio" no nome (ex. "Sound of
+// Silence"). Se a busca falhar ou não achar nada, `warmUpSpotify` cai de
+// volta pra uma faixa normal do pool (o único comportamento que existia
+// antes desse recurso).
+async function findSilentWarmupTrack() {
+  if (silentWarmupSearchDone) return silentWarmupTrackUri;
+  silentWarmupSearchDone = true;
+  try {
+    const results = await api.searchTracks("silence", 15);
+    const candidate = results.find((t) => t?.uri && t.duration_ms > 0 && t.duration_ms <= 6000);
+    if (candidate) silentWarmupTrackUri = candidate.uri;
+  } catch (err) {
+    console.warn("Não deu pra buscar uma faixa silenciosa pro aquecimento:", err.message);
+  }
+  return silentWarmupTrackUri;
+}
+
 // "Aquece" o Spotify sem sair da tela do RunBeat: procura um dispositivo
 // Spotify que ainda esteja rodando (mesmo em segundo plano) e já manda tocar
 // uma faixa direto nele pela API — se der certo, o Spotify passa a tocar
@@ -405,17 +435,20 @@ async function warmUpSpotify() {
 
     const device = devices.find((d) => d.is_active) ?? devices[0];
     const range = el.modeSelect.value === "fixed" ? currentFixedRange() : null;
-    const track = range
+    const realTrack = range
       ? pickTrackForRange(bpmPool, range, new Set())
       : bpmPool[Math.floor(Math.random() * bpmPool.length)];
+    const silentUri = await findSilentWarmupTrack();
+    const track = silentUri ? { uri: silentUri } : realTrack;
 
-    // Silencia ANTES de tocar — a faixa de aquecimento só existe pra manter
-    // o Spotify vivo em segundo plano, não faz sentido o usuário ouvir ela
-    // antes de apertar Play. `mutedWarmupDevice` só é setado na primeira
-    // tentativa bem-sucedida (repetir o sync não deve capturar 0% como se
-    // fosse o volume "original"). Se o dispositivo não suportar volume (ex.
-    // alguns alto-falantes), ou já estiver em 0, ou a chamada falhar, segue
-    // tocando audível mesmo — silenciar é um bônus, não bloqueia o sync.
+    // Silencia ANTES de tocar (bônus, além da faixa silenciosa acima) —
+    // ajuda mais ainda quando o dispositivo suporta volume, e não custa
+    // nada tentar mesmo quando já tem faixa silenciosa. `mutedWarmupDevice`
+    // só é setado na primeira tentativa bem-sucedida (repetir o sync não
+    // deve capturar 0% como se fosse o volume "original"). Se o dispositivo
+    // não suportar volume (comum em celulares), ou já estiver em 0, ou a
+    // chamada falhar, segue sem mutar — sem faixa silenciosa disponível,
+    // toca audível mesmo; com ela, não faz diferença de qualquer jeito.
     let muted = false;
     let muteSkipReason = "";
     let muteError = "";
@@ -436,12 +469,14 @@ async function warmUpSpotify() {
     }
 
     await api.playTrackUriOnDevice(track.uri, device.id);
-    const mutedNote = muted || mutedWarmupDevice ? " (sem som até você apertar Play)" : "";
-    // DIAGNÓSTICO TEMPORÁRIO — remover assim que descobrirmos por que o
-    // silenciar não está pegando no aparelho do usuário (ver conversa).
-    const debugNote = muted
+    const effectivelySilent = muted || mutedWarmupDevice || Boolean(silentUri);
+    const mutedNote = effectivelySilent ? " (sem som até você apertar Play)" : "";
+    // DIAGNÓSTICO TEMPORÁRIO — remover assim que confirmarmos que a faixa
+    // silenciosa (ou o mute por volume) está mesmo resolvendo em aparelhos
+    // reais que reportam supports_volume=false.
+    const debugNote = effectivelySilent
       ? ""
-      : ` [debug: supports_volume=${JSON.stringify(device.supports_volume)}, volume_percent=${JSON.stringify(device.volume_percent)}${muteSkipReason ? `, motivo=${muteSkipReason}` : ""}${muteError ? `, erro=${muteError}` : ""}]`;
+      : ` [debug: faixa_silenciosa=${silentUri ? "sim" : "não encontrada"}, supports_volume=${JSON.stringify(device.supports_volume)}, volume_percent=${JSON.stringify(device.volume_percent)}${muteSkipReason ? `, motivo_mute=${muteSkipReason}` : ""}${muteError ? `, erro_mute=${muteError}` : ""}]`;
     el.warmupStatus.textContent = `Spotify ativado em "${device.name}"${mutedNote} — pode tocar em Play pra começar a corrida.${debugNote}`;
     setSyncHighlight(false);
     // O Spotify já está tocando a faixa de aquecimento sozinho nesse ponto —

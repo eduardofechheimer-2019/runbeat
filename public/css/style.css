@@ -1,5 +1,9 @@
 :root {
   color-scheme: dark;
+  /* Tudo no app usa rem, então esse valor único escala a fonte inteira —
+     16px (padrão do navegador) estava pequeno demais pra leitura durante
+     a corrida; ~1-2pt maior em todos os textos de uma vez. */
+  font-size: 17.5px;
   --bg: #0b0f14;
   --card-bg: rgba(20, 26, 33, 0.82);
   --card-border: #2a323c;
@@ -231,6 +235,16 @@ label {
 
 label:first-of-type { margin-top: 0; }
 
+/* Label principal de um campo que precisa de toque pra abrir (ex.
+   "Playlists" antes do multiseletor) — mais forte que o rótulo padrão
+   (que é secundário/descritivo) pra deixar claro que ali é o ponto de
+   interação, não só uma legenda. */
+.label-emphasis {
+  color: var(--fg);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
 select, button {
   width: 100%;
   padding: 13px 14px;
@@ -283,8 +297,13 @@ button:disabled {
   position: relative;
 }
 
+/* Antes de qualquer seleção, o campo mostra "Selecione" — precisa chamar
+   atenção como um convite a tocar ali, não passar despercebido como um
+   texto secundário/preenchido. */
 .multiselect-summary.is-placeholder {
-  color: var(--muted);
+  color: var(--fg);
+  font-weight: 700;
+  border-color: var(--accent);
 }
 
 .multiselect-summary::after {

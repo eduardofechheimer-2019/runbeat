@@ -161,7 +161,7 @@ dependem.
    escolher uma faixa nova. O sensor de passos nunca para durante uma pausa,
    só a troca de faixa e o pulso sonoro (se estiver ligado).
 6. Antes de apertar "Play" pela primeira vez, o cartão de corrida mostra um
-   botão secundário **"🔥 Aquecer o Spotify"** — resolve de antemão, sem
+   botão secundário **"Spotify sync (passo 1 de 2)"** — resolve de antemão, sem
    sair da tela do RunBeat, o caso mais comum de não ter nenhum dispositivo
    Spotify ativo. Ele chama `GET /me/player/devices` (lista qualquer app
    Spotify que ainda esteja rodando, mesmo em segundo plano e mesmo sem
@@ -174,8 +174,8 @@ dependem.
    corrida realmente começa (não é mais necessário depois disso).
 7. Se mesmo assim o Spotify não tiver nenhum dispositivo ativo quando uma
    troca de faixa precisar tocar (app já encerrado pelo sistema, ex.
-   segundo plano suspenso), aparece um botão **"▶ Abrir Spotify e
-   começar"** — um toque só abre o app Spotify direto na faixa certa e já
+   segundo plano suspenso), aparece um botão **"Spotify sync (passo 2 de
+   2)"** — um toque só abre o app Spotify direto na faixa certa e já
    começa a tocar sozinho (link `spotify:track:<id>`, que só precisa de 1
    toque porque nada mais está tocando ainda). Abrir esse link tira o
    RunBeat de primeiro plano — **nenhum app ou site consegue se trazer de
@@ -274,15 +274,15 @@ ou HTTPS — batendo com o que foi cadastrado no app).
 
 ### 3. Durante o uso
 
-- Antes de "▶ Play", o botão **"🔥 Aquecer o Spotify"** tenta resolver o
-  caso de nenhum dispositivo ativo sem sair do RunBeat — só funciona se o
-  Spotify ainda estiver rodando em segundo plano (`GET
+- Antes de "▶ Play", o botão **"Spotify sync (passo 1 de 2)"** tenta
+  resolver o caso de nenhum dispositivo ativo sem sair do RunBeat — só
+  funciona se o Spotify ainda estiver rodando em segundo plano (`GET
   /me/player/devices` não vem vazio).
 - Se mesmo assim você tocar em "▶ Play" sem nenhum dispositivo Spotify
-  ativo (app já encerrado pelo sistema), o RunBeat mostra um botão **"▶
-  Abrir Spotify e começar"** — um toque nele abre o app Spotify já tocando
-  a faixa certa, sem precisar procurar nada lá dentro (o app não usa o Web
-  Playback SDK, só comanda o dispositivo ativo).
+  ativo (app já encerrado pelo sistema), o RunBeat mostra um botão
+  **"Spotify sync (passo 2 de 2)"** — um toque nele abre o app Spotify já
+  tocando a faixa certa, sem precisar procurar nada lá dentro (o app não
+  usa o Web Playback SDK, só comanda o dispositivo ativo).
 - O RunBeat pede pra tela não apagar sozinha enquanto a corrida está ativa
   (Screen Wake Lock), mas isso não segura o botão físico de bloquear o
   celular — bloqueando manualmente, o sensor de passos e a troca automática

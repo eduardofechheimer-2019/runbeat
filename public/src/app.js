@@ -57,11 +57,12 @@ const el = {
   audioStatus: document.getElementById("audio-status"),
 };
 
-// Os 4 cartões ficam todos montados na página, empilhados na ordem abaixo —
-// nunca é uma "troca de tela". Só um fica "active" (destacado, cor cheia) por
-// vez; os anteriores já concluídos ficam visíveis mas "completed" (sem
-// destaque, controles desabilitados) acima dele; os seguintes ainda nem
-// aparecem (hidden) até serem alcançados.
+// Os 4 cartões ficam todos montados na página, mas durante os passos 1-3
+// (Conectar, Playlists, Ritmo) só um fica visível por vez — uma tela por
+// passo, os já concluídos somem em vez de empilhar (ver revealStep). Só ao
+// alcançar o cartão de corrida (passo 4) os 3 primeiros voltam a aparecer
+// juntos, "condensados" numa linha cada, resumindo a jornada acima dos
+// controles da corrida.
 const STEP_ORDER = ["connect", "library", "pace", "run"];
 const STEP_CARDS = {
   connect: el.cardConnect,
@@ -99,16 +100,18 @@ function advanceTo(stepKey) {
   }
 }
 
-// Mostra o cartão `stepKey` em destaque. Cartões antes dele na ordem já
-// deviam estar "completed" (finishStep cuida disso antes de chamar aqui) —
-// ao alcançar o cartão de corrida, eles passam pra "condensed" (resumidos
-// numa linha só, ver CSS), liberando a tela pros controles da corrida.
-// Tudo depois do alvo ainda nem foi alcançado, então fica escondido.
+// Mostra o cartão `stepKey` em destaque. Durante os passos 1-3 (Conectar,
+// Playlists, Ritmo), só o cartão da vez fica visível — uma tela por passo,
+// sem empilhar os já concluídos. Só ao alcançar o cartão de corrida (depois
+// de "Continuar" no passo 3) os 3 primeiros aparecem juntos, "condensados"
+// (resumidos numa linha só, ver CSS), liberando o resto da tela pros
+// controles da corrida. Tudo depois do alvo ainda nem foi alcançado, então
+// fica escondido.
 function revealStep(stepKey, idx) {
   STEP_ORDER.forEach((key, i) => {
     const card = STEP_CARDS[key];
     if (i < idx) {
-      card.hidden = false;
+      card.hidden = stepKey !== "run";
       if (stepKey === "run") card.dataset.state = "condensed";
     } else if (i === idx) {
       card.hidden = false;
@@ -349,7 +352,7 @@ function hideNoDeviceLink() {
 // uma faixa direto nele pela API — se der certo, o Spotify passa a tocar
 // essa faixa sozinho, sem precisar abrir o app manualmente. Só funciona se o
 // Spotify ainda não tiver sido suspenso/encerrado pelo sistema; senão, cai
-// de volta no fluxo antigo (link "Abrir Spotify e começar") quando a corrida
+// de volta no fluxo antigo (link "Spotify sync (passo 2 de 2)") quando a corrida
 // realmente começar.
 async function warmUpSpotify() {
   if (bpmPool.length === 0) {
@@ -1110,8 +1113,8 @@ async function init() {
     if (document.visibilityState !== "visible" || !runActive) return;
     if (!wakeLock) requestWakeLock();
     // O usuário voltou pro RunBeat depois de abrir o Spotify (ex. pelo link
-    // "Abrir Spotify e começar") — tenta tocar de novo agora, sem esperar o
-    // resto do intervalo de retry automático.
+    // "Spotify sync (passo 2 de 2)") — tenta tocar de novo agora, sem
+    // esperar o resto do intervalo de retry automático.
     if (noDeviceRetryPending) {
       clearTimeout(endOfTrackTimer);
       playNextAndSchedule().catch((err) => showRunError(err.message));

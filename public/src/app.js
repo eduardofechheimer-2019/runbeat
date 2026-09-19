@@ -284,7 +284,7 @@ function updateAudioStatus(ctx) {
   el.audioStatus.hidden = false;
   el.audioStatus.textContent = blocked
     ? "🔇 iOS não liberou o som — desmarque e marque de novo, ou confira o interruptor de silêncio"
-    : "🔊 Pulso sonoro ativo";
+    : "🔊 Marca-Passo Sonoro ativo";
   el.audioStatus.classList.toggle("audio-status-warn", blocked);
 }
 
@@ -396,6 +396,11 @@ async function warmUpSpotify() {
     await api.playTrackUriOnDevice(track.uri, device.id);
     el.warmupStatus.textContent = `Spotify ativado em "${device.name}" — pode tocar em Play pra começar a corrida.`;
     setSyncHighlight(false);
+    // O Spotify já está tocando a faixa de aquecimento sozinho nesse ponto —
+    // o Play pulsa até o primeiro toque pra deixar claro que precisa apertar
+    // logo, não só ficar destacado parado (ver startRun(), que tira o pulso
+    // assim que a corrida realmente começa).
+    el.playPauseBtn.classList.add("is-attention");
   } catch (err) {
     el.warmupStatus.textContent = `Erro: ${err.message}`;
   } finally {
@@ -918,8 +923,10 @@ function startRun() {
   el.warmupRow.hidden = true;
   // A corrida já começou — Play/Pause virou o controle principal da tela,
   // não faz mais sentido ficar esmaecido (mesmo se o usuário nunca tiver
-  // usado o "Spotify sync").
+  // usado o "Spotify sync") nem pulsando (já foi apertado, não precisa mais
+  // chamar atenção).
   setSyncHighlight(false);
+  el.playPauseBtn.classList.remove("is-attention");
   requestWakeLock();
   displayTimer = setInterval(updateCadenceDisplay, CADENCE_DISPLAY_INTERVAL_MS);
   waitForFirstCadence();

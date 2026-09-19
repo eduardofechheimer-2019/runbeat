@@ -72,7 +72,7 @@
 
   <section id="card-pace" class="step-card" data-step="pace" hidden>
     <h2><span class="step-badge">3</span> Escolha o ritmo <span class="step-check" hidden>✓</span></h2>
-    <label for="mode-select">Ritmo</label>
+    <label for="mode-select" class="label-emphasis">Ritmo</label>
     <select id="mode-select">
       <option value="auto">Automático (minha cadência)</option>
       <option value="fixed">Ritmo fixo</option>
@@ -91,7 +91,10 @@
       <p class="beat-label">Batida-alvo: <strong id="beat-bpm-value">—</strong></p>
       <label class="checkbox-row">
         <input type="checkbox" id="audible-pulse-toggle" />
-        Pulso sonoro a cada batida (pode interferir no áudio do Spotify — teste antes de confiar)
+        <span>
+          Marca-Passo Sonoro
+          <em class="checkbox-subtitle">Pode interferir no áudio do Spotify — faça o teste.</em>
+        </span>
       </label>
       <p id="audio-status" class="audio-status" hidden></p>
     </div>

@@ -72,11 +72,15 @@ uma trocação instantânea:
 4. **Cartão de corrida.** Mostra a medição de cadência, a faixa tocando
    agora, e os controles: um botão central **▶ Play / ⏸ Pause** com
    **⏮ Anterior** / **⏭ Próxima** ao lado, que só aparecem depois que a
-   corrida começa. O primeiro toque em "Play" começa a corrida de verdade
-   (sensor de passos, primeira faixa); depois disso, Play/Pause só controla
-   a música — pausa/retoma o Spotify de onde parou, sem reiniciar a medição
-   de cadência nem recomeçar a faixa atual do zero (ver "Como funciona",
-   item 5).
+   corrida começa. Antes do primeiro toque, se o "Spotify sync" já tiver
+   funcionado, o Play pulsa (brilho ao redor, ver `.play-pause-btn.is-
+   attention` no CSS) — o Spotify já pode estar tocando uma faixa de
+   aquecimento sozinho nesse momento, então o pulso chama atenção pra
+   apertar logo. O primeiro toque em "Play" começa a corrida de verdade
+   (sensor de passos, primeira faixa) e o pulso para de vez; depois disso,
+   Play/Pause só controla a música — pausa/retoma o Spotify de onde parou,
+   sem reiniciar a medição de cadência nem recomeçar a faixa atual do zero
+   (ver "Como funciona", item 5).
 
 Tocar no título de qualquer cartão já concluído ou condensado (sem
 destaque) reabre ele pra editar (volta ao tamanho normal, com os controles
@@ -200,7 +204,7 @@ dependem.
    continua tocando normalmente (é o app Spotify nativo, não a página do
    RunBeat, que toca o áudio), mas a troca automática de faixa só volta a
    acontecer quando você desbloquear e voltar pro RunBeat.
-9. Um **pulso sonoro** (checkbox, opt-in) toca um clique curto no navegador
+9. Um **"Marca-Passo Sonoro"** (checkbox, opt-in) toca um clique curto no navegador
    a cada batida do BPM-alvo, pra ajudar a sincronizar o passo com a
    batida. Não é sincronizado com o áudio real da faixa (a API do Spotify
    não expõe posição/fase de batida) — é um guia de ritmo constante a

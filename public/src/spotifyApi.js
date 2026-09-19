@@ -203,3 +203,15 @@ export async function playTrackUriOnDevice(uri, deviceId) {
     throw err;
   }
 }
+
+// Ajusta o volume do Spotify Connect num dispositivo específico — usado pra
+// silenciar a faixa de aquecimento do "Spotify sync" (toca de verdade, mas
+// sem som) e devolver o volume original assim que o usuário aperta Play de
+// verdade. É o volume do PRÓPRIO Spotify (Connect), não o volume físico do
+// aparelho.
+export async function setVolume(volumePercent, deviceId) {
+  await request(
+    `/me/player/volume?volume_percent=${volumePercent}&device_id=${encodeURIComponent(deviceId)}`,
+    { method: "PUT" }
+  );
+}

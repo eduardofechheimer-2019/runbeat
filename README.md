@@ -172,8 +172,15 @@ dependem.
    tocar nada) e, achando um, já manda tocar uma faixa direto nele via
    `PUT /me/player/play?device_id=<id>` — o Spotify passa a tocar sozinho,
    em segundo plano, sem precisar abrir o app manualmente nem trocar de
-   tela. Só não funciona se o Spotify já tiver sido suspenso/encerrado pelo
-   sistema (aí nenhum dispositivo aparece na lista) — nesse caso o botão
+   tela. Antes de tocar, se o dispositivo suportar controle de volume
+   (`supports_volume`), o RunBeat guarda o volume atual e zera ele via
+   `PUT /me/player/volume` — a faixa de aquecimento toca de verdade (por
+   isso mantém o Spotify vivo), mas sem som, já que ela não tem nada a ver
+   com a corrida ainda. O volume original volta assim que o usuário aperta
+   "Play" de verdade (ver `restoreWarmupVolume()` em app.js). Só não
+   funciona (nem o sync, nem o mute) se o Spotify já tiver sido
+   suspenso/encerrado pelo sistema (aí nenhum dispositivo aparece na
+   lista) — nesse caso o botão
    avisa "Abra o app Spotify primeiro". Antes desse sync funcionar, esse
    botão fica em destaque cheio e o "Play" ao lado fica esmaecido (ainda
    clicável, só visualmente sugerindo sincronizar primeiro); assim que

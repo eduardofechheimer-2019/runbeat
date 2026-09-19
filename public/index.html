@@ -62,7 +62,7 @@
     <button type="button" id="playlist-summary-btn" class="multiselect-summary" aria-haspopup="dialog">Selecione</button>
     <select id="playlist-select" multiple size="6" hidden></select>
     <div id="catalog-genre-group" class="nested-group" hidden>
-      <label>Gêneros Playlist RunBeat</label>
+      <label class="label-emphasis">Gêneros Playlist RunBeat</label>
       <button type="button" id="catalog-genre-summary-btn" class="multiselect-summary" aria-haspopup="dialog">Selecione</button>
       <select id="catalog-genre-select" multiple size="6" hidden></select>
     </div>
@@ -100,17 +100,17 @@
     <p id="run-error" class="error" hidden></p>
 
     <div id="warmup-row" class="warmup-row">
-      <button id="warmup-btn" class="warmup-btn" type="button">Spotify sync (passo 1 de 2)</button>
+      <button id="warmup-btn" class="warmup-btn is-highlighted" type="button">Spotify sync (clique aqui)</button>
       <p id="warmup-status" class="warmup-status" hidden></p>
     </div>
 
-    <a id="open-spotify-link" class="button-link" hidden>Spotify sync (passo 2 de 2)</a>
+    <a id="open-spotify-link" class="button-link" hidden>Spotify sync (clique aqui)</a>
 
     <div class="playpause-row">
       <button id="prev-btn" class="side-btn" type="button" hidden aria-label="Faixa anterior">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14M20 5 8 12l12 7V5Z"/></svg>
       </button>
-      <button id="play-pause-btn" class="play-pause-btn" type="button">
+      <button id="play-pause-btn" class="play-pause-btn is-muted" type="button">
         <svg class="icon icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7L8 5Z"/></svg>
         <svg class="icon icon-pause" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
         <span id="play-pause-label">Play</span>

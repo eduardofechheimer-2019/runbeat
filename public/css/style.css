@@ -206,13 +206,13 @@ h2 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   margin-left: auto;
   border-radius: 50%;
-  border: 2.5px solid #1db954;
+  border: 3px solid #1db954;
   color: #1db954;
-  font-size: 0.95rem;
+  font-size: 1.2rem;
   font-weight: 900;
   flex-shrink: 0;
   animation: check-pop 0.3s ease;
@@ -457,17 +457,29 @@ button:disabled {
   display: none;
 }
 
-/* Botão secundário — não deve competir visualmente com o Play/Pause,
-   que é a ação principal desse cartão. */
+/* Antes do primeiro sync bem-sucedido, esse botão é a ação sugerida (em
+   destaque cheio) e o Play fica esmaecido ao lado (ver .play-pause-btn.is-
+   muted) — um empurrãozinho visual pra sincronizar primeiro, sem travar
+   quem preferir ir direto no Play. Assim que o sync funciona
+   ("Spotify ativo em..."), a ênfase inverte: esse botão volta a esse
+   estado neutro/esmaecido e o Play vira o destaque (ver warmUpSpotify()
+   em app.js). */
 .warmup-btn {
   background: transparent;
-  border: 1.5px solid var(--accent);
-  color: var(--accent);
+  border: 1.5px solid var(--card-border);
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+.warmup-btn.is-highlighted {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .warmup-status {
   margin: 8px 0 0;
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   color: var(--muted);
   text-align: center;
 }
@@ -573,6 +585,15 @@ button:disabled {
   justify-content: center;
   gap: 20px;
   margin-top: 20px;
+}
+
+/* Enquanto o "Spotify sync" está em destaque (ver .warmup-btn.is-
+   highlighted), o Play fica esmaecido do lado — visual de "ainda não é a
+   ação principal", sem travar quem preferir tocar direto nele. */
+.play-pause-btn.is-muted {
+  background: transparent;
+  border: 1.5px solid var(--card-border);
+  color: var(--muted);
 }
 
 .play-pause-btn {

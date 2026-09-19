@@ -87,14 +87,17 @@ let activeStep = STEP_ORDER[0];
 // do novo alvo), o novo cartão só aparece DEPOIS da espera + check do
 // anterior (ver finishStep) — nunca ao mesmo tempo, senão os dois surgem
 // juntos e a sequência fica confusa/imperceptível.
-function advanceTo(stepKey) {
+// `preDelayMs`/`extraHoldMs`: usados só na conexão do Spotify (ver
+// refreshAuthedUi) — atraso antes do check aparecer, e tempo extra
+// segurando ele antes de revelar o próximo cartão.
+function advanceTo(stepKey, { preDelayMs = 0, extraHoldMs = 0 } = {}) {
   const idx = STEP_ORDER.indexOf(stepKey);
   const finishingStep = activeStep;
   const finishingIdx = STEP_ORDER.indexOf(finishingStep);
   activeStep = stepKey;
 
   if (finishingIdx >= 0 && finishingIdx < idx) {
-    finishStep(STEP_CARDS[finishingStep], () => revealStep(stepKey, idx));
+    finishStep(STEP_CARDS[finishingStep], () => revealStep(stepKey, idx), { preDelayMs, extraHoldMs });
   } else {
     revealStep(stepKey, idx);
   }
@@ -135,15 +138,17 @@ function revealStep(stepKey, idx) {
 // no CSS) e só ENTÃO chamar `onDone` (que revela o próximo cartão).
 const STEP_CHECK_HOLD_MS = 1500;
 
-function finishStep(card, onDone) {
+function finishStep(card, onDone, { preDelayMs = 0, extraHoldMs = 0 } = {}) {
   const check = card.querySelector(".step-check");
-  if (check) check.hidden = false;
   setTimeout(() => {
-    if (check) check.hidden = true;
-    card.dataset.state = "completed";
-    setStepControlsDisabled(card, true);
-    onDone();
-  }, STEP_CHECK_HOLD_MS);
+    if (check) check.hidden = false;
+    setTimeout(() => {
+      if (check) check.hidden = true;
+      card.dataset.state = "completed";
+      setStepControlsDisabled(card, true);
+      onDone();
+    }, STEP_CHECK_HOLD_MS + extraHoldMs);
+  }, preDelayMs);
 }
 
 // Tocar no título de um cartão já concluído (sem destaque) reabre ele pra
@@ -347,13 +352,23 @@ function hideNoDeviceLink() {
   el.openSpotifyLink.hidden = true;
 }
 
+// Troca qual dos dois botões está em destaque: antes do sync funcionar,
+// "Spotify sync" chama mais atenção que o Play (ainda esmaecido); assim que
+// funciona, a ênfase inverte — Play vira a ação óbvia, "Spotify sync" recua
+// pro segundo plano (ver .warmup-btn.is-highlighted/.play-pause-btn.is-muted
+// no CSS).
+function setSyncHighlight(syncIsHighlighted) {
+  el.warmupBtn.classList.toggle("is-highlighted", syncIsHighlighted);
+  el.playPauseBtn.classList.toggle("is-muted", syncIsHighlighted);
+}
+
 // "Aquece" o Spotify sem sair da tela do RunBeat: procura um dispositivo
 // Spotify que ainda esteja rodando (mesmo em segundo plano) e já manda tocar
 // uma faixa direto nele pela API — se der certo, o Spotify passa a tocar
 // essa faixa sozinho, sem precisar abrir o app manualmente. Só funciona se o
 // Spotify ainda não tiver sido suspenso/encerrado pelo sistema; senão, cai
-// de volta no fluxo antigo (link "Spotify sync (passo 2 de 2)") quando a corrida
-// realmente começar.
+// de volta no fluxo antigo (link "Spotify sync (clique aqui)") quando a
+// corrida realmente começar.
 async function warmUpSpotify() {
   if (bpmPool.length === 0) {
     el.warmupStatus.hidden = false;
@@ -368,8 +383,7 @@ async function warmUpSpotify() {
   try {
     const devices = await api.getAvailableDevices();
     if (devices.length === 0) {
-      el.warmupStatus.textContent =
-        "Nenhum Spotify encontrado rodando no celular — abra o app do Spotify uma vez e tente de novo.";
+      el.warmupStatus.textContent = "Abra o app Spotify primeiro";
       return;
     }
 
@@ -381,6 +395,7 @@ async function warmUpSpotify() {
 
     await api.playTrackUriOnDevice(track.uri, device.id);
     el.warmupStatus.textContent = `Spotify ativado em "${device.name}" — pode tocar em Play pra começar a corrida.`;
+    setSyncHighlight(false);
   } catch (err) {
     el.warmupStatus.textContent = `Erro: ${err.message}`;
   } finally {
@@ -901,6 +916,10 @@ function startRun() {
   showRunError("");
   hideNoDeviceLink();
   el.warmupRow.hidden = true;
+  // A corrida já começou — Play/Pause virou o controle principal da tela,
+  // não faz mais sentido ficar esmaecido (mesmo se o usuário nunca tiver
+  // usado o "Spotify sync").
+  setSyncHighlight(false);
   requestWakeLock();
   displayTimer = setInterval(updateCadenceDisplay, CADENCE_DISPLAY_INTERVAL_MS);
   waitForFirstCadence();
@@ -941,7 +960,13 @@ function resumeRun() {
   }
 }
 
-async function refreshAuthedUi() {
+// `silentlyConnected`: true quando a conexão já estava valida de uma visita
+// anterior (sem o usuário precisar tocar em nada agora) — nesse caso a
+// sequência de conclusão do cartão 1 ganha 0,5s a mais antes de avançar pro
+// cartão 2, porque não teve nenhuma ação do usuário (login manual, redirect)
+// marcando o ritmo — sem isso, a transição acontece rápido demais pra
+// perceber o que aconteceu.
+async function refreshAuthedUi(silentlyConnected = false) {
   el.connectBtn.hidden = true;
   el.disconnectBtn.hidden = false;
   setStatus("Conectado ao Spotify.");
@@ -950,7 +975,7 @@ async function refreshAuthedUi() {
   // a espera + o check acontecerem de verdade, mesmo quando o login já
   // estava pronto de antes. O dropdown do cartão 2 termina de se popular
   // assim que loadPlaylistOptions() responder.
-  advanceTo("library");
+  advanceTo("library", { preDelayMs: 500, extraHoldMs: silentlyConnected ? 500 : 0 });
   await loadPlaylistOptions();
 }
 
@@ -1014,9 +1039,10 @@ async function init() {
   const minSplashDelay = new Promise((resolve) => setTimeout(resolve, 1200));
 
   let alreadyConnected = false;
+  let justLoggedIn = false;
   let loginErrorMessage = null;
   try {
-    const justLoggedIn = await auth.handleRedirectCallback();
+    justLoggedIn = await auth.handleRedirectCallback();
     alreadyConnected = justLoggedIn || auth.isLoggedIn();
   } catch (err) {
     loginErrorMessage = err.message;
@@ -1031,7 +1057,9 @@ async function init() {
   if (loginErrorMessage) {
     setStatus(`Erro no login: ${loginErrorMessage}`);
   } else if (alreadyConnected) {
-    refreshAuthedUi().catch((err) => setStatus(`Erro: ${err.message}`));
+    // "Silenciosa" = já estava conectado de antes, sem passar pelo redirect
+    // de login agora — ver o comentário em refreshAuthedUi.
+    refreshAuthedUi(!justLoggedIn).catch((err) => setStatus(`Erro: ${err.message}`));
   } else {
     setStatus("Não conectado.");
   }
@@ -1113,7 +1141,7 @@ async function init() {
     if (document.visibilityState !== "visible" || !runActive) return;
     if (!wakeLock) requestWakeLock();
     // O usuário voltou pro RunBeat depois de abrir o Spotify (ex. pelo link
-    // "Spotify sync (passo 2 de 2)") — tenta tocar de novo agora, sem
+    // "Spotify sync (clique aqui)") — tenta tocar de novo agora, sem
     // esperar o resto do intervalo de retry automático.
     if (noDeviceRetryPending) {
       clearTimeout(endOfTrackTimer);

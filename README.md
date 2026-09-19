@@ -161,8 +161,8 @@ dependem.
    escolher uma faixa nova. O sensor de passos nunca para durante uma pausa,
    só a troca de faixa e o pulso sonoro (se estiver ligado).
 6. Antes de apertar "Play" pela primeira vez, o cartão de corrida mostra um
-   botão secundário **"Spotify sync (passo 1 de 2)"** — resolve de antemão, sem
-   sair da tela do RunBeat, o caso mais comum de não ter nenhum dispositivo
+   botão **"Spotify sync (clique aqui)"** — resolve de antemão, sem sair
+   da tela do RunBeat, o caso mais comum de não ter nenhum dispositivo
    Spotify ativo. Ele chama `GET /me/player/devices` (lista qualquer app
    Spotify que ainda esteja rodando, mesmo em segundo plano e mesmo sem
    tocar nada) e, achando um, já manda tocar uma faixa direto nele via
@@ -170,14 +170,19 @@ dependem.
    em segundo plano, sem precisar abrir o app manualmente nem trocar de
    tela. Só não funciona se o Spotify já tiver sido suspenso/encerrado pelo
    sistema (aí nenhum dispositivo aparece na lista) — nesse caso o botão
-   avisa pra abrir o Spotify manualmente uma vez. O botão some assim que a
-   corrida realmente começa (não é mais necessário depois disso).
+   avisa "Abra o app Spotify primeiro". Antes desse sync funcionar, esse
+   botão fica em destaque cheio e o "Play" ao lado fica esmaecido (ainda
+   clicável, só visualmente sugerindo sincronizar primeiro); assim que
+   funciona ("Spotify ativado em..."), a ênfase inverte — "Play" vira o
+   destaque e o botão de sync esmaece. Ele some de vez assim que a corrida
+   realmente começa (não é mais necessário depois disso).
 7. Se mesmo assim o Spotify não tiver nenhum dispositivo ativo quando uma
    troca de faixa precisar tocar (app já encerrado pelo sistema, ex.
-   segundo plano suspenso), aparece um botão **"Spotify sync (passo 2 de
-   2)"** — um toque só abre o app Spotify direto na faixa certa e já
-   começa a tocar sozinho (link `spotify:track:<id>`, que só precisa de 1
-   toque porque nada mais está tocando ainda). Abrir esse link tira o
+   segundo plano suspenso), aparece um botão **"Spotify sync (clique
+   aqui)"** (o mesmo texto do passo anterior) — um toque só abre o app
+   Spotify direto na faixa certa e já começa a tocar sozinho (link
+   `spotify:track:<id>`, que só precisa de 1 toque porque nada mais está
+   tocando ainda). Abrir esse link tira o
    RunBeat de primeiro plano — **nenhum app ou site consegue se trazer de
    volta ao primeiro plano sozinho** (restrição do próprio sistema
    operacional, iOS e Android, não uma limitação do RunBeat ou do
@@ -274,15 +279,16 @@ ou HTTPS — batendo com o que foi cadastrado no app).
 
 ### 3. Durante o uso
 
-- Antes de "▶ Play", o botão **"Spotify sync (passo 1 de 2)"** tenta
+- Antes de "▶ Play", o botão **"Spotify sync (clique aqui)"** tenta
   resolver o caso de nenhum dispositivo ativo sem sair do RunBeat — só
   funciona se o Spotify ainda estiver rodando em segundo plano (`GET
-  /me/player/devices` não vem vazio).
+  /me/player/devices` não vem vazio); sem nenhum, avisa "Abra o app
+  Spotify primeiro".
 - Se mesmo assim você tocar em "▶ Play" sem nenhum dispositivo Spotify
-  ativo (app já encerrado pelo sistema), o RunBeat mostra um botão
-  **"Spotify sync (passo 2 de 2)"** — um toque nele abre o app Spotify já
-  tocando a faixa certa, sem precisar procurar nada lá dentro (o app não
-  usa o Web Playback SDK, só comanda o dispositivo ativo).
+  ativo (app já encerrado pelo sistema), o RunBeat mostra o mesmo botão
+  **"Spotify sync (clique aqui)"** como link — um toque nele abre o app
+  Spotify já tocando a faixa certa, sem precisar procurar nada lá dentro
+  (o app não usa o Web Playback SDK, só comanda o dispositivo ativo).
 - O RunBeat pede pra tela não apagar sozinha enquanto a corrida está ativa
   (Screen Wake Lock), mas isso não segura o botão físico de bloquear o
   celular — bloqueando manualmente, o sensor de passos e a troca automática

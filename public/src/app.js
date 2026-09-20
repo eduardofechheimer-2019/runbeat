@@ -44,9 +44,16 @@ const el = {
   iconPause: document.querySelector("#play-pause-btn .icon-pause"),
   prevBtn: document.getElementById("prev-btn"),
   nextBtn: document.getElementById("next-btn"),
-  cadenceValue: document.getElementById("cadence-value"),
-  trackValue: document.getElementById("track-value"),
+  cadenceLastLabel: document.getElementById("cadence-last-label"),
+  cadenceLastValue: document.getElementById("cadence-last-value"),
+  cadenceLiveValue: document.getElementById("cadence-live-value"),
+  trackNameValue: document.getElementById("track-name-value"),
+  trackSourceValue: document.getElementById("track-source-value"),
+  trackBpmValue: document.getElementById("track-bpm-value"),
   runError: document.getElementById("run-error"),
+  connectSummary: document.getElementById("connect-summary"),
+  librarySummary: document.getElementById("library-summary"),
+  paceSummary: document.getElementById("pace-summary"),
   openSpotifyLink: document.getElementById("open-spotify-link"),
   warmupRow: document.getElementById("warmup-row"),
   warmupBtn: document.getElementById("warmup-btn"),
@@ -173,6 +180,12 @@ let endOfTrackTimer = null;
 let currentTrackId = null;
 let activeMode = "auto"; // "auto" (cadência real) | "fixed" (faixa de BPM fixa)
 let fixedRange = null; // {min, max} quando activeMode === "fixed"
+// Cadência (passos/min) usada pra escolher a faixa que está tocando agora
+// (modo automático) — congelada no momento da troca, diferente da leitura
+// "tempo real" que segue atualizando (ver updateCadenceDisplay). Mostra o
+// "porquê" dessa faixa mesmo que a cadência real já tenha mudado desde
+// então.
+let lastMatchCadence = 0;
 let runActive = false; // true desde o primeiro "Play" até fechar/recarregar a página
 // true enquanto pausado (Spotify pausado + troca automática de faixa
 // suspensa) — não confundir com runActive=false, que é o estado inicial
@@ -222,6 +235,18 @@ function populatePaceOptions() {
 function currentFixedRange() {
   const opt = FIXED_PACE_OPTIONS.find((o) => o.id === el.paceSelect.value);
   return opt ? { min: opt.min, max: opt.max } : null;
+}
+
+// Resumo exibido ao lado do título do passo 3 depois de concluído (ex.
+// "(Automático)" ou "(Warming Up)") — ver o mesmo padrão em connect-summary
+// e library-summary.
+function updatePaceSummary() {
+  if (el.modeSelect.value === "fixed") {
+    const opt = FIXED_PACE_OPTIONS.find((o) => o.id === el.paceSelect.value);
+    el.paceSummary.textContent = opt ? `(${opt.label})` : "";
+  } else {
+    el.paceSummary.textContent = "(Automático)";
+  }
 }
 
 // Aplica imediatamente uma troca de modo/velocidade feita em pleno andamento
@@ -658,7 +683,10 @@ async function fetchSourceRefs(id, label, catalogGenres) {
     if (id === "__catalog__") refs = await loadCatalogRefs(catalogGenres);
     else if (id === "__liked__") refs = await api.getLikedSongRefs();
     else refs = await api.getPlaylistTrackRefs(id);
-    return { refs, failure: null };
+    // Marca cada faixa com o nome da fonte de onde veio (playlist, Músicas
+    // Curtidas ou Playlist RunBeat) — usado na tela de corrida pra mostrar
+    // de onde a faixa que está tocando agora foi tirada (ver "Tocando agora").
+    return { refs: refs.map((r) => ({ ...r, source: label })), failure: null };
   } catch (err) {
     console.warn(`Falha ao buscar faixas de "${label}":`, err.message);
     return { refs: [], failure: { label, message: err.message } };
@@ -667,7 +695,7 @@ async function fetchSourceRefs(id, label, catalogGenres) {
 
 // Resolve o BPM de `refs` e atualiza a tela — usado tanto pra análise das
 // playlists selecionadas quanto pra "toda a biblioteca".
-async function resolvePool(refs, failures = []) {
+async function resolvePool(refs, failures = [], itemCount = 0) {
   const { tracks, diagnostic } = await buildBpmPool(refs, (done, total) => {
     el.poolProgress.textContent = `Resolvendo BPM: ${done}/${total}...`;
   });
@@ -686,6 +714,7 @@ async function resolvePool(refs, failures = []) {
       el.poolProgress.textContent += ` [Diagnóstico: ${diagnostic}]`;
     }
   } else {
+    el.librarySummary.textContent = `(${itemCount} ${itemCount === 1 ? "Item" : "Items"})`;
     // Cartão 2 concluído — avança pro cartão 3 (Ritmo). Reabre e refaz o
     // cartão 3 mesmo se o usuário só queria trocar de playlist com a
     // corrida já em andamento — mantém o modelo simples e previsível.
@@ -711,7 +740,7 @@ async function buildPool() {
     selectedOptions.map((opt) => fetchSourceRefs(opt.value, opt.textContent, catalogGenres))
   );
   const failures = results.map((r) => r.failure).filter(Boolean);
-  await resolvePool(dedupeRefs(results.map((r) => r.refs)), failures);
+  await resolvePool(dedupeRefs(results.map((r) => r.refs)), failures, selectedOptions.length);
 
   updateBuildPoolAvailability();
 }
@@ -747,20 +776,22 @@ async function buildPoolFromEverything() {
     if (failure) failures.push(failure);
   }
 
-  await resolvePool(dedupeRefs(refLists), failures);
+  await resolvePool(dedupeRefs(refLists), failures, sources.length);
 
   updateBuildPoolAvailability();
 }
 
 function updateCadenceDisplay() {
+  const liveCadence = tracker?.getCurrentSpm() ?? 0;
+  el.cadenceLiveValue.textContent = liveCadence > 0 ? `${liveCadence} passos/min` : "medindo...";
+
   if (activeMode === "fixed") {
-    el.cadenceValue.textContent = fixedRange
-      ? `${fixedRange.min}–${fixedRange.max} passos/min (alvo)`
-      : "—";
+    el.cadenceLastLabel.textContent = "Alvo:";
+    el.cadenceLastValue.textContent = fixedRange ? `${fixedRange.min}–${fixedRange.max} passos/min` : "—";
     return;
   }
-  const cadence = tracker?.getCurrentSpm() ?? 0;
-  el.cadenceValue.textContent = cadence > 0 ? `${cadence} passos/min` : "medindo...";
+  el.cadenceLastLabel.textContent = "Última medição:";
+  el.cadenceLastValue.textContent = lastMatchCadence > 0 ? `${lastMatchCadence} passos/min` : "—";
 }
 
 // `requestId` evita que uma troca de faixa lenta (ex. chamada à API do
@@ -771,7 +802,10 @@ async function playSpecificTrack(track, requestId) {
   await api.playTrackUri(track.uri);
   if (requestId !== playRequestSeq) return false;
   currentTrackId = track.id;
-  el.trackValue.textContent = `${track.name} — ${track.artist} (${Math.round(track.tempo)} BPM)`;
+  el.trackNameValue.textContent = `${track.name} — ${track.artist}`;
+  const sourceLabel = track.source ? `"${track.source}"` : "—";
+  el.trackSourceValue.textContent = track.genre ? `${sourceLabel} (Gênero: ${track.genre})` : sourceLabel;
+  el.trackBpmValue.textContent = `${Math.round(track.tempo)} / min`;
   showRunError("");
   hideNoDeviceLink();
   startBeatPulse(track.effectiveBpm);
@@ -806,11 +840,16 @@ async function playNextAndSchedule() {
   // pendente — ver o listener de visibilitychange mais abaixo.
   noDeviceRetryPending = false;
   const requestId = ++playRequestSeq;
+  const cadenceNow = tracker?.getCurrentSpm() ?? 0;
   const track =
     activeMode === "fixed"
       ? pickTrackForRange(bpmPool, fixedRange, playedIds)
-      : pickTrackForCadence(bpmPool, tracker?.getCurrentSpm() ?? 0, playedIds);
+      : pickTrackForCadence(bpmPool, cadenceNow, playedIds);
   if (!track) return;
+  // Congela a cadência usada nessa escolha pro rótulo "Última medição" (ver
+  // updateCadenceDisplay) — só faz sentido no modo automático, onde a
+  // cadência real é o critério de escolha.
+  if (activeMode !== "fixed") lastMatchCadence = cadenceNow;
 
   // Marca como "tentada" antes de tocar — se falhar (ex. faixa do catálogo
   // com ID que não existe mais no Spotify), o retry abaixo escolhe outra
@@ -970,6 +1009,7 @@ async function refreshAuthedUi(silentlyConnected = false) {
   el.connectBtn.hidden = true;
   el.disconnectBtn.hidden = false;
   setStatus("Conectado ao Spotify.");
+  el.connectSummary.textContent = "(Conectado)";
   // Cartão 1 concluído (já conectado, com ou sem interação do usuário) —
   // avança pro cartão 2 na hora, sem esperar a rede: o usuário precisa ver
   // a espera + o check acontecerem de verdade, mesmo quando o login já
@@ -984,9 +1024,11 @@ async function init() {
   populatePaceOptions();
   el.modeSelect.addEventListener("change", () => {
     el.paceGroup.hidden = el.modeSelect.value !== "fixed";
+    updatePaceSummary();
     applyLiveModeChange();
   });
   el.paceSelect.addEventListener("change", () => {
+    updatePaceSummary();
     if (el.modeSelect.value === "fixed") applyLiveModeChange();
   });
   el.playlistSelect.addEventListener("change", () => {
@@ -1084,6 +1126,7 @@ async function init() {
     // trocar de ritmo no meio do caminho), a troca já foi aplicada ao vivo
     // pelo listener de "change" do mode-select/pace-select — esse botão só
     // precisa avançar de volta pro cartão de corrida.
+    updatePaceSummary();
     advanceTo("run");
   });
 

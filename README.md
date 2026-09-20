@@ -68,9 +68,16 @@ uma trocação instantânea:
    recua ele também e revela o cartão de corrida. Nesse momento os cartões
    1, 2 e 3 **condensam** juntos numa linha cada (só o título, sem o
    conteúdo interno) no topo da tela, liberando o resto do espaço pro
-   cartão de corrida.
-4. **Cartão de corrida.** Mostra a medição de cadência, a faixa tocando
-   agora, e os controles: um botão central **▶ Play / ⏸ Pause** com
+   cartão de corrida — cada título condensado ganha um resumo curto em
+   verde do que foi escolhido nele (ex. "Conectado", "2 Items",
+   "Automático"/nome do nível), pra lembrar a configuração sem precisar
+   reabrir o cartão.
+4. **Cartão de corrida.** Mostra duas seções com bullets — "Sua Cadência"
+   (última medição usada pra escolher a faixa atual no modo automático, ou
+   o alvo fixo no modo ritmo fixo, e a leitura em tempo real do sensor) e
+   "Tocando agora" (música, playlist/fonte de onde ela veio — com o gênero
+   entre parênteses quando é uma faixa do Catálogo RunBeat — e o BPM) — e os
+   controles: um botão central **▶ Play / ⏸ Pause** com
    **⏮ Anterior** / **⏭ Próxima** ao lado, que só aparecem depois que a
    corrida começa. Antes do primeiro toque, assim que o usuário volta do
    "Spotify sync" (ver item 6), o Play pulsa (brilho ao redor, ver

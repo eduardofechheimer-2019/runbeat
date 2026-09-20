@@ -220,6 +220,24 @@ h2 {
 
 .step-check[hidden] { display: none; }
 
+/* Resumo do que foi escolhido nesse passo (ex. "Conectado", "2 Items",
+   "Automático"), à direita do título — só aparece depois do passo
+   concluído (populado em app.js), fica vazio (escondido) antes disso. */
+.step-summary {
+  margin-left: auto;
+  color: #1db954;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.step-summary:empty {
+  display: none;
+}
+
 @keyframes check-pop {
   0% { transform: scale(0); opacity: 0; }
   60% { transform: scale(1.15); opacity: 1; }
@@ -605,8 +623,41 @@ button:disabled {
   color: var(--danger);
 }
 
-#cadence-value, #track-value {
+/* Bloco "Sua Cadência" / "Tocando agora" no cartão de corrida — título +
+   lista com marcador, no lugar das linhas soltas "Cadência: X" / "Tocando
+   agora: Y" de antes. */
+.run-info {
+  margin: 4px 0 16px;
+}
+
+.run-info-title {
+  margin: 12px 0 4px;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.run-info-title:first-child {
+  margin-top: 0;
+}
+
+.run-info-list {
+  margin: 0;
+  padding-left: 20px;
+  list-style: disc;
+}
+
+.run-info-list li {
+  margin: 2px 0;
+  color: var(--fg);
+}
+
+.run-info-label {
+  color: var(--muted);
+}
+
+.run-info-list strong {
   color: var(--accent);
+  font-weight: 700;
 }
 
 /* --- Play/Pause --- */

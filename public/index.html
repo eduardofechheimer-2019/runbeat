@@ -50,14 +50,14 @@
   </header>
 
   <section id="card-connect" class="step-card" data-step="connect">
-    <h2><span class="step-badge">1</span> Conecte ao Spotify <span class="step-check" hidden>✓</span></h2>
+    <h2><span class="step-badge">1</span> Conecte ao Spotify <span class="step-check" hidden>✓</span><span id="connect-summary" class="step-summary"></span></h2>
     <p id="status">Verificando login...</p>
     <button id="connect-btn">Conectar ao Spotify</button>
     <button id="disconnect-btn" hidden>Desconectar do Spotify</button>
   </section>
 
   <section id="card-library" class="step-card" data-step="library" hidden>
-    <h2><span class="step-badge">2</span> Escolha as Playlists <span class="step-check" hidden>✓</span></h2>
+    <h2><span class="step-badge">2</span> Escolha as Playlists <span class="step-check" hidden>✓</span><span id="library-summary" class="step-summary"></span></h2>
     <label class="label-emphasis">Playlists</label>
     <button type="button" id="playlist-summary-btn" class="multiselect-summary" aria-haspopup="dialog">Selecione</button>
     <select id="playlist-select" multiple size="6" hidden></select>
@@ -71,7 +71,7 @@
   </section>
 
   <section id="card-pace" class="step-card" data-step="pace" hidden>
-    <h2><span class="step-badge">3</span> Escolha o ritmo <span class="step-check" hidden>✓</span></h2>
+    <h2><span class="step-badge">3</span> Escolha o ritmo <span class="step-check" hidden>✓</span><span id="pace-summary" class="step-summary"></span></h2>
     <label for="mode-select" class="label-emphasis">Ritmo</label>
     <select id="mode-select">
       <option value="auto">Automático (minha cadência)</option>
@@ -98,8 +98,20 @@
       </label>
       <p id="audio-status" class="audio-status" hidden></p>
     </div>
-    <p>Cadência: <strong id="cadence-value">—</strong></p>
-    <p>Tocando agora: <strong id="track-value">—</strong></p>
+    <div class="run-info">
+      <p class="run-info-title">Sua Cadência:</p>
+      <ul class="run-info-list">
+        <li><span class="run-info-label" id="cadence-last-label">Última medição:</span> <strong id="cadence-last-value">—</strong></li>
+        <li><span class="run-info-label">Tempo real:</span> <strong id="cadence-live-value">—</strong></li>
+      </ul>
+
+      <p class="run-info-title">Tocando agora:</p>
+      <ul class="run-info-list">
+        <li><span class="run-info-label">Música:</span> <strong id="track-name-value">—</strong></li>
+        <li><span class="run-info-label">Playlist:</span> <strong id="track-source-value">—</strong></li>
+        <li><span class="run-info-label">BPM:</span> <strong id="track-bpm-value">—</strong></li>
+      </ul>
+    </div>
     <p id="run-error" class="error" hidden></p>
 
     <div id="warmup-row" class="warmup-row">

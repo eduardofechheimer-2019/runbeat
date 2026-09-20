@@ -51,6 +51,12 @@ export const CADENCE_DISPLAY_INTERVAL_MS = 1000;
 // ficou inativo), tenta de novo depois desse tempo.
 export const RETRY_AFTER_ERROR_MS = 5000;
 
+// Quanto tempo esperar sem nenhuma leitura de cadência (modo automático)
+// antes de mostrar um aviso incentivando o usuário a começar a se mexer —
+// evita deixar a tela parada sem explicação enquanto o acelerômetro ainda
+// não detectou nenhum passo.
+export const CADENCE_WAIT_HINT_DELAY_MS = 6000;
+
 // Opções do modo "ritmo fixo" — faixa de BPM alvo, independente do passo
 // real do usuário. Dentro do intervalo, qualquer faixa do pool serve; sem
 // nenhuma no intervalo, cai pra faixa mais próxima do limite. Ajustável aqui.
@@ -66,4 +72,5 @@ export const STORAGE_KEYS = {
   pkceVerifier: "runbeat_pkce_verifier",
   bpmPool: "runbeat_bpm_pool",
   onboardingSeen: "runbeat_onboarding_seen",
+  lang: "runbeat_lang",
 };

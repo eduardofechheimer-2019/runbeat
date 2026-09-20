@@ -1,4 +1,5 @@
 import { STORAGE_KEYS } from "./config.js";
+import { t, onLanguageChange } from "./i18n.js";
 
 const TOTAL_STEPS = 5;
 let currentStep = 1;
@@ -22,7 +23,7 @@ function goToStep(n) {
     dot.classList.toggle("active", Number(dot.dataset.dot) === n);
   }
   el.backBtn.hidden = n === 1;
-  el.nextBtn.textContent = n === TOTAL_STEPS ? "Começar" : "Próximo";
+  el.nextBtn.textContent = n === TOTAL_STEPS ? t("onboardingStart") : t("onboardingNext");
 }
 
 function showOnboarding() {
@@ -47,4 +48,9 @@ export function initOnboarding() {
   if (!localStorage.getItem(STORAGE_KEYS.onboardingSeen)) {
     showOnboarding();
   }
+
+  // O texto dos passos (título/parágrafo) é traduzido junto com o resto da
+  // tela estática via data-i18n — só o rótulo do botão "Próximo"/"Começar"
+  // precisa ser recalculado à mão, porque depende do passo atual.
+  onLanguageChange(() => goToStep(currentStep));
 }

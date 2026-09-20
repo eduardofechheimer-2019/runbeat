@@ -21,6 +21,16 @@ nota musical — aparece ao lado do nome "RunBeat" no
 cabeçalho, que fica com um respiro extra no topo (`env(safe-area-inset-top)`)
 pra não ficar atrás do relógio/notch do celular.
 
+## Idioma
+
+Um seletor **PT/EN** no cabeçalho (ao lado do "?") troca todo o texto do
+app — telas, onboarding e mensagens de erro — entre português e inglês na
+hora, sem recarregar a página. A escolha fica salva (`localStorage`) e
+persiste entre visitas. O dicionário e a lógica de troca ficam em
+`src/i18n.js`; texto estático usa atributos `data-i18n`/`data-i18n-html`/
+`data-i18n-aria-label` no HTML, e texto montado em runtime (status,
+resumos de passo, progresso) chama `t(chave, variáveis)` direto no JS.
+
 ## Abrindo o app
 
 Toda vez que o app abre, aparece por ~1,2s uma tela de splash com o ícone do
@@ -80,15 +90,18 @@ uma trocação instantânea:
    controles: um botão central **▶ Play / ⏸ Pause** com
    **⏮ Anterior** / **⏭ Próxima** ao lado, que só aparecem depois que a
    corrida começa. Antes do primeiro toque, assim que o usuário volta do
-   "Spotify sync" (ver item 6), o Play pulsa (brilho ao redor, ver
-   `.play-pause-btn.is-attention` no CSS) — o Spotify já pode estar tocando
-   uma faixa de aquecimento sozinho nesse momento, então o pulso chama
-   atenção pra apertar logo. O primeiro toque em "Play" começa a corrida de
-   verdade
-   (sensor de passos, primeira faixa) e o pulso para de vez; depois disso,
-   Play/Pause só controla a música — pausa/retoma o Spotify de onde parou,
-   sem reiniciar a medição de cadência nem recomeçar a faixa atual do zero
-   (ver "Como funciona", item 5).
+   "Spotify sync" (ver item 6), o Play pulsa de forma bem chamativa (cresce
+   ~8% e volta, com um brilho grande ao redor, ver `.play-pause-btn.is-
+   attention`/`@keyframes play-pulse` no CSS) — o Spotify já pode estar
+   tocando uma faixa de aquecimento sozinho nesse momento, então o pulso
+   precisa deixar claro que precisa apertar logo. O primeiro toque em "Play"
+   começa a corrida de verdade (sensor de passos, primeira faixa) e o pulso
+   para de vez; depois disso, Play/Pause só controla a música — pausa/retoma
+   o Spotify de onde parou, sem reiniciar a medição de cadência nem
+   recomeçar a faixa atual do zero (ver "Como funciona", item 5). No modo
+   automático, se passar 6s sem nenhum passo detectado (usuário ainda não
+   começou a se mexer), aparece um aviso "Pode começar a correr!" — some
+   sozinho assim que a primeira cadência é lida (ou ao pausar).
 
 Tocar no título de qualquer cartão já concluído ou condensado (sem
 destaque) reabre ele pra editar (volta ao tamanho normal, com os controles
@@ -257,6 +270,7 @@ runbeat/
         ├── cadence.js         # detecção de passos via acelerômetro
         ├── matcher.js         # escolhe a faixa certa pra cadência atual
         ├── onboarding.js      # tutorial guiado da primeira vez (e botão "?")
+        ├── i18n.js            # dicionário PT/EN e troca de idioma
         └── app.js             # orquestra a UI e o loop de matching
 ```
 

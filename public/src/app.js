@@ -4,6 +4,7 @@ import {
   FALLBACK_TRACK_DURATION_MS,
   CADENCE_DISPLAY_INTERVAL_MS,
   RETRY_AFTER_ERROR_MS,
+  CADENCE_WAIT_HINT_DELAY_MS,
   FIXED_PACE_OPTIONS,
 } from "./config.js";
 import * as auth from "./spotifyAuth.js";
@@ -13,6 +14,7 @@ import { loadCatalogRefs, loadCatalogGenres } from "./catalogSource.js";
 import { CadenceTracker, requestMotionPermission } from "./cadence.js";
 import { pickTrackForCadence, pickTrackForRange } from "./matcher.js";
 import { initOnboarding } from "./onboarding.js";
+import { t, getLang, setLang, onLanguageChange, initI18n } from "./i18n.js";
 
 const el = {
   splashScreen: document.getElementById("splash-screen"),
@@ -62,6 +64,9 @@ const el = {
   beatVisual: document.getElementById("beat-visual"),
   audiblePulseToggle: document.getElementById("audible-pulse-toggle"),
   audioStatus: document.getElementById("audio-status"),
+  cadenceWaitHint: document.getElementById("cadence-wait-hint"),
+  langPtBtn: document.getElementById("lang-pt-btn"),
+  langEnBtn: document.getElementById("lang-en-btn"),
 };
 
 // Os 4 cartões ficam todos montados na página, mas durante os passos 1-3
@@ -213,6 +218,14 @@ let noDeviceRetryPending = false;
 // app manualmente), já que nenhum dos dois faz mais sentido depois disso
 // (ver visibilitychange).
 let warmupPending = false;
+// Timer do aviso "Pode começar a correr!" (ver waitForFirstCadence) —
+// guardado à parte do bootstrapTimer pra poder cancelar/escondê-lo de forma
+// independente sempre que a espera pela primeira cadência for interrompida
+// (pause, troca pro modo fixo, faixa começou a tocar).
+let cadenceWaitHintTimer = null;
+// Guardado só pra poder recalcular o resumo do passo 2 ("(N Items)") na
+// língua nova quando o idioma muda — ver refreshDynamicTexts().
+let lastLibraryItemCount = null;
 let playRequestSeq = 0; // invalida trocas de faixa que ficaram pra trás no tempo
 let history = []; // faixas já tocadas nesta corrida, em ordem — pra "Anterior"
 const playedIds = new Set();
@@ -255,7 +268,7 @@ function updatePaceSummary() {
     const opt = FIXED_PACE_OPTIONS.find((o) => o.id === el.paceSelect.value);
     el.paceSummary.textContent = opt ? `(${opt.label})` : "";
   } else {
-    el.paceSummary.textContent = "(Automático)";
+    el.paceSummary.textContent = t("autoSummary");
   }
 }
 
@@ -268,6 +281,7 @@ function applyLiveModeChange() {
   activeMode = el.modeSelect.value;
   fixedRange = activeMode === "fixed" ? currentFixedRange() : null;
   clearInterval(bootstrapTimer);
+  clearCadenceWaitHint();
   clearTimeout(endOfTrackTimer);
   playNextAndSchedule().catch((err) => showRunError(err.message));
 }
@@ -316,9 +330,7 @@ function updateAudioStatus(ctx) {
   }
   const blocked = ctx.state !== "running";
   el.audioStatus.hidden = false;
-  el.audioStatus.textContent = blocked
-    ? "🔇 iOS não liberou o som — desmarque e marque de novo, ou confira o interruptor de silêncio"
-    : "🔊 Marca-Passo Sonoro ativo";
+  el.audioStatus.textContent = blocked ? t("audioBlocked") : t("audioActive");
   el.audioStatus.classList.toggle("audio-status-warn", blocked);
 }
 
@@ -426,7 +438,7 @@ const WARMUP_TRACK_ID = "3mSFn1km1dGcGHUNqmEaHM"; // "One Bird Singing" — Auge
 function warmUpSpotify() {
   el.warmupHint.hidden = false;
   el.warmupStatus.hidden = false;
-  el.warmupStatus.textContent = "Abrindo o Spotify...";
+  el.warmupStatus.textContent = t("openingSpotify");
   warmupPending = true;
 
   setSyncHighlight(false);
@@ -464,7 +476,7 @@ async function loadPlaylistOptions() {
   // playlists próprias do usuário.
   const allOpt = document.createElement("option");
   allOpt.value = "__all__";
-  allOpt.textContent = "Todos";
+  allOpt.textContent = t("allOption");
   el.playlistSelect.appendChild(allOpt);
 
   const catalogOpt = document.createElement("option");
@@ -606,7 +618,7 @@ function syncMultiselectSelection(selectEl, panelEl) {
 // ou a contagem depois de qualquer seleção.
 function updateMultiselectSummary(selectEl, summaryBtnEl) {
   const n = selectEl.selectedOptions.length;
-  summaryBtnEl.textContent = n === 0 ? "Selecione" : `${n} Items`;
+  summaryBtnEl.textContent = n === 0 ? t("selectPlaceholder") : t(n === 1 ? "oneItem" : "nItems", { n });
   summaryBtnEl.classList.toggle("is-placeholder", n === 0);
 }
 
@@ -661,7 +673,7 @@ async function populateCatalogGenreOptions() {
   // playlists — marcar ela desmarca os gêneros individuais e vice-versa.
   const allOpt = document.createElement("option");
   allOpt.value = "__all__";
-  allOpt.textContent = "Todos";
+  allOpt.textContent = t("allOption");
   el.catalogGenreSelect.appendChild(allOpt);
 
   for (const genre of genres) {
@@ -723,24 +735,25 @@ async function fetchSourceRefs(id, label, catalogGenres) {
 // playlists selecionadas quanto pra "toda a biblioteca".
 async function resolvePool(refs, failures = [], itemCount = 0) {
   const { tracks, diagnostic } = await buildBpmPool(refs, (done, total) => {
-    el.poolProgress.textContent = `Resolvendo BPM: ${done}/${total}...`;
+    el.poolProgress.textContent = t("resolvingBpm", { done, total });
   });
   bpmPool = tracks;
 
-  let text = `Pronto: ${bpmPool.length} de ${refs.length} faixas com BPM encontrado.`;
+  let text = t("poolReady", { found: bpmPool.length, total: refs.length });
   if (failures.length > 0) {
     const names = failures.map((f) => f.label).join(", ");
-    text += ` (${failures.length} fonte(s) não puderam ser lidas: ${names})`;
-    text += ` [motivo da 1ª: ${failures[0].message}]`;
+    text += t("poolFailuresSuffix", { count: failures.length, names });
+    text += t("poolFirstFailureReason", { message: failures[0].message });
   }
   el.poolProgress.textContent = text;
   if (bpmPool.length === 0) {
-    el.poolProgress.textContent += " Nenhuma faixa teve BPM resolvido.";
+    el.poolProgress.textContent += t("poolNoTracksResolved");
     if (diagnostic) {
-      el.poolProgress.textContent += ` [Diagnóstico: ${diagnostic}]`;
+      el.poolProgress.textContent += t("poolDiagnostic", { diagnostic });
     }
   } else {
-    el.librarySummary.textContent = `(${itemCount} ${itemCount === 1 ? "Item" : "Items"})`;
+    lastLibraryItemCount = itemCount;
+    updateLibrarySummary();
     // Cartão 2 concluído — avança pro cartão 3 (Ritmo). Reabre e refaz o
     // cartão 3 mesmo se o usuário só queria trocar de playlist com a
     // corrida já em andamento — mantém o modelo simples e previsível.
@@ -748,19 +761,27 @@ async function resolvePool(refs, failures = [], itemCount = 0) {
   }
 }
 
+// Extraído de resolvePool() pra poder recalcular na língua nova quando o
+// idioma muda (ver refreshDynamicTexts) sem precisar reconstruir o pool.
+function updateLibrarySummary() {
+  if (lastLibraryItemCount == null) return;
+  const n = lastLibraryItemCount;
+  el.librarySummary.textContent = `(${t(n === 1 ? "oneItem" : "nItems", { n })})`;
+}
+
 async function buildPool() {
   const selectedOptions = Array.from(el.playlistSelect.selectedOptions);
   if (!hasValidPoolSelection()) {
     el.poolProgress.hidden = false;
     el.poolProgress.textContent =
-      selectedOptions.length === 0 ? "Escolha ao menos uma playlist." : "Escolha ao menos um gênero.";
+      selectedOptions.length === 0 ? t("chooseAtLeastOnePlaylist") : t("chooseAtLeastOneGenre");
     return;
   }
   const catalogGenres = selectedCatalogGenres();
 
   el.buildPoolBtn.disabled = true;
   el.poolProgress.hidden = false;
-  el.poolProgress.textContent = "Buscando faixas...";
+  el.poolProgress.textContent = t("fetchingTracks");
 
   const results = await Promise.all(
     selectedOptions.map((opt) => fetchSourceRefs(opt.value, opt.textContent, catalogGenres))
@@ -779,15 +800,15 @@ async function buildPool() {
 async function buildPoolFromEverything() {
   el.buildPoolBtn.disabled = true;
   el.poolProgress.hidden = false;
-  el.poolProgress.textContent = "Buscando playlists da biblioteca...";
+  el.poolProgress.textContent = t("fetchingLibraryPlaylists");
 
   const myUserId = await api.getCurrentUserId();
   const playlists = await api.getMyPlaylists();
   const sources = [
-    { id: "__liked__", name: "Músicas Curtidas" },
+    { id: "__liked__", name: t("likedSongs") },
     ...playlists.map((p) => ({
       id: p.id,
-      name: p.ownerId && p.ownerId !== myUserId ? `${p.name} (de ${p.ownerName})` : p.name,
+      name: p.ownerId && p.ownerId !== myUserId ? t("playlistByOwner", { name: p.name, owner: p.ownerName }) : p.name,
     })),
     { id: "__catalog__", name: "RunBeat" },
   ];
@@ -796,7 +817,7 @@ async function buildPoolFromEverything() {
   const failures = [];
   for (let i = 0; i < sources.length; i++) {
     const source = sources[i];
-    el.poolProgress.textContent = `Buscando faixas: fonte ${i + 1}/${sources.length} (${source.name})...`;
+    el.poolProgress.textContent = t("fetchingTracksSource", { i: i + 1, total: sources.length, name: source.name });
     const { refs, failure } = await fetchSourceRefs(source.id, source.name, []);
     refLists.push(refs);
     if (failure) failures.push(failure);
@@ -809,15 +830,28 @@ async function buildPoolFromEverything() {
 
 function updateCadenceDisplay() {
   const liveCadence = tracker?.getCurrentSpm() ?? 0;
-  el.cadenceLiveValue.textContent = liveCadence > 0 ? `${liveCadence} passos/min` : "medindo...";
+  el.cadenceLiveValue.textContent = liveCadence > 0 ? t("stepsPerMin", { n: liveCadence }) : t("measuring");
 
   if (activeMode === "fixed") {
-    el.cadenceLastLabel.textContent = "Alvo:";
-    el.cadenceLastValue.textContent = fixedRange ? `${fixedRange.min}–${fixedRange.max} passos/min` : "—";
+    el.cadenceLastLabel.textContent = t("targetLabel");
+    el.cadenceLastValue.textContent = fixedRange
+      ? t("stepsPerMinRange", { min: fixedRange.min, max: fixedRange.max })
+      : "—";
     return;
   }
-  el.cadenceLastLabel.textContent = "Última medição:";
-  el.cadenceLastValue.textContent = lastMatchCadence > 0 ? `${lastMatchCadence} passos/min` : "—";
+  el.cadenceLastLabel.textContent = t("lastMeasurementLabel");
+  el.cadenceLastValue.textContent = lastMatchCadence > 0 ? t("stepsPerMin", { n: lastMatchCadence }) : "—";
+}
+
+// Extraído de playSpecificTrack() pra poder recalcular o texto na língua
+// nova (ver refreshDynamicTexts) sem precisar tocar a faixa de novo.
+function renderTrackInfo(track) {
+  el.trackNameValue.textContent = `${track.name} — ${track.artist}`;
+  const sourceLabel = track.source ? `"${track.source}"` : "—";
+  el.trackSourceValue.textContent = track.genre
+    ? t("trackGenreSuffix", { source: sourceLabel, genre: track.genre })
+    : sourceLabel;
+  el.trackBpmValue.textContent = t("bpmPerMin", { n: Math.round(track.tempo) });
 }
 
 // `requestId` evita que uma troca de faixa lenta (ex. chamada à API do
@@ -828,10 +862,7 @@ async function playSpecificTrack(track, requestId) {
   await api.playTrackUri(track.uri);
   if (requestId !== playRequestSeq) return false;
   currentTrackId = track.id;
-  el.trackNameValue.textContent = `${track.name} — ${track.artist}`;
-  const sourceLabel = track.source ? `"${track.source}"` : "—";
-  el.trackSourceValue.textContent = track.genre ? `${sourceLabel} (Gênero: ${track.genre})` : sourceLabel;
-  el.trackBpmValue.textContent = `${Math.round(track.tempo)} / min`;
+  renderTrackInfo(track);
   showRunError("");
   hideNoDeviceLink();
   startBeatPulse(track.effectiveBpm);
@@ -934,12 +965,24 @@ function waitForFirstCadence() {
     playNextAndSchedule();
     return;
   }
+  // Sem nenhum passo detectado ainda depois de um tempo — provavelmente o
+  // usuário só ainda não começou a se mexer. Um aviso evita deixar a tela
+  // parada sem explicação nenhuma enquanto isso.
+  cadenceWaitHintTimer = setTimeout(() => {
+    el.cadenceWaitHint.hidden = false;
+  }, CADENCE_WAIT_HINT_DELAY_MS);
   bootstrapTimer = setInterval(() => {
     if (tracker.getCurrentSpm() > 0) {
       clearInterval(bootstrapTimer);
+      clearCadenceWaitHint();
       playNextAndSchedule();
     }
   }, CADENCE_DISPLAY_INTERVAL_MS);
+}
+
+function clearCadenceWaitHint() {
+  clearTimeout(cadenceWaitHintTimer);
+  el.cadenceWaitHint.hidden = true;
 }
 
 // SVG elements não refletem a propriedade `.hidden` pro atributo HTML
@@ -954,7 +997,7 @@ function setSvgHidden(svg, hidden) {
 function setPlayPauseIcon(isPlaying) {
   setSvgHidden(el.iconPlay, isPlaying);
   setSvgHidden(el.iconPause, !isPlaying);
-  el.playPauseLabel.textContent = isPlaying ? "Pause" : "Play";
+  el.playPauseLabel.textContent = isPlaying ? t("pauseLabel") : t("playLabel");
 }
 
 function startRun() {
@@ -997,6 +1040,7 @@ function startRun() {
 function pauseRun() {
   runPaused = true;
   clearInterval(bootstrapTimer);
+  clearCadenceWaitHint();
   clearTimeout(endOfTrackTimer);
   if (trackSegmentStartedAt != null && trackRemainingMs != null) {
     const elapsed = Date.now() - trackSegmentStartedAt;
@@ -1034,8 +1078,8 @@ function resumeRun() {
 async function refreshAuthedUi(silentlyConnected = false) {
   el.connectBtn.hidden = true;
   el.disconnectBtn.hidden = false;
-  setStatus("Conectado ao Spotify.");
-  el.connectSummary.textContent = "(Conectado)";
+  setStatus(t("connectedStatus"));
+  el.connectSummary.textContent = t("connectedSummary");
   // Cartão 1 concluído (já conectado, com ou sem interação do usuário) —
   // avança pro cartão 2 na hora, sem esperar a rede: o usuário precisa ver
   // a espera + o check acontecerem de verdade, mesmo quando o login já
@@ -1045,7 +1089,71 @@ async function refreshAuthedUi(silentlyConnected = false) {
   await loadPlaylistOptions();
 }
 
+function updateLangButtons() {
+  const lang = getLang();
+  el.langPtBtn.classList.toggle("is-active", lang === "pt");
+  el.langEnBtn.classList.toggle("is-active", lang === "en");
+}
+
+// A maior parte do texto é estática e já é reaplicada sozinha (ver
+// applyStaticTranslations em i18n.js, via atributos data-i18n*) — esta
+// função só cobre o que é montado em runtime a partir do estado atual do
+// app, chamada toda vez que o idioma muda (ver onLanguageChange em init()).
+// Alguns estados transitórios raros (uma mensagem de erro pontual já
+// ocorrida, o progresso de carregamento de faixas em andamento) não são
+// re-traduzidos — ficam na língua em que apareceram até a próxima ação do
+// usuário, o que é aceitável por serem passageiros.
+function refreshDynamicTexts() {
+  if (el.connectBtn.hidden) {
+    setStatus(t("connectedStatus"));
+    el.connectSummary.textContent = t("connectedSummary");
+  } else {
+    setStatus(t("notConnected"));
+  }
+
+  // As opções "__all__" ("Todos"/"All") são escritas uma vez só, quando a
+  // lista é populada (loadPlaylistOptions/populateCatalogGenreOptions) —
+  // sem isso ficariam presas na língua de quando a tela foi carregada.
+  for (const selectEl of [el.playlistSelect, el.catalogGenreSelect]) {
+    const allOpt = Array.from(selectEl.options).find((o) => o.value === "__all__");
+    if (allOpt) allOpt.textContent = t("allOption");
+  }
+
+  updateMultiselectSummary(el.playlistSelect, el.playlistSummaryBtn);
+  updateMultiselectSummary(el.catalogGenreSelect, el.catalogGenreSummaryBtn);
+  updateLibrarySummary();
+  updatePaceSummary();
+  if (runActive) updateCadenceDisplay();
+  // Lê o atributo, não a propriedade `.hidden` — SVG não reflete os dois
+  // de forma confiável em todo navegador (ver setSvgHidden()).
+  setPlayPauseIcon(!el.iconPause.hasAttribute("hidden"));
+
+  const lastTrack = history[history.length - 1];
+  if (lastTrack) renderTrackInfo(lastTrack);
+
+  // O pop-up de multiseleção (playlists/gêneros) constrói suas linhas a
+  // partir do texto das opções na hora que abre (ver renderMultiselectPanel)
+  // — se estiver aberto durante a troca de idioma, precisa recriar as
+  // linhas (com o texto das opções já atualizado acima) e o título, senão
+  // ficam presos na língua de quando foi aberto.
+  if (activeMultiselect) {
+    const isGenreModal = activeMultiselect.selectEl === el.catalogGenreSelect;
+    el.multiselectModalTitle.textContent = isGenreModal ? t("catalogGenresLabel") : "Playlists";
+    renderMultiselectPanel(activeMultiselect.selectEl, el.multiselectModalPanel);
+  }
+}
+
 async function init() {
+  initI18n();
+  setStatus(t("checkingLogin"));
+  updateLangButtons();
+  el.langPtBtn.addEventListener("click", () => setLang("pt"));
+  el.langEnBtn.addEventListener("click", () => setLang("en"));
+  onLanguageChange(() => {
+    updateLangButtons();
+    refreshDynamicTexts();
+  });
+
   initOnboarding();
   populatePaceOptions();
   el.modeSelect.addEventListener("change", () => {
@@ -1075,7 +1183,7 @@ async function init() {
     openMultiselectModal(el.playlistSelect, el.playlistSummaryBtn, "Playlists");
   });
   el.catalogGenreSummaryBtn.addEventListener("click", () => {
-    openMultiselectModal(el.catalogGenreSelect, el.catalogGenreSummaryBtn, "Gêneros Playlist RunBeat");
+    openMultiselectModal(el.catalogGenreSelect, el.catalogGenreSummaryBtn, t("catalogGenresLabel"));
   });
   el.multiselectModalPanel.addEventListener("click", (event) => {
     const row = event.target.closest(".multiselect-option");
@@ -1118,13 +1226,13 @@ async function init() {
   }, 400);
 
   if (loginErrorMessage) {
-    setStatus(`Erro no login: ${loginErrorMessage}`);
+    setStatus(t("loginError", { message: loginErrorMessage }));
   } else if (alreadyConnected) {
     // "Silenciosa" = já estava conectado de antes, sem passar pelo redirect
     // de login agora — ver o comentário em refreshAuthedUi.
-    refreshAuthedUi(!justLoggedIn).catch((err) => setStatus(`Erro: ${err.message}`));
+    refreshAuthedUi(!justLoggedIn).catch((err) => setStatus(t("genericErrorPrefix", { message: err.message })));
   } else {
-    setStatus("Não conectado.");
+    setStatus(t("notConnected"));
   }
 
   el.connectBtn.addEventListener("click", () => {
@@ -1143,7 +1251,7 @@ async function init() {
     );
     const action = isAllMode ? buildPoolFromEverything() : buildPool();
     action.catch((err) => {
-      el.poolProgress.textContent = `Erro: ${err.message}`;
+      el.poolProgress.textContent = t("genericErrorPrefix", { message: err.message });
     });
   });
 

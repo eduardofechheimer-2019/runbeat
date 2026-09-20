@@ -78,6 +78,43 @@ header {
   flex-shrink: 0;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Seletor PT/EN — dois botões dentro de uma pílula, o ativo em destaque
+   (mesmo padrão de "grupo segmentado" comum em toggles de 2 opções). */
+.lang-switch {
+  display: flex;
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 2px;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.lang-btn {
+  width: auto;
+  margin-top: 0;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+.lang-btn.is-active {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
 header h1 {
   margin: 0;
   color: var(--accent);
@@ -177,6 +214,9 @@ header h1 {
 
 .step-card[data-state="condensed"] h2 {
   margin: 0;
+  /* Um pouco menor que o título normal (1.05rem) — sobra mais espaço pro
+     resumo ao lado sem cortar tanto (ver .step-title/.step-summary). */
+  font-size: 0.92rem;
 }
 
 h2 {
@@ -187,6 +227,19 @@ h2 {
   font-weight: 800;
   font-size: 1.05rem;
   margin: 0 0 16px;
+}
+
+/* Sem min-width:0 aqui, um flex item de texto longo (ex. em inglês, "Connect
+   to Spotify") empurra o resumo condensado ao lado (.step-summary) pra fora
+   do espaço disponível em vez de dividir o espaço com ele — o resultado é
+   os dois brigando por espaço e um dos dois (ou os dois) cortando de forma
+   estranha. min-width:0 + ellipsis nos dois deixa cada um encolher de forma
+   previsível até caber, nunca estourando a linha. */
+.step-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .step-badge {
@@ -233,6 +286,7 @@ h2 {
 .step-summary {
   display: none;
   margin-left: auto;
+  min-width: 0;
   color: #1db954;
   font-style: italic;
   font-weight: 700;
@@ -551,6 +605,26 @@ button:disabled {
   text-align: center;
 }
 
+/* Mesmo tratamento visual do warmup-hint (caixa clara com destaque de cor)
+   — aparece só depois de um tempo sem nenhum passo detectado (ver
+   waitForFirstCadence em app.js), incentivando o usuário a começar a se
+   mexer em vez de deixar a tela parada sem explicação. */
+.cadence-wait-hint {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 221, 0, 0.12);
+  border: 1px solid rgba(255, 221, 0, 0.35);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+}
+
+.cadence-wait-hint[hidden] {
+  display: none;
+}
+
 .warmup-status {
   margin: 8px 0 0;
   font-size: 0.95rem;
@@ -703,12 +777,18 @@ button:disabled {
    não só ficar destacado parado. Some assim que a corrida realmente começa
    (ver startRun() em app.js). */
 @keyframes play-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 221, 0, 0.55); }
-  50% { box-shadow: 0 0 0 16px rgba(255, 221, 0, 0); }
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 221, 0, 0.75);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 22px rgba(255, 221, 0, 0);
+  }
 }
 
 .play-pause-btn.is-attention {
-  animation: play-pulse 1.4s ease-out infinite;
+  animation: play-pulse 1.1s ease-in-out infinite;
 }
 
 .play-pause-btn {

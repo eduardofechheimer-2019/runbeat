@@ -3,7 +3,7 @@
 // nova da rede primeiro, e só caindo pro cache se a rede falhar. Um app em
 // desenvolvimento ativo muda de código com frequência; cache-first faria o
 // usuário ficar preso numa versão antiga mesmo depois de um deploy novo.
-const CACHE_NAME = "runbeat-shell-v25";
+const CACHE_NAME = "runbeat-shell-v26";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -22,6 +22,7 @@ const SHELL_FILES = [
   "./css/style.css",
   "./src/app.js",
   "./src/config.js",
+  "./src/i18n.js",
   "./src/spotifyAuth.js",
   "./src/spotifyApi.js",
   "./src/bpmSource.js",

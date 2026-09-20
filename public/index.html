@@ -42,46 +42,52 @@
         <img src="img/logo-mark.png" alt="" class="header-logo" />
         <div>
           <h1>RunBeat</h1>
-          <p class="tagline">A música certa na hora certa.</p>
+          <p class="tagline" data-i18n="tagline">A música certa na hora certa.</p>
         </div>
       </div>
-      <button id="help-btn" class="help-btn" type="button" aria-label="Como funciona">?</button>
+      <div class="header-actions">
+        <div class="lang-switch" role="group" data-i18n-aria-label="langSwitchAriaLabel" aria-label="Idioma">
+          <button type="button" id="lang-pt-btn" class="lang-btn" data-lang="pt">PT</button>
+          <button type="button" id="lang-en-btn" class="lang-btn" data-lang="en">EN</button>
+        </div>
+        <button id="help-btn" class="help-btn" type="button" data-i18n-aria-label="helpAriaLabel" aria-label="Como funciona">?</button>
+      </div>
     </div>
   </header>
 
   <section id="card-connect" class="step-card" data-step="connect">
-    <h2><span class="step-badge">1</span> Conecte ao Spotify <span class="step-check" hidden>✓</span><span id="connect-summary" class="step-summary"></span></h2>
+    <h2><span class="step-badge">1</span> <span class="step-title" data-i18n="step1Title">Conecte ao Spotify</span> <span class="step-check" hidden>✓</span><span id="connect-summary" class="step-summary"></span></h2>
     <p id="status">Verificando login...</p>
-    <button id="connect-btn">Conectar ao Spotify</button>
-    <button id="disconnect-btn" hidden>Desconectar do Spotify</button>
+    <button id="connect-btn" data-i18n="connectBtn">Conectar ao Spotify</button>
+    <button id="disconnect-btn" hidden data-i18n="disconnectBtn">Desconectar do Spotify</button>
   </section>
 
   <section id="card-library" class="step-card" data-step="library" hidden>
-    <h2><span class="step-badge">2</span> Escolha as Playlists <span class="step-check" hidden>✓</span><span id="library-summary" class="step-summary"></span></h2>
+    <h2><span class="step-badge">2</span> <span class="step-title" data-i18n="step2Title">Escolha as Playlists</span> <span class="step-check" hidden>✓</span><span id="library-summary" class="step-summary"></span></h2>
     <label class="label-emphasis">Playlists</label>
-    <button type="button" id="playlist-summary-btn" class="multiselect-summary" aria-haspopup="dialog">Selecione</button>
+    <button type="button" id="playlist-summary-btn" class="multiselect-summary" aria-haspopup="dialog" data-i18n="selectPlaceholder">Selecione</button>
     <select id="playlist-select" multiple size="6" hidden></select>
     <div id="catalog-genre-group" class="nested-group" hidden>
-      <label class="label-emphasis">Gêneros Playlist RunBeat</label>
-      <button type="button" id="catalog-genre-summary-btn" class="multiselect-summary" aria-haspopup="dialog">Selecione</button>
+      <label class="label-emphasis" data-i18n="catalogGenresLabel">Gêneros Playlist RunBeat</label>
+      <button type="button" id="catalog-genre-summary-btn" class="multiselect-summary" aria-haspopup="dialog" data-i18n="selectPlaceholder">Selecione</button>
       <select id="catalog-genre-select" multiple size="6" hidden></select>
     </div>
-    <button id="build-pool-btn" disabled>Carregar BPM</button>
+    <button id="build-pool-btn" disabled data-i18n="loadBpmBtn">Carregar BPM</button>
     <p id="pool-progress" hidden></p>
   </section>
 
   <section id="card-pace" class="step-card" data-step="pace" hidden>
-    <h2><span class="step-badge">3</span> Escolha o ritmo <span class="step-check" hidden>✓</span><span id="pace-summary" class="step-summary"></span></h2>
-    <label for="mode-select" class="label-emphasis">Ritmo</label>
+    <h2><span class="step-badge">3</span> <span class="step-title" data-i18n="step3Title">Escolha o ritmo</span> <span class="step-check" hidden>✓</span><span id="pace-summary" class="step-summary"></span></h2>
+    <label for="mode-select" class="label-emphasis" data-i18n="paceLabel">Ritmo</label>
     <select id="mode-select">
-      <option value="auto">Automático (minha cadência)</option>
-      <option value="fixed">Ritmo fixo</option>
+      <option value="auto" data-i18n="modeAuto">Automático (minha cadência)</option>
+      <option value="fixed" data-i18n="modeFixed">Ritmo fixo</option>
     </select>
     <div id="pace-group" class="nested-group" hidden>
-      <label for="pace-select">Nível</label>
+      <label for="pace-select" data-i18n="paceLevelLabel">Nível</label>
       <select id="pace-select"></select>
     </div>
-    <button id="confirm-pace-btn">Continuar</button>
+    <button id="confirm-pace-btn" data-i18n="continueBtn">Continuar</button>
   </section>
 
   <section id="card-run" class="step-card" data-step="run" hidden>
@@ -89,38 +95,39 @@
       <label class="checkbox-row">
         <input type="checkbox" id="audible-pulse-toggle" />
         <span>
-          Marca-Passo Sonoro
-          <em class="checkbox-subtitle">Pode interferir no áudio do Spotify — faça o teste.</em>
+          <span data-i18n="audiblePulseTitle">Marca-Passo Sonoro</span>
+          <em class="checkbox-subtitle" data-i18n="audiblePulseSubtitle">Pode interferir no áudio do Spotify — faça o teste.</em>
         </span>
       </label>
       <p id="audio-status" class="audio-status" hidden></p>
     </div>
+    <p id="cadence-wait-hint" class="cadence-wait-hint" hidden data-i18n="cadenceWaitHint">🏃 Pode começar a correr! Estamos esperando os primeiros passos.</p>
     <div class="run-info">
-      <p class="run-info-title">Sua Cadência:</p>
+      <p class="run-info-title" data-i18n="cadenceTitle">Sua Cadência:</p>
       <ul class="run-info-list">
-        <li><span class="run-info-label" id="cadence-last-label">Última medição:</span> <strong id="cadence-last-value">—</strong></li>
-        <li><span class="run-info-label">Tempo real:</span> <strong id="cadence-live-value">—</strong></li>
+        <li><span class="run-info-label" id="cadence-last-label" data-i18n="lastMeasurementLabel">Última medição:</span> <strong id="cadence-last-value">—</strong></li>
+        <li><span class="run-info-label" data-i18n="liveCadenceLabel">Tempo real:</span> <strong id="cadence-live-value">—</strong></li>
       </ul>
 
-      <p class="run-info-title">Tocando agora:</p>
+      <p class="run-info-title" data-i18n="nowPlayingTitle">Tocando agora:</p>
       <ul class="run-info-list">
-        <li><span class="run-info-label">Música:</span> <strong id="track-name-value">—</strong></li>
-        <li><span class="run-info-label">Playlist:</span> <strong id="track-source-value">—</strong></li>
-        <li><span class="run-info-label">BPM:</span> <strong id="track-bpm-value">—</strong></li>
+        <li><span class="run-info-label" data-i18n="trackNameLabel">Música:</span> <strong id="track-name-value">—</strong></li>
+        <li><span class="run-info-label" data-i18n="trackSourceLabel">Playlist:</span> <strong id="track-source-value">—</strong></li>
+        <li><span class="run-info-label" data-i18n="trackBpmLabel">BPM:</span> <strong id="track-bpm-value">—</strong></li>
       </ul>
     </div>
     <p id="run-error" class="error" hidden></p>
 
     <div id="warmup-row" class="warmup-row">
-      <button id="warmup-btn" class="warmup-btn is-highlighted" type="button">Spotify sync (clique aqui)</button>
-      <p id="warmup-hint" class="warmup-hint">↖️ Voltar é só tocar em "‹ RunBeat"</p>
+      <button id="warmup-btn" class="warmup-btn is-highlighted" type="button" data-i18n="warmupBtn">Spotify sync (clique aqui)</button>
+      <p id="warmup-hint" class="warmup-hint" data-i18n="warmupHint">↖️ Voltar é só tocar em "‹ RunBeat"</p>
       <p id="warmup-status" class="warmup-status" hidden></p>
     </div>
 
-    <a id="open-spotify-link" class="button-link" hidden>Spotify sync (clique aqui)</a>
+    <a id="open-spotify-link" class="button-link" hidden data-i18n="warmupBtn">Spotify sync (clique aqui)</a>
 
     <div class="playpause-row">
-      <button id="prev-btn" class="side-btn" type="button" hidden aria-label="Faixa anterior">
+      <button id="prev-btn" class="side-btn" type="button" hidden data-i18n-aria-label="prevAriaLabel" aria-label="Faixa anterior">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14M20 5 8 12l12 7V5Z"/></svg>
       </button>
       <button id="play-pause-btn" class="play-pause-btn is-muted" type="button">
@@ -128,7 +135,7 @@
         <svg class="icon icon-pause" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
         <span id="play-pause-label">Play</span>
       </button>
-      <button id="next-btn" class="side-btn" type="button" hidden aria-label="Próxima faixa">
+      <button id="next-btn" class="side-btn" type="button" hidden data-i18n-aria-label="nextAriaLabel" aria-label="Próxima faixa">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 5v14M4 5l12 7-12 7V5Z"/></svg>
       </button>
     </div>
@@ -139,7 +146,7 @@
   <div class="multiselect-modal-card">
     <div class="multiselect-modal-header">
       <h3 id="multiselect-modal-title"></h3>
-      <button type="button" id="multiselect-modal-close" class="multiselect-modal-close" aria-label="Fechar">✕</button>
+      <button type="button" id="multiselect-modal-close" class="multiselect-modal-close" data-i18n-aria-label="multiselectCloseAriaLabel" aria-label="Fechar">✕</button>
     </div>
     <div id="multiselect-modal-panel" class="multiselect-panel"></div>
   </div>
@@ -150,28 +157,28 @@
     <div class="onboarding-steps">
       <div class="onboarding-step" data-step="1">
         <p class="onboarding-emoji">🎧</p>
-        <h3>Bem-vindo ao RunBeat</h3>
-        <p>O RunBeat troca a música sozinho no Spotify pra acompanhar o ritmo da sua corrida ou caminhada — sem precisar escolher faixa na mão.</p>
+        <h3 data-i18n="onboardingTitle1">Bem-vindo ao RunBeat</h3>
+        <p data-i18n="onboardingBody1">O RunBeat troca a música sozinho no Spotify pra acompanhar o ritmo da sua corrida ou caminhada — sem precisar escolher faixa na mão.</p>
       </div>
       <div class="onboarding-step" data-step="2" hidden>
         <p class="onboarding-emoji">🔗</p>
-        <h3>Conecte sua conta Spotify</h3>
-        <p>Precisa ser <strong>Premium</strong> — é a API de controle de playback que troca a faixa por você, sem custo além da sua assinatura.</p>
+        <h3 data-i18n="onboardingTitle2">Conecte sua conta Spotify</h3>
+        <p data-i18n-html="onboardingBody2">Precisa ser <strong>Premium</strong> — é a API de controle de playback que troca a faixa por você, sem custo além da sua assinatura.</p>
       </div>
       <div class="onboarding-step" data-step="3" hidden>
         <p class="onboarding-emoji">🎵</p>
-        <h3>Escolha suas músicas</h3>
-        <p>Na lista, marque "Todos" pra juntar tudo de uma vez, a <strong>Playlist RunBeat</strong> (com filtro por gênero) pra mais opções de BPM, ou uma ou mais playlists suas.</p>
+        <h3 data-i18n="onboardingTitle3">Escolha suas músicas</h3>
+        <p data-i18n-html="onboardingBody3">Na lista, marque "Todos" pra juntar tudo de uma vez, a <strong>Playlist RunBeat</strong> (com filtro por gênero) pra mais opções de BPM, ou uma ou mais playlists suas.</p>
       </div>
       <div class="onboarding-step" data-step="4" hidden>
         <p class="onboarding-emoji">⚙️</p>
-        <h3>Escolha o ritmo</h3>
-        <p><strong>Automático</strong> usa o acelerômetro do celular pra medir sua cadência real. <strong>Ritmo fixo</strong> trava um nível (Easy Pace, Warming Up, Taking Off, Pro) — dá pra trocar a qualquer momento durante a corrida.</p>
+        <h3 data-i18n="onboardingTitle4">Escolha o ritmo</h3>
+        <p data-i18n-html="onboardingBody4"><strong>Automático</strong> usa o acelerômetro do celular pra medir sua cadência real. <strong>Ritmo fixo</strong> trava um nível (Easy Pace, Warming Up, Taking Off, Pro) — dá pra trocar a qualquer momento durante a corrida.</p>
       </div>
       <div class="onboarding-step" data-step="5" hidden>
         <p class="onboarding-emoji">🏃</p>
-        <h3>Toque em Play pra começar</h3>
-        <p>A troca de faixa acontece sozinha, sem interromper a música no meio. Use ⏮/⏭ pra pular manualmente, e o pulso sonoro (opcional) pra sentir a batida-alvo. Se o Spotify pedir, um toque no botão que aparece já abre e começa a tocar — pra voltar, toque em "‹ RunBeat" no topo da tela, ou troque de app normalmente.</p>
+        <h3 data-i18n="onboardingTitle5">Toque em Play pra começar</h3>
+        <p data-i18n="onboardingBody5">A troca de faixa acontece sozinha, sem interromper a música no meio. Use ⏮/⏭ pra pular manualmente, e o pulso sonoro (opcional) pra sentir a batida-alvo. Se o Spotify pedir, um toque no botão que aparece já abre e começa a tocar — pra voltar, toque em "‹ RunBeat" no topo da tela, ou troque de app normalmente.</p>
       </div>
     </div>
     <div class="onboarding-dots">
@@ -182,9 +189,9 @@
       <span class="onboarding-dot" data-dot="5"></span>
     </div>
     <div class="onboarding-actions">
-      <button id="onboarding-skip" class="onboarding-skip" type="button">Pular</button>
+      <button id="onboarding-skip" class="onboarding-skip" type="button" data-i18n="onboardingSkip">Pular</button>
       <div class="onboarding-nav">
-        <button id="onboarding-back" class="onboarding-back" type="button" hidden>Voltar</button>
+        <button id="onboarding-back" class="onboarding-back" type="button" hidden data-i18n="onboardingBack">Voltar</button>
         <button id="onboarding-next" type="button">Próximo</button>
       </div>
     </div>

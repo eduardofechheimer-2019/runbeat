@@ -6,6 +6,7 @@ import {
   SPOTIFY_SCOPES,
   STORAGE_KEYS,
 } from "./config.js";
+import { t } from "./i18n.js";
 
 const AUTHORIZE_URL = "https://accounts.spotify.com/authorize";
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
@@ -46,9 +47,7 @@ export function logout() {
 
 export async function startLogin() {
   if (SPOTIFY_CLIENT_ID === "COLOQUE_AQUI_O_CLIENT_ID") {
-    throw new Error(
-      "Configure SPOTIFY_CLIENT_ID em src/config.js antes de conectar (ver README)."
-    );
+    throw new Error(t("configureClientId"));
   }
   const verifier = generateCodeVerifier();
   sessionStorage.setItem(STORAGE_KEYS.pkceVerifier, verifier);
@@ -74,14 +73,14 @@ export async function handleRedirectCallback() {
   if (error) {
     url.searchParams.delete("error");
     window.history.replaceState({}, "", url.toString());
-    throw new Error(`Spotify recusou o login: ${error}`);
+    throw new Error(t("spotifyRefusedLogin", { error }));
   }
   if (!code) return false;
 
   const verifier = sessionStorage.getItem(STORAGE_KEYS.pkceVerifier);
   sessionStorage.removeItem(STORAGE_KEYS.pkceVerifier);
   if (!verifier) {
-    throw new Error("Sessão de login expirada, tente conectar novamente.");
+    throw new Error(t("loginSessionExpired"));
   }
 
   const body = new URLSearchParams({
@@ -98,7 +97,7 @@ export async function handleRedirectCallback() {
     body,
   });
   if (!res.ok) {
-    throw new Error(`Falha ao trocar código por token (HTTP ${res.status}).`);
+    throw new Error(t("tokenExchangeFailed", { status: res.status }));
   }
   const json = await res.json();
   saveTokens({
@@ -125,7 +124,7 @@ async function refreshAccessToken(refreshToken) {
     body,
   });
   if (!res.ok) {
-    throw new Error(`Falha ao renovar token (HTTP ${res.status}).`);
+    throw new Error(t("tokenRefreshFailed", { status: res.status }));
   }
   const json = await res.json();
   const tokens = loadTokens();
@@ -142,7 +141,7 @@ async function refreshAccessToken(refreshToken) {
 // Retorna um access_token válido, renovando automaticamente se necessário.
 export async function getValidAccessToken() {
   let tokens = loadTokens();
-  if (!tokens) throw new Error("Não conectado ao Spotify.");
+  if (!tokens) throw new Error(t("notConnectedToSpotify"));
   const expiresSoon = Date.now() > tokens.expires_at - 60_000;
   if (expiresSoon) {
     tokens = await refreshAccessToken(tokens.refresh_token);

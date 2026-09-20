@@ -8,6 +8,8 @@
 // mais no catálogo do Spotify (faixa removida/substituída). O app trata
 // isso como uma falha normal de reprodução e pula pra próxima candidata,
 // não é motivo de erro fatal.
+import { t } from "./i18n.js";
+
 const CATALOG_URL = "data/runbeat-catalog.json";
 
 let cachedCatalog = null;
@@ -17,7 +19,7 @@ async function loadFullCatalog() {
 
   const res = await fetch(CATALOG_URL);
   if (!res.ok) {
-    throw new Error(`Falha ao carregar o Catálogo RunBeat (HTTP ${res.status})`);
+    throw new Error(t("catalogLoadFailed", { status: res.status }));
   }
   const rows = await res.json();
   cachedCatalog = rows.map(([id, name, artist, tempo, durationMs, genre]) => ({

@@ -1,6 +1,7 @@
 // Detecção de cadência (passos/min) via acelerômetro do celular, por
 // detecção de picos no módulo do vetor de aceleração.
 import { CADENCE_MIN_SPM, CADENCE_MAX_SPM, CADENCE_WINDOW_MS } from "./config.js";
+import { t } from "./i18n.js";
 
 const MIN_STEP_INTERVAL_MS = 1000 * (60 / CADENCE_MAX_SPM); // evita contar ruído como passo duplo
 const PEAK_THRESHOLD_G = 1.2; // acima da gravidade (~1g) em módulo, ajustável
@@ -12,7 +13,7 @@ export async function requestMotionPermission() {
   if (DME && typeof DME.requestPermission === "function") {
     const result = await DME.requestPermission();
     if (result !== "granted") {
-      throw new Error("Permissão de sensor de movimento negada.");
+      throw new Error(t("motionPermissionDenied"));
     }
   }
   // Android/desktop: não exige permissão explícita, DeviceMotionEvent já disponível.

@@ -1,4 +1,5 @@
 import { getValidAccessToken } from "./spotifyAuth.js";
+import { t } from "./i18n.js";
 
 const API_BASE = "https://api.spotify.com/v1";
 
@@ -15,7 +16,9 @@ async function request(path, options = {}) {
   if (res.status === 204) return null;
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
-    const err = new Error(`Spotify API ${options.method || "GET"} ${path} falhou (HTTP ${res.status}): ${detail}`);
+    const err = new Error(
+      t("spotifyApiFailed", { method: options.method || "GET", path, status: res.status, detail })
+    );
     err.status = res.status;
     throw err;
   }
@@ -55,7 +58,7 @@ export async function getMyPlaylists() {
       id: p.id,
       name: p.name,
       ownerId: p.owner?.id ?? null,
-      ownerName: p.owner?.display_name ?? p.owner?.id ?? "desconhecido",
+      ownerName: p.owner?.display_name ?? p.owner?.id ?? t("unknownOwner"),
     }));
 }
 
@@ -134,9 +137,7 @@ function isNoActiveDeviceError(err) {
 }
 
 function noActiveDeviceError() {
-  const err = new Error(
-    "Nenhum dispositivo Spotify ativo. Toque no botão abaixo pra abrir o Spotify e começar."
-  );
+  const err = new Error(t("noActiveDevice"));
   err.code = "NO_ACTIVE_DEVICE";
   return err;
 }
@@ -168,7 +169,7 @@ export async function playTrackUri(uri) {
     // faixas do Catálogo RunBeat, que tem uma data de curadoria própria).
     if (isNoActiveDeviceError(err)) throw noActiveDeviceError();
     if (err.status === 404) {
-      throw new Error(`Faixa não encontrada no Spotify (pode ter sido removida do catálogo): ${uri}`);
+      throw new Error(t("trackNotFound", { uri }));
     }
     throw err;
   }

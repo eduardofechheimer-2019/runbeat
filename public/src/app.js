@@ -59,7 +59,6 @@ const el = {
   warmupBtn: document.getElementById("warmup-btn"),
   warmupStatus: document.getElementById("warmup-status"),
   beatVisual: document.getElementById("beat-visual"),
-  beatBpmValue: document.getElementById("beat-bpm-value"),
   audiblePulseToggle: document.getElementById("audible-pulse-toggle"),
   audioStatus: document.getElementById("audio-status"),
 };
@@ -165,7 +164,11 @@ function finishStep(card, onDone, { preDelayMs = 0, extraHoldMs = 0 } = {}) {
 // "Continuar") já muda o cartão pra "completed" na hora, e como esse clique
 // também borbulha até o cartão, um listener no cartão inteiro acabaria
 // reabrindo o próprio cartão que acabou de avançar.
+// O cartão de corrida não tem título (nem nunca fica "completed"/"condensed"
+// como os 3 primeiros, já que é sempre o último passo) — não entra nesse
+// comportamento de reabrir ao tocar no <h2>.
 for (const key of STEP_ORDER) {
+  if (key === "run") continue;
   STEP_CARDS[key].querySelector("h2").addEventListener("click", () => {
     const state = STEP_CARDS[key].dataset.state;
     if (state === "completed" || state === "condensed") advanceTo(key);
@@ -265,7 +268,6 @@ function applyLiveModeChange() {
 function startBeatPulse(effectiveBpm) {
   if (!effectiveBpm || effectiveBpm <= 0) return;
   currentEffectiveBpm = effectiveBpm;
-  el.beatBpmValue.textContent = `${Math.round(effectiveBpm)} /min`;
   el.beatVisual.hidden = false;
   startAudiblePulse(effectiveBpm);
 }

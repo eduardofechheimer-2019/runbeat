@@ -177,15 +177,15 @@ dependem.
    sem sair do RunBeat) mas se mostrou instável em testes reais — o
    Spotify às vezes lista um dispositivo como disponível e mesmo assim
    recusa o comando de tocar nele; abrir o app de verdade é a única
-   técnica que se provou 100% confiável. Pra reduzir o quanto toca som
-   antes da corrida começar, o RunBeat busca no catálogo do Spotify
-   (`GET /search`) uma faixa que já seja silêncio de verdade (existem
-   várias, feitas propositalmente pra isso — 4 termos de busca em
-   paralelo, filtrando por nome com "silen(t/ce)" e duração bem curta) e
-   usa ela em vez de uma música real do pool; se não achar nenhuma, cai de
-   volta pra uma faixa normal (audível). Ao voltar pro RunBeat, o Play
-   pulsa (brilho ao redor) até o primeiro toque, já que o Spotify pode já
-   estar tocando algo sozinho nesse momento.
+   técnica que se provou 100% confiável. A faixa aberta é sempre a mesma,
+   fixa (`WARMUP_TRACK_ID` em app.js) — escolhida por ser tranquila/
+   discreta, em vez de uma música qualquer do pool (que tocaria em volume
+   normal e sem relação nenhuma com a corrida ainda). Uma versão anterior
+   buscava dinamicamente uma faixa "silenciosa" no catálogo do Spotify
+   (`GET /search`); trocado por uma faixa fixa, mais previsível que
+   depender do resultado de uma busca. Ao voltar pro RunBeat, o Play pulsa
+   (brilho ao redor) até o primeiro toque, já que o Spotify pode já estar
+   tocando essa faixa sozinho nesse momento.
 7. Se o Spotify não tiver nenhum dispositivo ativo quando uma troca de
    faixa precisar tocar (app já encerrado pelo sistema, ex. segundo plano
    suspenso, ou o usuário nunca usou o "Spotify sync" do item 6), aparece
@@ -285,9 +285,9 @@ ou HTTPS — batendo com o que foi cadastrado no app).
 
 - Antes de "▶ Play" (ou se tocar em "▶ Play" sem nenhum dispositivo
   Spotify ativo), o botão/link **"Spotify sync (clique aqui)"** abre o
-  Spotify de verdade numa faixa (silenciosa quando acha uma) — um toque
-  só, sem precisar procurar nada lá dentro (o app não usa o Web Playback
-  SDK, só comanda o dispositivo ativo).
+  Spotify de verdade numa faixa fixa e tranquila (`WARMUP_TRACK_ID` em
+  app.js) — um toque só, sem precisar procurar nada lá dentro (o app não
+  usa o Web Playback SDK, só comanda o dispositivo ativo).
 - O RunBeat pede pra tela não apagar sozinha enquanto a corrida está ativa
   (Screen Wake Lock), mas isso não segura o botão físico de bloquear o
   celular — bloqueando manualmente, o sensor de passos e a troca automática

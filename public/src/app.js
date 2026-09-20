@@ -371,90 +371,34 @@ function setSyncHighlight(syncIsHighlighted) {
   el.playPauseBtn.classList.toggle("is-muted", syncIsHighlighted);
 }
 
-// Cache da faixa "silenciosa" encontrada (ver findSilentWarmupTrack) — só
-// pesquisa uma vez por sessão.
-let silentWarmupTrackUri = null;
-let silentWarmupSearchDone = false;
-
-// Várias buscas diferentes — cada termo tende a achar um conjunto um pouco
-// diferente de faixas "utilitárias" de silêncio no catálogo do Spotify.
-const SILENT_TRACK_QUERIES = ["silence", "silent", "10 seconds of silence", "one second of silence"];
-
-// Busca no catálogo do Spotify uma faixa que já seja silêncio de verdade
-// (existem várias, feitas propositalmente pra isso) — usada como faixa de
-// aquecimento do "Spotify sync" (ver warmUpSpotify) pra reduzir o quanto dá
-// pra ouvir antes de apertar Play. Exige a palavra "silen(t/ce)" no nome E
-// duração curta (<= 15s) — reduz bastante o risco de pegar uma música de
-// verdade que só tenha "silêncio" no nome (ex. "Sound of Silence", que tem
-// minutos de duração). Entre todas as candidatas de todas as buscas, fica
-// com a de menor duração. Se nenhuma busca achar nada, `warmUpSpotify` cai
-// de volta pra uma faixa normal do pool.
-async function findSilentWarmupTrack() {
-  if (silentWarmupSearchDone) return silentWarmupTrackUri;
-  silentWarmupSearchDone = true;
-  try {
-    const resultLists = await Promise.all(
-      SILENT_TRACK_QUERIES.map((q) => api.searchTracks(q, 15).catch(() => []))
-    );
-    const candidates = resultLists
-      .flat()
-      .filter(
-        (t) =>
-          t?.uri &&
-          typeof t.name === "string" &&
-          /silen[ct]/i.test(t.name) &&
-          t.duration_ms > 0 &&
-          t.duration_ms <= 15000
-      )
-      .sort((a, b) => a.duration_ms - b.duration_ms);
-    if (candidates[0]) silentWarmupTrackUri = candidates[0].uri;
-  } catch (err) {
-    console.warn("Não deu pra buscar uma faixa silenciosa pro aquecimento:", err.message);
-  }
-  return silentWarmupTrackUri;
-}
-
-// Extrai o ID de uma URI "spotify:track:<id>" — usado pra montar o Universal
-// Link (https://open.spotify.com/track/<id>) a partir do `uri` que as faixas
-// já carregam nesse formato (catálogo, playlists, busca).
-function spotifyTrackIdFromUri(uri) {
-  return uri.split(":").pop();
-}
+// Faixa fixa usada pra "aquecer" o Spotify — escolhida pelo usuário
+// especificamente por ser tranquila/discreta (não uma música real do pool,
+// que tocaria em volume normal e sem relação nenhuma com a corrida ainda).
+// Antes disso o app tentava achar dinamicamente uma faixa "silenciosa" via
+// busca no catálogo do Spotify — trocado por uma faixa fixa e conhecida,
+// que é mais previsível que depender do resultado de uma busca.
+const WARMUP_TRACK_ID = "3mSFn1km1dGcGHUNqmEaHM"; // "One Bird Singing" — Auge Espiritual
 
 // "Aquece" o Spotify abrindo o app de verdade (Universal Link — ver
 // showNoDeviceLink pra mais detalhes de por que Universal Link em vez do
 // esquema customizado "spotify:track:<id>") — a mesma técnica do fallback
-// "sem dispositivo ativo" (ver showNoDeviceLink),
-// que é a única que se provou 100% confiável em testes reais. Uma versão
-// anterior tentava tocar remoto via API (device_id) sem sair do RunBeat, mas
-// o Spotify às vezes lista o dispositivo como disponível e ainda assim
-// recusa o comando — testado e descartado por instável. Como aqui SEMPRE
-// troca de app (diferente da tentativa anterior), usa uma faixa silenciosa
-// quando acha uma, pra pelo menos não tocar som nenhum enquanto o usuário
-// está fora do RunBeat.
-async function warmUpSpotify() {
-  if (bpmPool.length === 0) {
-    el.warmupStatus.hidden = false;
-    el.warmupStatus.textContent = "Monte o pool de músicas primeiro (cartão 2).";
-    return;
-  }
-
+// "sem dispositivo ativo" (ver showNoDeviceLink), que é a única que se
+// provou 100% confiável em testes reais. Uma versão anterior tentava tocar
+// remoto via API (device_id) sem sair do RunBeat, mas o Spotify às vezes
+// lista o dispositivo como disponível e ainda assim recusa o comando —
+// testado e descartado por instável. Como aqui SEMPRE troca de app
+// (diferente da tentativa anterior), abre sempre a mesma faixa fixa
+// (WARMUP_TRACK_ID) em vez de uma música real do pool.
+function warmUpSpotify() {
   el.warmupStatus.hidden = false;
   el.warmupStatus.textContent = "Abrindo o Spotify...";
-
-  const range = el.modeSelect.value === "fixed" ? currentFixedRange() : null;
-  const realTrack = range
-    ? pickTrackForRange(bpmPool, range, new Set())
-    : bpmPool[Math.floor(Math.random() * bpmPool.length)];
-  const silentUri = await findSilentWarmupTrack();
-  const uri = silentUri ?? realTrack.uri;
 
   setSyncHighlight(false);
   // O Spotify vai abrir e tocar essa faixa sozinho — o Play pulsa até o
   // primeiro toque pra deixar claro que precisa voltar e apertar logo (ver
   // startRun(), que tira o pulso assim que a corrida realmente começa).
   el.playPauseBtn.classList.add("is-attention");
-  window.location.href = spotifyTrackWebUrl(spotifyTrackIdFromUri(uri));
+  window.location.href = spotifyTrackWebUrl(WARMUP_TRACK_ID);
 }
 
 async function requestWakeLock() {
@@ -1074,12 +1018,7 @@ async function init() {
     opt.selected = !opt.selected;
     selectEl.dispatchEvent(new Event("change"));
   });
-  el.warmupBtn.addEventListener("click", () => {
-    warmUpSpotify().catch((err) => {
-      el.warmupStatus.hidden = false;
-      el.warmupStatus.textContent = `Erro: ${err.message}`;
-    });
-  });
+  el.warmupBtn.addEventListener("click", warmUpSpotify);
   el.multiselectModalClose.addEventListener("click", closeMultiselectModal);
   el.multiselectModal.addEventListener("click", (event) => {
     if (event.target === el.multiselectModal) closeMultiselectModal();

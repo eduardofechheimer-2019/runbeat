@@ -151,9 +151,10 @@ dependem.
 3. Você escolhe o modo de ritmo, e pode **trocar a qualquer momento durante
    a corrida** (a troca vale na hora, sem precisar parar e reiniciar):
    - **Automático**: o acelerômetro do celular (`DeviceMotion`) mede sua
-     cadência (passos/min) em tempo real.
-   - **Ritmo fixo**: você escolhe uma faixa de BPM (nível), definida em
-     `FIXED_PACE_OPTIONS` em `config.js`:
+     cadência (passos/min) em tempo real, e a cadência decide sozinha em
+     qual dos 4 níveis abaixo você está a cada momento.
+   - **Ritmo fixo**: você escolhe direto um desses níveis (faixa de BPM),
+     definidos em `FIXED_PACE_OPTIONS` em `config.js`:
      | Nível | BPM |
      |---|---|
      | Easy Pace | 60–119 |
@@ -161,17 +162,25 @@ dependem.
      | Taking Off | 150–189 |
      | Pro | 190–220 |
 
-     Qualquer faixa do pool dentro desse intervalo serve (escolhida ao
-     acaso entre as candidatas); sem nenhuma no intervalo, cai pra mais
-     próxima do limite. O sensor de passos continua rodando em segundo
-     plano mesmo em ritmo fixo, então voltar pro automático depois também
-     funciona sem reiniciar.
+   Nos dois modos, a escolha da faixa é a mesma (ver `matcher.js`): **sorteio
+   ao acaso** entre todas as faixas do pool inteiro (todas as playlists e
+   gêneros selecionados juntos, como um único conjunto) que caem dentro do
+   intervalo de BPM do nível atual — sem repetir nenhuma antes de esgotar
+   **todas as outras faixas daquele intervalo**; aí sim recomeça e pode
+   repetir. Só quando o intervalo não tem *nenhuma* faixa no pool inteiro
+   (situação rara, ex. um gênero cujo BPM mais alto nem chega no nível
+   escolhido) é que cai pro fallback: a faixa mais próxima do limite do
+   intervalo, dentre as ainda não tocadas de todo o pool (reinicia quando
+   esgotar o pool inteiro). O sensor de passos continua rodando em segundo
+   plano mesmo em ritmo fixo, então voltar pro automático depois também
+   funciona sem reiniciar.
 4. Cada faixa toca **até quase o fim** — pouco antes de acabar (por padrão,
    2 segundos antes, ajustável em `END_OF_TRACK_LEAD_MS`), o motor de
-   matching escolhe a próxima faixa do pool com o BPM **mais próximo da
-   cadência atual, numa relação fixa 1:1** (1 passo = 1 batida) e já manda o
-   Spotify tocá-la — sem nunca interromper uma música no meio. Esse momento
-   é calculado localmente a partir da duração da faixa (que já conhecemos),
+   matching sorteia a próxima faixa do pool (ver item 3 acima) e já manda o
+   Spotify tocá-la — sem nunca interromper uma música no meio. O BPM da
+   faixa sempre bate com o passo numa **relação fixa 1:1** (1 passo = 1
+   batida), sem aceitar metade/dobro do BPM. Esse momento de troca é
+   calculado localmente a partir da duração da faixa (que já conhecemos),
    sem precisar perguntar ao Spotify "quanto falta".
 5. Os botões **⏮ Anterior** / **⏭ Próxima** (visíveis só com a corrida em
    andamento) deixam pular manualmente pra faixa seguinte do pool (recalcula

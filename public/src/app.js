@@ -469,7 +469,7 @@ async function loadPlaylistOptions() {
 
   const catalogOpt = document.createElement("option");
   catalogOpt.value = "__catalog__";
-  catalogOpt.textContent = "Playlist RunBeat";
+  catalogOpt.textContent = "RunBeat";
   el.playlistSelect.appendChild(catalogOpt);
 
   const myUserId = await api.getCurrentUserId();
@@ -573,7 +573,22 @@ function renderMultiselectPanel(selectEl, panelEl) {
 
     const label = document.createElement("span");
     label.className = "multiselect-label";
-    label.textContent = opt.textContent;
+    if (opt.value === "__catalog__") {
+      // Linha da Playlist RunBeat ganha a logo + o nome com a mesma
+      // tipografia do cabeçalho do app, em vez de texto puro — reforça que é
+      // o catálogo próprio do RunBeat, não uma playlist qualquer do usuário.
+      const logo = document.createElement("img");
+      logo.src = "img/logo-mark.png";
+      logo.alt = "";
+      logo.className = "multiselect-option-logo";
+      label.appendChild(logo);
+      const brand = document.createElement("span");
+      brand.className = "brand-runbeat";
+      brand.textContent = opt.textContent;
+      label.appendChild(brand);
+    } else {
+      label.textContent = opt.textContent;
+    }
     row.appendChild(label);
 
     panelEl.appendChild(row);
@@ -774,7 +789,7 @@ async function buildPoolFromEverything() {
       id: p.id,
       name: p.ownerId && p.ownerId !== myUserId ? `${p.name} (de ${p.ownerName})` : p.name,
     })),
-    { id: "__catalog__", name: "Playlist RunBeat" },
+    { id: "__catalog__", name: "RunBeat" },
   ];
 
   const refLists = [];

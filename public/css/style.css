@@ -389,12 +389,42 @@ button:disabled {
 
 .multiselect-label {
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Logo pequena na linha da Playlist RunBeat dentro do multiseletor (ver
+   app.js) — mesmo tratamento de altura fixa/largura automática do logo do
+   cabeçalho, só menor pra caber numa linha de lista. */
+.multiselect-option-logo {
+  height: 20px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+/* Nome "RunBeat" com a mesma tipografia do <h1> do cabeçalho (itálico,
+   peso 900, fonte de destaque), só sem o contorno extra — que existe lá só
+   por causa do tamanho grande do título. */
+.brand-runbeat {
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: -0.01em;
 }
 
 .multiselect-option.is-selected {
   background: var(--accent);
   color: var(--accent-ink);
   font-weight: 700;
+}
+
+/* Sem isso o "RunBeat" (cor --accent) ficaria ilegível em cima do fundo
+   --accent da própria linha selecionada — mesmo contraste escuro do resto
+   do texto da linha nesse estado. */
+.multiselect-option.is-selected .brand-runbeat {
+  color: var(--accent-ink);
 }
 
 /* --- Pop-up de marcar/desmarcar (compartilhado entre playlists e gêneros —

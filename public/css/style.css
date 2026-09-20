@@ -2,8 +2,11 @@
   color-scheme: dark;
   /* Tudo no app usa rem, então esse valor único escala a fonte inteira —
      16px (padrão do navegador) estava pequeno demais pra leitura durante
-     a corrida; ~1-2pt maior em todos os textos de uma vez. */
-  font-size: 17.5px;
+     a corrida; foi pra 17.5px numa rodada anterior e segue pequeno, então
+     sobe mais um degrau aqui. Os elementos com tamanho fixo em px (círculos
+     de badge/check, botões redondos, ícones) não escalam junto de propósito
+     — continuam do mesmo tamanho, só o texto cresce. */
+  font-size: 19.5px;
   --bg: #0b0f14;
   --card-bg: rgba(20, 26, 33, 0.82);
   --card-border: #2a323c;

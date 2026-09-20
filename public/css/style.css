@@ -480,12 +480,18 @@ button:disabled {
 /* Explica de antemão pra onde o toque no botão leva e como voltar — o
    indicador nativo do iOS pra voltar ("‹ RunBeat" no topo da tela) é
    discreto, então essa instrução fica sempre visível, não só num status
-   passageiro, pra reduzir o risco de perder o usuário no Spotify. */
+   passageiro, pra reduzir o risco de perder o usuário no Spotify. Curta e
+   com destaque de cor/negrito (não mais um texto corrido apagado) pra
+   "beliscar" o olhar antes do toque no botão. */
 .warmup-hint {
   margin: 8px 0 0;
-  font-size: 0.85rem;
-  font-style: italic;
-  color: var(--muted);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(245, 180, 0, 0.12);
+  border: 1px solid rgba(245, 180, 0, 0.35);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent);
   text-align: center;
 }
 

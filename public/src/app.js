@@ -339,13 +339,22 @@ function showRunError(message) {
   el.runError.hidden = !message;
 }
 
-// Mostra um link "spotify:track:<id>" — abrir esse link no celular manda o
-// app Spotify começar a tocar essa faixa sozinho (sem precisar procurar nada
-// lá dentro), desde que nada mais esteja tocando ainda. É o que resolve o
-// caso "nenhum dispositivo ativo" com um toque só.
+// Mostra um link "https://open.spotify.com/track/<id>" — Universal Link, não
+// o esquema customizado "spotify:track:<id>". Abrir esse link no celular
+// manda o app Spotify começar a tocar essa faixa sozinho (sem precisar
+// procurar nada lá dentro), desde que nada mais esteja tocando ainda — igual
+// ao esquema customizado nesse sentido. A diferença é que, por ser um
+// Universal Link (domínio verificado), o iOS costuma mostrar sozinho a
+// pilula "‹ Voltar pro RunBeat" no topo da tela depois de abrir — volta com
+// um toque só, em vez do usuário precisar lembrar de trocar de app de
+// volta manualmente (isso não acontece com o esquema customizado).
 function showNoDeviceLink(track) {
-  el.openSpotifyLink.href = `spotify:track:${track.id}`;
+  el.openSpotifyLink.href = spotifyTrackWebUrl(track.id);
   el.openSpotifyLink.hidden = false;
+}
+
+function spotifyTrackWebUrl(trackId) {
+  return `https://open.spotify.com/track/${trackId}`;
 }
 
 function hideNoDeviceLink() {
@@ -405,8 +414,17 @@ async function findSilentWarmupTrack() {
   return silentWarmupTrackUri;
 }
 
-// "Aquece" o Spotify abrindo o app de verdade (link `spotify:track:<id>`) —
-// a mesma técnica do fallback "sem dispositivo ativo" (ver showNoDeviceLink),
+// Extrai o ID de uma URI "spotify:track:<id>" — usado pra montar o Universal
+// Link (https://open.spotify.com/track/<id>) a partir do `uri` que as faixas
+// já carregam nesse formato (catálogo, playlists, busca).
+function spotifyTrackIdFromUri(uri) {
+  return uri.split(":").pop();
+}
+
+// "Aquece" o Spotify abrindo o app de verdade (Universal Link — ver
+// showNoDeviceLink pra mais detalhes de por que Universal Link em vez do
+// esquema customizado "spotify:track:<id>") — a mesma técnica do fallback
+// "sem dispositivo ativo" (ver showNoDeviceLink),
 // que é a única que se provou 100% confiável em testes reais. Uma versão
 // anterior tentava tocar remoto via API (device_id) sem sair do RunBeat, mas
 // o Spotify às vezes lista o dispositivo como disponível e ainda assim
@@ -436,7 +454,7 @@ async function warmUpSpotify() {
   // primeiro toque pra deixar claro que precisa voltar e apertar logo (ver
   // startRun(), que tira o pulso assim que a corrida realmente começa).
   el.playPauseBtn.classList.add("is-attention");
-  window.location.href = uri;
+  window.location.href = spotifyTrackWebUrl(spotifyTrackIdFromUri(uri));
 }
 
 async function requestWakeLock() {

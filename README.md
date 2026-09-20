@@ -168,30 +168,30 @@ dependem.
 6. Antes de apertar "Play" pela primeira vez, o cartão de corrida mostra um
    botão **"Spotify sync (clique aqui)"** — resolve de antemão o caso mais
    comum de não ter nenhum dispositivo Spotify ativo, abrindo o app do
-   Spotify de verdade (link `spotify:track:<id>`) numa faixa escolhida.
-   Uma versão anterior tentava fazer isso remoto (via API, sem sair do
-   RunBeat) mas se mostrou instável em testes reais — o Spotify às vezes
-   lista um dispositivo como disponível e mesmo assim recusa o comando de
-   tocar nele; abrir o app de verdade é a única técnica que se provou
-   100% confiável. Pra reduzir o quanto toca som antes da corrida começar,
-   o RunBeat busca no catálogo do Spotify (`GET /search`) uma faixa que já
-   seja silêncio de verdade (existem várias, feitas propositalmente pra
-   isso — 4 termos de busca em paralelo, filtrando por nome com
-   "silen(t/ce)" e duração bem curta) e usa ela em vez de uma música real
-   do pool; se não achar nenhuma, cai de volta pra uma faixa normal
-   (audível). Abrir esse link tira o RunBeat de primeiro plano — **nenhum
-   app ou site consegue se trazer de volta ao primeiro plano sozinho**
-   (restrição do próprio sistema operacional, iOS e Android, não uma
-   limitação do RunBeat ou do navegador — nem o app nativo do Spotify
-   conseguiria fazer isso). Ao voltar pro RunBeat, o Play pulsa (brilho ao
-   redor) até o primeiro toque, já que o Spotify pode já estar tocando
-   algo sozinho nesse momento.
+   Spotify de verdade numa faixa escolhida, via **Universal Link**
+   (`https://open.spotify.com/track/<id>`, não o esquema customizado
+   `spotify:track:<id>`) — abrir por esse formato faz o iOS mostrar
+   sozinho a pilula "‹ Voltar pro RunBeat" no topo da tela depois, então
+   voltar é 1 toque só em vez de precisar lembrar de trocar de app
+   manualmente. Uma versão anterior tentava fazer isso remoto (via API,
+   sem sair do RunBeat) mas se mostrou instável em testes reais — o
+   Spotify às vezes lista um dispositivo como disponível e mesmo assim
+   recusa o comando de tocar nele; abrir o app de verdade é a única
+   técnica que se provou 100% confiável. Pra reduzir o quanto toca som
+   antes da corrida começar, o RunBeat busca no catálogo do Spotify
+   (`GET /search`) uma faixa que já seja silêncio de verdade (existem
+   várias, feitas propositalmente pra isso — 4 termos de busca em
+   paralelo, filtrando por nome com "silen(t/ce)" e duração bem curta) e
+   usa ela em vez de uma música real do pool; se não achar nenhuma, cai de
+   volta pra uma faixa normal (audível). Ao voltar pro RunBeat, o Play
+   pulsa (brilho ao redor) até o primeiro toque, já que o Spotify pode já
+   estar tocando algo sozinho nesse momento.
 7. Se o Spotify não tiver nenhum dispositivo ativo quando uma troca de
    faixa precisar tocar (app já encerrado pelo sistema, ex. segundo plano
    suspenso, ou o usuário nunca usou o "Spotify sync" do item 6), aparece
    o mesmo botão **"Spotify sync (clique aqui)"** como link — mesma
-   técnica, mesmo texto, só que reagindo a uma falha em vez de ser
-   clicado por antecipação. Quando o usuário volta pro RunBeat
+   técnica (Universal Link), mesmo texto, só que reagindo a uma falha em
+   vez de ser clicado por antecipação. Quando o usuário volta pro RunBeat
    manualmente, o app detecta e tenta tocar de novo na hora (em vez de
    esperar o intervalo normal de retry), então basta voltar que a troca de
    faixa já retoma sozinha, sem precisar tocar em mais nada. O botão some

@@ -13,9 +13,9 @@
   --input-bg: rgba(15, 21, 27, 0.9);
   --fg: #e8edf2;
   --muted: #9aa5b1;
-  --accent: #f5b400;
-  --accent-soft: #ffd873;
-  --accent-strong: #b38200;
+  --accent: #ffdd00;
+  --accent-soft: #ffe873;
+  --accent-strong: #b39400;
   --accent-ink: #1a1400;
   --danger: #f85149;
   --radius: 14px;
@@ -464,7 +464,7 @@ button:disabled {
   margin-top: 14px;
   padding: 12px 14px;
   border-left: 3px solid var(--accent);
-  background: rgba(245, 180, 0, 0.08);
+  background: rgba(255, 221, 0, 0.08);
   border-radius: 0 10px 10px 0;
 }
 
@@ -508,8 +508,8 @@ button:disabled {
   margin: 8px 0 0;
   padding: 8px 12px;
   border-radius: var(--radius-sm);
-  background: rgba(245, 180, 0, 0.12);
-  border: 1px solid rgba(245, 180, 0, 0.35);
+  background: rgba(255, 221, 0, 0.12);
+  border: 1px solid rgba(255, 221, 0, 0.35);
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--accent);
@@ -559,8 +559,8 @@ button:disabled {
   margin: 16px 0;
   padding: 16px;
   border-radius: var(--radius-sm);
-  background: rgba(245, 180, 0, 0.1);
-  border: 1px solid rgba(245, 180, 0, 0.3);
+  background: rgba(255, 221, 0, 0.1);
+  border: 1px solid rgba(255, 221, 0, 0.3);
 }
 
 .beat-visual[hidden] {
@@ -668,8 +668,8 @@ button:disabled {
    não só ficar destacado parado. Some assim que a corrida realmente começa
    (ver startRun() em app.js). */
 @keyframes play-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 180, 0, 0.55); }
-  50% { box-shadow: 0 0 0 16px rgba(245, 180, 0, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 221, 0, 0.55); }
+  50% { box-shadow: 0 0 0 16px rgba(255, 221, 0, 0); }
 }
 
 .play-pause-btn.is-attention {

@@ -57,6 +57,7 @@ const el = {
   openSpotifyLink: document.getElementById("open-spotify-link"),
   warmupRow: document.getElementById("warmup-row"),
   warmupBtn: document.getElementById("warmup-btn"),
+  warmupHint: document.getElementById("warmup-hint"),
   warmupStatus: document.getElementById("warmup-status"),
   beatVisual: document.getElementById("beat-visual"),
   audiblePulseToggle: document.getElementById("audible-pulse-toggle"),
@@ -206,6 +207,12 @@ let trackSegmentStartedAt = null;
 // usado pra pular direto pra essa nova tentativa assim que o usuário volta
 // pro RunBeat (ver visibilitychange), sem esperar o intervalo inteiro.
 let noDeviceRetryPending = false;
+// true logo depois de abrir o Spotify pelo "Spotify sync" — usado pra
+// esconder a dica "Voltar é só tocar..." e o status "Abrindo o Spotify..."
+// assim que o usuário volta pro RunBeat (pela pílula do iOS ou trocando de
+// app manualmente), já que nenhum dos dois faz mais sentido depois disso
+// (ver visibilitychange).
+let warmupPending = false;
 let playRequestSeq = 0; // invalida trocas de faixa que ficaram pra trás no tempo
 let history = []; // faixas já tocadas nesta corrida, em ordem — pra "Anterior"
 const playedIds = new Set();
@@ -417,8 +424,10 @@ const WARMUP_TRACK_ID = "3mSFn1km1dGcGHUNqmEaHM"; // "One Bird Singing" — Auge
 // (diferente da tentativa anterior), abre sempre a mesma faixa fixa
 // (WARMUP_TRACK_ID) em vez de uma música real do pool.
 function warmUpSpotify() {
+  el.warmupHint.hidden = false;
   el.warmupStatus.hidden = false;
   el.warmupStatus.textContent = "Abrindo o Spotify...";
+  warmupPending = true;
 
   setSyncHighlight(false);
   // O Spotify vai abrir e tocar essa faixa sozinho — o Play pulsa até o
@@ -1178,7 +1187,16 @@ async function init() {
   // fica em segundo plano (parte do spec) — reconquista sozinho ao voltar,
   // sem precisar que o usuário faça nada.
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState !== "visible" || !runActive) return;
+    if (document.visibilityState !== "visible") return;
+    // Some a dica/status do "Spotify sync" assim que o usuário volta pro
+    // RunBeat — independe da corrida já ter começado (o sync acontece antes
+    // do primeiro Play), por isso fica fora do `if (!runActive)` abaixo.
+    if (warmupPending) {
+      warmupPending = false;
+      el.warmupHint.hidden = true;
+      el.warmupStatus.hidden = true;
+    }
+    if (!runActive) return;
     if (!wakeLock) requestWakeLock();
     // O usuário voltou pro RunBeat depois de abrir o Spotify (ex. pelo link
     // "Spotify sync (clique aqui)") — tenta tocar de novo agora, sem

@@ -224,9 +224,14 @@ h2 {
 .step-check[hidden] { display: none; }
 
 /* Resumo do que foi escolhido nesse passo (ex. "Conectado", "2 Items",
-   "Automático"), à direita do título — só aparece depois do passo
-   concluído (populado em app.js), fica vazio (escondido) antes disso. */
+   "Automático"), à direita do título — já vem populado (em app.js) assim
+   que o passo é concluído, mas só aparece na tela final, quando o cartão
+   está condensado numa linha só (ver .step-card[data-state="condensed"]
+   abaixo). Enquanto o passo só termina e recua (sem chegar no cartão de
+   corrida ainda), fica escondido — só o sinal verde (.step-check) marca a
+   conclusão nesse momento. */
 .step-summary {
+  display: none;
   margin-left: auto;
   color: #1db954;
   font-style: italic;
@@ -237,8 +242,8 @@ h2 {
   text-overflow: ellipsis;
 }
 
-.step-summary:empty {
-  display: none;
+.step-card[data-state="condensed"] .step-summary:not(:empty) {
+  display: inline;
 }
 
 @keyframes check-pop {

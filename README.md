@@ -183,13 +183,9 @@ dependem.
    app ou site consegue se trazer de volta ao primeiro plano sozinho**
    (restrição do próprio sistema operacional, iOS e Android, não uma
    limitação do RunBeat ou do navegador — nem o app nativo do Spotify
-   conseguiria fazer isso). Assim que o usuário volta pro RunBeat (detectado
-   via evento `visibilitychange`), o app manda pausar essa faixa na hora
-   (`PUT /me/player/pause`) — ela só existia pra manter o Spotify vivo, não
-   deve continuar tocando enquanto o usuário decide quando começar de
-   verdade — e o Play pulsa (brilho ao redor) até o primeiro toque, que
-   volta a mandar tocar (a faixa escolhida pelo motor de matching, não a
-   mesma da faixa de aquecimento).
+   conseguiria fazer isso). Ao voltar pro RunBeat, o Play pulsa (brilho ao
+   redor) até o primeiro toque, já que o Spotify pode já estar tocando
+   algo sozinho nesse momento.
 7. Se o Spotify não tiver nenhum dispositivo ativo quando uma troca de
    faixa precisar tocar (app já encerrado pelo sistema, ex. segundo plano
    suspenso, ou o usuário nunca usou o "Spotify sync" do item 6), aparece

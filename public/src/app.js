@@ -190,6 +190,11 @@ let trackSegmentStartedAt = null;
 // usado pra pular direto pra essa nova tentativa assim que o usuário volta
 // pro RunBeat (ver visibilitychange), sem esperar o intervalo inteiro.
 let noDeviceRetryPending = false;
+// true depois de abrir o Spotify pelo "Spotify sync" (ver warmUpSpotify),
+// esperando o usuário voltar pro RunBeat — nesse retorno, pausa a faixa que
+// o sync deixou tocando, já que ela só existia pra manter o Spotify vivo, e
+// deve ficar parada até o usuário apertar Play de verdade.
+let warmupReturnPending = false;
 let playRequestSeq = 0; // invalida trocas de faixa que ficaram pra trás no tempo
 let history = []; // faixas já tocadas nesta corrida, em ordem — pra "Anterior"
 const playedIds = new Set();
@@ -436,6 +441,10 @@ async function warmUpSpotify() {
   // primeiro toque pra deixar claro que precisa voltar e apertar logo (ver
   // startRun(), que tira o pulso assim que a corrida realmente começa).
   el.playPauseBtn.classList.add("is-attention");
+  // Ao voltar pro RunBeat (ver visibilitychange), pausa essa faixa — ela só
+  // existe pra manter o Spotify vivo, não deve continuar tocando enquanto o
+  // usuário decide quando apertar Play de verdade.
+  warmupReturnPending = true;
   window.location.href = uri;
 }
 
@@ -1176,7 +1185,17 @@ async function init() {
   // fica em segundo plano (parte do spec) — reconquista sozinho ao voltar,
   // sem precisar que o usuário faça nada.
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState !== "visible" || !runActive) return;
+    if (document.visibilityState !== "visible") return;
+    // Voltou do "Spotify sync" de antes da corrida começar — pausa a faixa
+    // que ele deixou tocando (ver warmUpSpotify). Cabe aqui, fora do "if
+    // runActive" abaixo, porque a corrida ainda nem começou nesse momento.
+    if (warmupReturnPending) {
+      warmupReturnPending = false;
+      api.pausePlayback().catch((err) => {
+        console.warn("Não deu pra pausar a faixa do Spotify sync:", err.message);
+      });
+    }
+    if (!runActive) return;
     if (!wakeLock) requestWakeLock();
     // O usuário voltou pro RunBeat depois de abrir o Spotify (ex. pelo link
     // "Spotify sync (clique aqui)") — tenta tocar de novo agora, sem

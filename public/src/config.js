@@ -51,11 +51,15 @@ export const CADENCE_DISPLAY_INTERVAL_MS = 1000;
 // ficou inativo), tenta de novo depois desse tempo.
 export const RETRY_AFTER_ERROR_MS = 5000;
 
-// Modo automático: a escolha da próxima faixa prioriza o BPM mais próximo
-// da cadência medida — começa numa janela de ±10 bpm ao redor dela e, sem
-// nenhuma faixa do pool dentro disso, vai abrindo de 10 em 10 (±20, ±30...)
-// até achar alguma. Ver matcher.js.
-export const CADENCE_MATCH_STEP_BPM = 10;
+// Modo automático: a escolha da próxima faixa sorteia entre todo o pool,
+// com peso maior pras faixas mais próximas da cadência medida (curva
+// gaussiana, ver matcher.js) — esse valor é o desvio-padrão dessa curva,
+// em bpm. Na prática: uma faixa a essa distância da cadência ainda tem uma
+// chance razoável de ser escolhida; a duas vezes essa distância, a chance
+// já cai bastante. Baixar o valor deixa a escolha mais "rígida" (prioriza
+// bem mais as faixas coladas na cadência exata); subir deixa mais solta
+// (mais variedade, menos fiel ao BPM exato).
+export const CADENCE_MATCH_SIGMA_BPM = 10;
 
 // Quanto tempo esperar sem nenhuma leitura de cadência (modo automático)
 // antes de mostrar um aviso incentivando o usuário a começar a se mexer —

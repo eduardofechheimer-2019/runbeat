@@ -151,13 +151,17 @@ dependem.
 3. Você escolhe o modo de ritmo, e pode **trocar a qualquer momento durante
    a corrida** (a troca vale na hora, sem precisar parar e reiniciar):
    - **Automático**: o acelerômetro do celular (`DeviceMotion`) mede sua
-     cadência (passos/min) em tempo real. A escolha da faixa prioriza o BPM
-     mais próximo dela: começa numa janela de **±10 bpm** ao redor da
-     cadência medida (`CADENCE_MATCH_STEP_BPM` em `config.js`) e sorteia
-     entre as faixas do pool que caem ali dentro; sem nenhuma faixa nessa
-     janela, abre mais 10 bpm pra cada lado (±20, depois ±30...) até achar
-     alguma — nunca fica sem música, só vai aceitando mais distância do BPM
-     ideal conforme precisa.
+     cadência (passos/min) em tempo real. A escolha da faixa é um **sorteio
+     ponderado** sobre todo o pool (todas as playlists e gêneros
+     selecionados juntos, como um único conjunto): cada faixa tem uma
+     chance de ser escolhida que cai suavemente conforme se afasta da
+     cadência medida (curva gaussiana centrada nela, sem corte rígido) —
+     faixas coladas na cadência são bem mais prováveis, faixas mais
+     distantes ainda podem tocar, só que raramente. `CADENCE_MATCH_SIGMA_
+     BPM` em `config.js` controla o quão "rigoroso" isso é (o desvio-padrão
+     da curva, em bpm; menor = mais fiel ao BPM exato, maior = mais
+     variedade). Sem repetir nenhuma faixa antes de esgotar **todo o pool**
+     — aí sim reinicia e pode repetir.
    - **Ritmo fixo**: você escolhe direto uma faixa de BPM (nível), definida
      em `FIXED_PACE_OPTIONS` em `config.js`:
      | Nível | BPM |
@@ -167,21 +171,16 @@ dependem.
      | Taking Off | 150–189 |
      | Pro | 190–220 |
 
-     Aqui não tem prioridade por proximidade — qualquer faixa dentro do
-     intervalo inteiro do nível serve igualmente.
-
-   Nos dois modos, dentro do intervalo (a janela de ±10bpm+ no automático,
-   ou o nível inteiro no ritmo fixo) a escolha é a mesma (ver `matcher.js`):
-   **sorteio ao acaso** entre as faixas do pool inteiro (todas as playlists
-   e gêneros selecionados juntos, como um único conjunto) que caem ali
-   dentro — sem repetir nenhuma antes de esgotar **todas as outras faixas
-   daquele intervalo**; aí sim recomeça e pode repetir. Só quando o
-   intervalo não tem *nenhuma* faixa no pool inteiro (situação rara, ex. um
-   gênero cujo BPM mais alto nem chega no nível escolhido) é que cai pro
-   fallback: a faixa mais próxima do limite do intervalo, dentre as ainda
-   não tocadas de todo o pool (reinicia quando esgotar o pool inteiro). O
-   sensor de passos continua rodando em segundo plano mesmo em ritmo fixo,
-   então voltar pro automático depois também funciona sem reiniciar.
+     Aqui não tem prioridade por proximidade — sorteio simples entre as
+     faixas do pool dentro do intervalo inteiro do nível, todas igualmente
+     válidas, sem repetir nenhuma antes de esgotar todas as outras daquele
+     intervalo. Só quando o intervalo não tem *nenhuma* faixa no pool
+     inteiro (situação rara, ex. um gênero cujo BPM mais alto nem chega no
+     nível escolhido) é que cai pro fallback: a faixa mais próxima do
+     limite do intervalo, dentre as ainda não tocadas de todo o pool
+     (reinicia quando esgotar o pool inteiro). O sensor de passos continua
+     rodando em segundo plano mesmo em ritmo fixo, então voltar pro
+     automático depois também funciona sem reiniciar.
 4. Cada faixa toca **até quase o fim** — pouco antes de acabar (por padrão,
    2 segundos antes, ajustável em `END_OF_TRACK_LEAD_MS`), o motor de
    matching sorteia a próxima faixa do pool (ver item 3 acima) e já manda o

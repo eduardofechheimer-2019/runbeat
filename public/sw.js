@@ -3,7 +3,7 @@
 // nova da rede primeiro, e só caindo pro cache se a rede falhar. Um app em
 // desenvolvimento ativo muda de código com frequência; cache-first faria o
 // usuário ficar preso numa versão antiga mesmo depois de um deploy novo.
-const CACHE_NAME = "runbeat-shell-v32";
+const CACHE_NAME = "runbeat-shell-v33";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -59,6 +59,11 @@ self.addEventListener("fetch", (event) => {
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
         return fresh;
       })
-      .catch(() => caches.match(event.request))
+      // `ignoreSearch`: o start_url do manifest.json tem "?homescreen=2"
+      // (força o iOS a tratar como uma instalação nova, sem herdar
+      // metadado antigo de versões anteriores do ícone) — sem isso, o
+      // fallback offline não bateria com "./index.html" (sem querystring)
+      // que foi o que ficou salvo no cache abaixo.
+      .catch(() => caches.match(event.request, { ignoreSearch: true }))
   );
 });

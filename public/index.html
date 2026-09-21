@@ -12,15 +12,32 @@
      também existe). Sem o atributo "sizes" (como estava antes, só um
      <link> genérico) alguns iOS caem pro fallback de gerar uma letra
      sozinho em vez de usar o ícone de verdade; 180x180 é o tamanho
-     "padrão" documentado pela Apple pro iPhone. O "?v=2" força uma URL
-     nova — o cache de ícone do Safari é conhecido por grudar no mesmo
-     link mesmo depois de limpar dados do site; bump esse número se
+     "padrão" documentado pela Apple pro iPhone.
+
+     CAUSA REAL já confirmada de cair nesse fallback de letra: o PNG desses
+     ícones tinha os CANTOS TRANSPARENTES (o "squircle" arredondado já
+     embutido na imagem, com fundo transparente ao redor) — a Apple exige
+     que o apple-touch-icon seja um quadrado 100% opaco, sem canal alpha
+     nenhum; ela mesma aplica o arredondamento por cima. Com transparência,
+     o iOS rejeita silenciosamente o ícone e gera a letra sozinho. Os PNGs
+     (apple-touch-icon*.png, icon-120/152/167/180/192.png — não o icon-512,
+     que só é usado no manifest/splash e pode ter transparência à vontade)
+     foram achatados (canto transparente virou a mesma cor de fundo #0b0f14
+     do resto do ícone) e salvos sem canal alpha. Se algum desses arquivos
+     for regerado no futuro, exportar sempre como quadrado opaco, nunca com
+     cantos/fundo transparente.
+
+     O "?v=4" força uma URL nova — o cache de ícone do Safari é conhecido
+     por grudar no mesmo link mesmo depois de limpar dados do site (e
+     principalmente: uma vez que o app já foi adicionado à tela de início,
+     o iOS nunca mais busca o ícone de novo sozinho — só re-adicionando
+     manualmente é que ele pega a versão nova). Bump esse número se
      precisar forçar de novo no futuro. -->
-<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=3" />
-<link rel="apple-touch-icon" sizes="167x167" href="icon-167.png?v=3" />
-<link rel="apple-touch-icon" sizes="152x152" href="icon-152.png?v=3" />
-<link rel="apple-touch-icon" sizes="120x120" href="icon-120.png?v=3" />
-<link rel="apple-touch-icon" href="icon-192.png?v=3" />
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=4" />
+<link rel="apple-touch-icon" sizes="167x167" href="icon-167.png?v=4" />
+<link rel="apple-touch-icon" sizes="152x152" href="icon-152.png?v=4" />
+<link rel="apple-touch-icon" sizes="120x120" href="icon-120.png?v=4" />
+<link rel="apple-touch-icon" href="icon-192.png?v=4" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="RunBeat" />

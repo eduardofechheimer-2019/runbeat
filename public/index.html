@@ -109,6 +109,11 @@
 
   <section id="card-run" class="step-card" data-step="run" hidden>
     <div id="beat-visual" class="beat-visual" hidden>
+      <ul class="run-info-list">
+        <li><span class="run-info-label" id="cadence-last-label" data-i18n="lastMeasurementLabel">Última medição (SPM):</span> <strong id="cadence-last-value">—</strong></li>
+        <li><span class="run-info-label" data-i18n="liveCadenceLabel">Tempo real (SPM):</span> <strong id="cadence-live-value">—</strong></li>
+        <li><span class="run-info-label" data-i18n="beatBpmLabel">Batida da música (BPM):</span> <strong id="beat-bpm-value">—</strong></li>
+      </ul>
       <label class="checkbox-row">
         <input type="checkbox" id="audible-pulse-toggle" />
         <span>
@@ -120,17 +125,11 @@
     </div>
     <p id="cadence-wait-hint" class="cadence-wait-hint" hidden data-i18n="cadenceWaitHint">🏃 Pode começar a correr! Estamos esperando os primeiros passos.</p>
     <div class="run-info">
-      <p class="run-info-title" data-i18n="cadenceTitle">Sua Cadência:</p>
-      <ul class="run-info-list">
-        <li><span class="run-info-label" id="cadence-last-label" data-i18n="lastMeasurementLabel">Última medição:</span> <strong id="cadence-last-value">—</strong></li>
-        <li><span class="run-info-label" data-i18n="liveCadenceLabel">Tempo real:</span> <strong id="cadence-live-value">—</strong></li>
-      </ul>
-
       <p class="run-info-title" data-i18n="nowPlayingTitle">Tocando agora:</p>
       <ul class="run-info-list">
         <li><span class="run-info-label" data-i18n="trackNameLabel">Música:</span> <strong id="track-name-value">—</strong></li>
         <li><span class="run-info-label" data-i18n="trackSourceLabel">Playlist:</span> <strong id="track-source-value">—</strong></li>
-        <li><span class="run-info-label" data-i18n="trackBpmLabel">BPM:</span> <strong id="track-bpm-value">—</strong></li>
+        <li id="track-genre-row" hidden><span class="run-info-label" data-i18n="trackGenreLabel">Gênero:</span> <strong id="track-genre-value">—</strong></li>
       </ul>
     </div>
     <p id="run-error" class="error" hidden></p>

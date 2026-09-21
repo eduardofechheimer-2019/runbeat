@@ -672,6 +672,14 @@ button:disabled {
   border: 1px solid rgba(255, 221, 0, 0.3);
 }
 
+/* A lista de cadência/batida dentro do card do marca-passo (ver
+   .beat-visual acima) precisa ocupar a largura toda pra ficar alinhada à
+   esquerda — sem isso, herdaria o align-items:center do flex pai e
+   encolheria/centralizaria como um bloco só. */
+.beat-visual .run-info-list {
+  align-self: stretch;
+}
+
 .beat-visual[hidden] {
   display: none;
 }
@@ -715,9 +723,9 @@ button:disabled {
   color: var(--danger);
 }
 
-/* Bloco "Sua Cadência" / "Tocando agora" no cartão de corrida — título +
-   lista com marcador, no lugar das linhas soltas "Cadência: X" / "Tocando
-   agora: Y" de antes. */
+/* Bloco "Tocando agora" no cartão de corrida — título + lista com
+   marcador. A cadência/batida-alvo mora no card do marca-passo (ver
+   .beat-visual), não aqui. */
 .run-info {
   margin: 4px 0 16px;
 }

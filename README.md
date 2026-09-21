@@ -82,12 +82,15 @@ uma trocação instantânea:
    verde do que foi escolhido nele (ex. "Conectado", "2 Items",
    "Automático"/nome do nível), pra lembrar a configuração sem precisar
    reabrir o cartão.
-4. **Cartão de corrida.** Mostra duas seções com bullets — "Sua Cadência"
-   (última medição usada pra escolher a faixa atual no modo automático, ou
-   o alvo fixo no modo ritmo fixo, e a leitura em tempo real do sensor) e
-   "Tocando agora" (música, playlist/fonte de onde ela veio — com o gênero
-   entre parênteses quando é uma faixa do Catálogo RunBeat — e o BPM) — e os
-   controles: um botão central **▶ Play / ⏸ Pause** com
+4. **Cartão de corrida.** O card do "Marca-Passo Sonoro" (só aparece depois
+   que a primeira faixa começa a tocar) mostra 3 linhas antes do checkbox:
+   última medição/alvo (SPM, usada pra escolher a faixa atual no modo
+   automático, ou o alvo fixo no modo ritmo fixo), a leitura de cadência em
+   tempo real (SPM), e o BPM da faixa tocando agora. Abaixo disso, fora
+   desse card mas ainda na mesma seção, fica "Tocando agora" com bullets —
+   música, playlist/fonte de onde ela veio, e o gênero (linha própria, só
+   aparece quando é uma faixa do Catálogo RunBeat). Os controles: um botão
+   central **▶ Play / ⏸ Pause** com
    **⏮ Anterior** / **⏭ Próxima** ao lado, que só aparecem depois que a
    corrida começa. Antes do primeiro toque, assim que o usuário volta do
    "Spotify sync" (ver item 6), o Play pulsa de forma bem chamativa (cresce

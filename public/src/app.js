@@ -51,7 +51,9 @@ const el = {
   cadenceLiveValue: document.getElementById("cadence-live-value"),
   trackNameValue: document.getElementById("track-name-value"),
   trackSourceValue: document.getElementById("track-source-value"),
-  trackBpmValue: document.getElementById("track-bpm-value"),
+  trackGenreRow: document.getElementById("track-genre-row"),
+  trackGenreValue: document.getElementById("track-genre-value"),
+  beatBpmValue: document.getElementById("beat-bpm-value"),
   runError: document.getElementById("run-error"),
   connectSummary: document.getElementById("connect-summary"),
   librarySummary: document.getElementById("library-summary"),
@@ -289,6 +291,7 @@ function applyLiveModeChange() {
 function startBeatPulse(effectiveBpm) {
   if (!effectiveBpm || effectiveBpm <= 0) return;
   currentEffectiveBpm = effectiveBpm;
+  el.beatBpmValue.textContent = t("beatsPerMin", { n: Math.round(effectiveBpm) });
   el.beatVisual.hidden = false;
   startAudiblePulse(effectiveBpm);
 }
@@ -847,11 +850,9 @@ function updateCadenceDisplay() {
 // nova (ver refreshDynamicTexts) sem precisar tocar a faixa de novo.
 function renderTrackInfo(track) {
   el.trackNameValue.textContent = `${track.name} — ${track.artist}`;
-  const sourceLabel = track.source ? `"${track.source}"` : "—";
-  el.trackSourceValue.textContent = track.genre
-    ? t("trackGenreSuffix", { source: sourceLabel, genre: track.genre })
-    : sourceLabel;
-  el.trackBpmValue.textContent = t("bpmPerMin", { n: Math.round(track.tempo) });
+  el.trackSourceValue.textContent = track.source ? `"${track.source}"` : "—";
+  el.trackGenreRow.hidden = !track.genre;
+  if (track.genre) el.trackGenreValue.textContent = track.genre;
 }
 
 // `requestId` evita que uma troca de faixa lenta (ex. chamada à API do
@@ -1130,6 +1131,7 @@ function refreshDynamicTexts() {
 
   const lastTrack = history[history.length - 1];
   if (lastTrack) renderTrackInfo(lastTrack);
+  if (currentEffectiveBpm) el.beatBpmValue.textContent = t("beatsPerMin", { n: Math.round(currentEffectiveBpm) });
 
   // O pop-up de multiseleção (playlists/gêneros) constrói suas linhas a
   // partir do texto das opções na hora que abre (ver renderMultiselectPanel)

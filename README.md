@@ -252,6 +252,18 @@ dependem.
    interferir — por isso é opt-in. (A versão anterior tinha um metrônomo
    visual — removido após teste real, não ajudou o suficiente a perceber a
    batida.)
+10. **🚀 Música Especial** ("Turbinar"): cada usuário pode colar o link de uma
+    faixa do Spotify (`https://open.spotify.com/track/<id>`) e salvar como
+    sua música especial — fica gravada no aparelho (`localStorage`) até ser
+    trocada. Com a corrida em andamento, o botão **"🚀 Turbinar!"** interrompe
+    a faixa atual e toca essa faixa na hora, sobrepondo o que estava tocando
+    (o BPM dela já foi resolvido no momento em que foi salva, então o botão
+    não espera nenhuma chamada de API pra reagir). Depois dela, o motor de
+    matching volta ao fluxo normal — ela entra no histórico como qualquer
+    faixa tocada (conta como "já tocada" no pool, se também fizer parte
+    dele) e a próxima troca automática/fim de faixa segue a lógica normal do
+    modo ativo. O botão **"Trocar"** limpa a faixa salva e volta pro campo de
+    colar um novo link.
 
 ## Instalando como app no celular
 

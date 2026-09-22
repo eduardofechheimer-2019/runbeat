@@ -69,6 +69,14 @@ const el = {
   cadenceWaitHint: document.getElementById("cadence-wait-hint"),
   langPtBtn: document.getElementById("lang-pt-btn"),
   langEnBtn: document.getElementById("lang-en-btn"),
+  boostConfigure: document.getElementById("boost-configure"),
+  boostTrackInput: document.getElementById("boost-track-input"),
+  boostSaveBtn: document.getElementById("boost-save-btn"),
+  boostConfigured: document.getElementById("boost-configured"),
+  boostTrackName: document.getElementById("boost-track-name"),
+  boostBtn: document.getElementById("boost-btn"),
+  boostChangeBtn: document.getElementById("boost-change-btn"),
+  boostError: document.getElementById("boost-error"),
 };
 
 // Os 4 cartões ficam todos montados na página, mas durante os passos 1-3
@@ -231,6 +239,13 @@ let lastLibraryItemCount = null;
 let playRequestSeq = 0; // invalida trocas de faixa que ficaram pra trás no tempo
 let history = []; // faixas já tocadas nesta corrida, em ordem — pra "Anterior"
 const playedIds = new Set();
+
+// "Música Especial" ("Turbinar") — faixa fixa escolhida pelo próprio
+// usuário (link colado, não vem do pool) que toca por cima da faixa atual
+// quando o botão é apertado. Persiste entre visitas (localStorage), já
+// resolvida (nome/artista/BPM) no momento em que foi salva, pra o botão
+// "Turbinar" não precisar esperar nenhuma chamada de API na hora do toque.
+let boostTrack = null;
 
 // Pulso sonoro — agenda cliques via Web Audio API, cujo relógio é bem mais
 // preciso que setTimeout pra esse fim.
@@ -957,6 +972,93 @@ async function skipToPrevious() {
   }
 }
 
+// --- "Música Especial" ("Turbinar") ---
+
+// Aceita um link completo (https://open.spotify.com/track/<id>?...),
+// o esquema "spotify:track:<id>", ou só o ID cru — o que o usuário colar.
+function extractSpotifyTrackId(input) {
+  const trimmed = input.trim();
+  const match = trimmed.match(/track[/:]([A-Za-z0-9]{22})/);
+  if (match) return match[1];
+  return /^[A-Za-z0-9]{22}$/.test(trimmed) ? trimmed : null;
+}
+
+function showBoostError(message) {
+  el.boostError.textContent = message;
+  el.boostError.hidden = !message;
+}
+
+function updateBoostUi() {
+  el.boostConfigure.hidden = !!boostTrack;
+  el.boostConfigured.hidden = !boostTrack;
+  if (boostTrack) {
+    el.boostTrackName.textContent = `${boostTrack.name} — ${boostTrack.artist}`;
+  }
+  el.boostBtn.disabled = !boostTrack || !runActive;
+}
+
+function loadBoostTrack() {
+  const raw = localStorage.getItem(STORAGE_KEYS.boostTrack);
+  boostTrack = raw ? JSON.parse(raw) : null;
+  updateBoostUi();
+}
+
+// Resolve nome/artista/BPM na hora de salvar (não no toque do "Turbinar")
+// — assim o botão em si é instantâneo, sem esperar nenhuma chamada de API.
+async function saveBoostTrack() {
+  const id = extractSpotifyTrackId(el.boostTrackInput.value);
+  if (!id) {
+    showBoostError(t("boostInvalidLink"));
+    return;
+  }
+  el.boostSaveBtn.disabled = true;
+  showBoostError("");
+  try {
+    const meta = await api.getTrack(id);
+    const { tracks } = await buildBpmPool([meta]);
+    if (tracks.length === 0 || !tracks[0].tempo) {
+      showBoostError(t("boostNoTempo"));
+      return;
+    }
+    boostTrack = tracks[0];
+    localStorage.setItem(STORAGE_KEYS.boostTrack, JSON.stringify(boostTrack));
+    el.boostTrackInput.value = "";
+    updateBoostUi();
+  } catch (err) {
+    showBoostError(t("genericErrorPrefix", { message: err.message }));
+  } finally {
+    el.boostSaveBtn.disabled = false;
+  }
+}
+
+function forgetBoostTrack() {
+  boostTrack = null;
+  localStorage.removeItem(STORAGE_KEYS.boostTrack);
+  updateBoostUi();
+}
+
+// Toca a Música Especial por cima da faixa atual — mesma mecânica de
+// playSpecificTrack()/scheduleEndOfTrack() usada pra qualquer troca normal,
+// só que a faixa já vem pronta (fixa) em vez de escolhida pelo matcher.
+// Depois que ela termina, a troca automática volta ao normal sozinha.
+async function triggerBoost() {
+  if (!boostTrack || !runActive) return;
+  clearTimeout(endOfTrackTimer);
+  const requestId = ++playRequestSeq;
+  const track = { ...boostTrack, source: t("boostTrackSource"), effectiveBpm: boostTrack.tempo };
+  try {
+    const applied = await playSpecificTrack(track, requestId);
+    if (!applied) return;
+    history.push(track);
+    playedIds.add(track.id);
+    scheduleEndOfTrack(track);
+  } catch (err) {
+    if (requestId !== playRequestSeq) return;
+    showRunError(err.message);
+    if (err.code === "NO_ACTIVE_DEVICE") showNoDeviceLink(track);
+  }
+}
+
 // Modo automático: só começa a tocar quando tiver uma primeira leitura
 // confiável de cadência (no início da corrida o acelerômetro ainda não tem
 // dado suficiente na janela deslizante). Modo fixo: começa na hora, o valor
@@ -1020,6 +1122,7 @@ function startRun() {
   setPlayPauseIcon(true);
   el.prevBtn.hidden = false;
   el.nextBtn.hidden = false;
+  updateBoostUi(); // libera o botão "Turbinar", que fica desabilitado até a corrida começar
   showRunError("");
   hideNoDeviceLink();
   el.warmupRow.hidden = true;
@@ -1158,6 +1261,7 @@ async function init() {
 
   initOnboarding();
   populatePaceOptions();
+  loadBoostTrack();
   el.modeSelect.addEventListener("change", () => {
     el.paceGroup.hidden = el.modeSelect.value !== "fixed";
     updatePaceSummary();
@@ -1291,6 +1395,14 @@ async function init() {
   });
   el.prevBtn.addEventListener("click", () => {
     skipToPrevious().catch((err) => showRunError(err.message));
+  });
+
+  el.boostSaveBtn.addEventListener("click", () => {
+    saveBoostTrack();
+  });
+  el.boostChangeBtn.addEventListener("click", forgetBoostTrack);
+  el.boostBtn.addEventListener("click", () => {
+    triggerBoost();
   });
 
   el.audiblePulseToggle.addEventListener("change", () => {

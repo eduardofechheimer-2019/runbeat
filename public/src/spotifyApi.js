@@ -93,6 +93,20 @@ export async function getPlaylistTrackRefs(playlistId) {
   return refs;
 }
 
+// Busca uma faixa específica pelo ID — usado pra resolver a "Música
+// Especial" que o usuário cola como link (ver app.js), já que essa faixa
+// não vem de nenhuma playlist/catálogo já carregado.
+export async function getTrack(id) {
+  const track = await request(`/tracks/${id}`);
+  return {
+    id: track.id,
+    name: track.name,
+    uri: track.uri,
+    artist: track.artists?.[0]?.name ?? "",
+    durationMs: track.duration_ms,
+  };
+}
+
 export async function getLikedSongRefs() {
   const refs = [];
   let url = "/me/tracks?limit=50";

@@ -325,7 +325,7 @@ label:first-of-type { margin-top: 0; }
   font-size: 0.95rem;
 }
 
-select, button {
+select, button, input[type="text"] {
   width: 100%;
   padding: 13px 14px;
   margin-top: 8px;
@@ -335,6 +335,10 @@ select, button {
   color: var(--fg);
   font-size: 0.95rem;
   font-family: inherit;
+}
+
+input[type="text"]::placeholder {
+  color: var(--muted);
 }
 
 button {
@@ -828,6 +832,68 @@ button:disabled {
 }
 
 .side-btn[hidden] { display: none; }
+
+/* --- "Música Especial" ("Turbinar") --- */
+
+.boost-section {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 221, 0, 0.1);
+  border: 1px solid rgba(255, 221, 0, 0.3);
+}
+
+.boost-section .run-info-title {
+  margin: 0 0 4px;
+  text-align: center;
+}
+
+.boost-configure {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.boost-configure input[type="text"] {
+  margin-top: 0;
+}
+
+.boost-configure button {
+  width: auto;
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
+.boost-configured[hidden],
+.boost-configure[hidden] {
+  display: none;
+}
+
+.boost-track-name {
+  margin: 0 0 8px;
+  text-align: center;
+  color: var(--fg);
+  font-weight: 700;
+}
+
+.boost-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.boost-btn {
+  flex: 1;
+}
+
+.boost-change-btn {
+  width: auto;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1.5px solid var(--card-border);
+  color: var(--muted);
+  font-family: inherit;
+  font-weight: 700;
+}
 
 .icon {
   width: 18px;

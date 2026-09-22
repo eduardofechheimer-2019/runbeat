@@ -155,6 +155,22 @@
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 5v14M4 5l12 7-12 7V5Z"/></svg>
       </button>
     </div>
+
+    <div id="boost-section" class="boost-section">
+      <p class="run-info-title" data-i18n="boostSectionTitle">🚀 Música Especial</p>
+      <div id="boost-configure" class="boost-configure">
+        <input type="text" id="boost-track-input" data-i18n-placeholder="boostInputPlaceholder" placeholder="Cole o link da música no Spotify" />
+        <button type="button" id="boost-save-btn" data-i18n="boostSaveBtn">Salvar</button>
+      </div>
+      <div id="boost-configured" class="boost-configured" hidden>
+        <p class="boost-track-name" id="boost-track-name"></p>
+        <div class="boost-actions">
+          <button type="button" id="boost-btn" class="boost-btn" data-i18n="boostBtn">🚀 Turbinar!</button>
+          <button type="button" id="boost-change-btn" class="boost-change-btn" data-i18n="boostChangeBtn">Trocar</button>
+        </div>
+      </div>
+      <p id="boost-error" class="error" hidden></p>
+    </div>
   </section>
 </main>
 

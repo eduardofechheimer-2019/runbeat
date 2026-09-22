@@ -83,6 +83,15 @@ const translations = {
     playLabel: "Play",
     pauseLabel: "Pause",
 
+    boostSectionTitle: "🚀 Música Especial",
+    boostInputPlaceholder: "Cole o link da música no Spotify",
+    boostSaveBtn: "Salvar",
+    boostChangeBtn: "Trocar",
+    boostBtn: "🚀 Turbinar!",
+    boostTrackSource: "Música especial",
+    boostInvalidLink: "Link inválido — cole o link de uma faixa do Spotify (ex. https://open.spotify.com/track/...).",
+    boostNoTempo: "Não foi possível determinar o BPM dessa música — tente outra.",
+
     multiselectCloseAriaLabel: "Fechar",
 
     onboardingNext: "Próximo",
@@ -182,6 +191,15 @@ const translations = {
     playLabel: "Play",
     pauseLabel: "Pause",
 
+    boostSectionTitle: "🚀 Special Track",
+    boostInputPlaceholder: "Paste the track link from Spotify",
+    boostSaveBtn: "Save",
+    boostChangeBtn: "Change",
+    boostBtn: "🚀 Boost!",
+    boostTrackSource: "Special track",
+    boostInvalidLink: "Invalid link — paste a Spotify track link (e.g. https://open.spotify.com/track/...).",
+    boostNoTempo: "Couldn't determine this track's BPM — try another one.",
+
     multiselectCloseAriaLabel: "Close",
 
     onboardingNext: "Next",
@@ -249,6 +267,9 @@ function applyStaticTranslations() {
   }
   for (const node of document.querySelectorAll("[data-i18n-aria-label]")) {
     node.setAttribute("aria-label", t(node.dataset.i18nAriaLabel));
+  }
+  for (const node of document.querySelectorAll("[data-i18n-placeholder]")) {
+    node.setAttribute("placeholder", t(node.dataset.i18nPlaceholder));
   }
 }
 

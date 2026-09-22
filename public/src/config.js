@@ -83,4 +83,5 @@ export const STORAGE_KEYS = {
   bpmPool: "runbeat_bpm_pool",
   onboardingSeen: "runbeat_onboarding_seen",
   lang: "runbeat_lang",
+  boostTrack: "runbeat_boost_track",
 };

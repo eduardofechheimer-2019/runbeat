@@ -257,23 +257,23 @@ dependem.
     (`https://open.spotify.com/track/<id>`) num campo discreto (sem caixa de
     destaque, só um input + "Salvar" pequenos) e guardar como sua faixa
     bônus — fica gravada no aparelho (`localStorage`) até ser trocada. Uma
-    vez salva, some o campo e aparece o botão de disparo: redondo, vermelho,
-    com relevo/brilho (gradiente + sombras em CSS, sem imagem nenhuma) pra
-    remeter a um botão de emergência físico de verdade — o nome **"FAIXA
-    BÔNUS"** fica escrito do lado dele, não em cima, deixando o botão em si
-    limpo e mais legível como forma/cor. É a única parte chamativa dessa
-    seção — o resto continua discreto de propósito. Com a corrida em
-    andamento, apertar esse botão interrompe a faixa atual e toca a bônus na
-    hora, sobrepondo o que estava tocando (o BPM dela já foi resolvido no
-    momento em que foi salva, então o botão não espera nenhuma chamada de
-    API pra reagir). Ela aparece nos mesmos mostradores de "Tocando"/cadência
-    e usa os mesmos controles de Play/Pause/Anterior/Próxima de qualquer
-    faixa — sem nenhuma tela ou navegação própria. Depois dela, o motor de
-    matching volta ao fluxo normal — ela entra no histórico como qualquer
-    faixa tocada (conta como "já tocada" no pool, se também fizer parte
-    dele) e a próxima troca automática/fim de faixa segue a lógica normal do
-    modo ativo. O link discreto **"Trocar"**, abaixo do botão, limpa a faixa
-    salva e volta pro campo de colar um novo link.
+    vez salva, some o campo e aparece uma linha única e discreta: um botão
+    pequeno, redondo, vermelho, com relevo/brilho (gradiente + sombras em
+    CSS, sem imagem nenhuma) pra remeter a um botão de emergência físico de
+    verdade, o texto **"Faixa Bônus"** ao lado dele (não em cima, e não em
+    caixa alta), e o link **"Trocar"** ao lado desse texto — sem mostrar o
+    nome da faixa salva na tela (o usuário já sabe qual escolheu). Com a
+    corrida em andamento, apertar o botão interrompe a faixa atual e toca a
+    bônus na hora, sobrepondo o que estava tocando (o BPM dela já foi
+    resolvido no momento em que foi salva, então o botão não espera nenhuma
+    chamada de API pra reagir). Ela aparece nos mesmos mostradores de
+    "Tocando"/cadência e usa os mesmos controles de Play/Pause/Anterior/
+    Próxima de qualquer faixa — sem nenhuma tela ou navegação própria.
+    Depois dela, o motor de matching volta ao fluxo normal — ela entra no
+    histórico como qualquer faixa tocada (conta como "já tocada" no pool,
+    se também fizer parte dele) e a próxima troca automática/fim de faixa
+    segue a lógica normal do modo ativo. "Trocar" limpa a faixa salva e
+    volta pro campo de colar um novo link.
 
 ## Instalando como app no celular
 

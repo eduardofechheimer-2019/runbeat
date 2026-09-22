@@ -73,7 +73,6 @@ const el = {
   boostTrackInput: document.getElementById("boost-track-input"),
   boostSaveBtn: document.getElementById("boost-save-btn"),
   boostConfigured: document.getElementById("boost-configured"),
-  boostTrackName: document.getElementById("boost-track-name"),
   boostBtn: document.getElementById("boost-btn"),
   boostChangeBtn: document.getElementById("boost-change-btn"),
   boostError: document.getElementById("boost-error"),
@@ -991,9 +990,6 @@ function showBoostError(message) {
 function updateBoostUi() {
   el.boostConfigure.hidden = !!boostTrack;
   el.boostConfigured.hidden = !boostTrack;
-  if (boostTrack) {
-    el.boostTrackName.textContent = `${boostTrack.name} — ${boostTrack.artist}`;
-  }
   el.boostBtn.disabled = !boostTrack || !runActive;
 }
 

@@ -93,9 +93,9 @@ export async function getPlaylistTrackRefs(playlistId) {
   return refs;
 }
 
-// Busca uma faixa específica pelo ID — usado pra resolver a "Música
-// Especial" que o usuário cola como link (ver app.js), já que essa faixa
-// não vem de nenhuma playlist/catálogo já carregado.
+// Busca uma faixa específica pelo ID — usado pra resolver a "Faixa Bônus"
+// que o usuário cola como link (ver app.js), já que essa faixa não vem de
+// nenhuma playlist/catálogo já carregado.
 export async function getTrack(id) {
   const track = await request(`/tracks/${id}`);
   return {

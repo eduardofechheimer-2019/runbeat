@@ -77,17 +77,18 @@ uma trocação instantânea:
 3. **Cartão 3 — Escolha o ritmo.** Último cartão — um botão **"Continuar"**
    recua ele também e revela o cartão de corrida. Nesse momento os cartões
    1, 2 e 3 **condensam** juntos numa linha cada (só o título, sem o
-   conteúdo interno) no topo da tela, liberando o resto do espaço pro
-   cartão de corrida — cada título condensado ganha um resumo curto em
-   verde do que foi escolhido nele (ex. "Conectado", "2 Items",
-   "Automático"/nome do nível), pra lembrar a configuração sem precisar
-   reabrir o cartão.
+   conteúdo interno) no topo da tela, bem mais estreitos/juntos que o
+   cartão normal (padding e espaçamento reduzidos) — libera o máximo de
+   espaço pro cartão de corrida, que é o que importa nesse momento — cada
+   título condensado ganha um resumo curto em verde do que foi escolhido
+   nele (ex. "Conectado", "2 Items", "Automático"/nome do nível), pra
+   lembrar a configuração sem precisar reabrir o cartão.
 4. **Cartão de corrida.** O card do "Marca-Passo Sonoro" (só aparece depois
    que a primeira faixa começa a tocar) mostra 3 linhas antes do checkbox:
    última medição/alvo (SPM, usada pra escolher a faixa atual no modo
    automático, ou o alvo fixo no modo ritmo fixo), a leitura de cadência em
    tempo real (SPM), e o BPM da faixa tocando agora. Abaixo disso, fora
-   desse card mas ainda na mesma seção, fica "Tocando agora" com bullets —
+   desse card mas ainda na mesma seção, fica "Tocando" com bullets —
    música, playlist/fonte de onde ela veio, e o gênero (linha própria, só
    aparece quando é uma faixa do Catálogo RunBeat). Os controles: um botão
    central **▶ Play / ⏸ Pause** com
@@ -252,18 +253,24 @@ dependem.
    interferir — por isso é opt-in. (A versão anterior tinha um metrônomo
    visual — removido após teste real, não ajudou o suficiente a perceber a
    batida.)
-10. **🚀 Música Especial** ("Turbinar"): cada usuário pode colar o link de uma
-    faixa do Spotify (`https://open.spotify.com/track/<id>`) e salvar como
-    sua música especial — fica gravada no aparelho (`localStorage`) até ser
-    trocada. Com a corrida em andamento, o botão **"🚀 Turbinar!"** interrompe
-    a faixa atual e toca essa faixa na hora, sobrepondo o que estava tocando
-    (o BPM dela já foi resolvido no momento em que foi salva, então o botão
-    não espera nenhuma chamada de API pra reagir). Depois dela, o motor de
+10. **Faixa Bônus**: cada usuário pode colar o link de uma faixa do Spotify
+    (`https://open.spotify.com/track/<id>`) num campo discreto (sem caixa de
+    destaque, só um input + "Salvar" pequenos) e guardar como sua faixa
+    bônus — fica gravada no aparelho (`localStorage`) até ser trocada. Uma
+    vez salva, some o campo e aparece um botão vermelho, estilo botão de
+    emergência (**"FAIXA BÔNUS"**), que é a única parte chamativa dessa
+    seção — o resto continua discreto de propósito. Com a corrida em
+    andamento, apertar esse botão interrompe a faixa atual e toca a bônus na
+    hora, sobrepondo o que estava tocando (o BPM dela já foi resolvido no
+    momento em que foi salva, então o botão não espera nenhuma chamada de
+    API pra reagir). Ela aparece nos mesmos mostradores de "Tocando"/cadência
+    e usa os mesmos controles de Play/Pause/Anterior/Próxima de qualquer
+    faixa — sem nenhuma tela ou navegação própria. Depois dela, o motor de
     matching volta ao fluxo normal — ela entra no histórico como qualquer
     faixa tocada (conta como "já tocada" no pool, se também fizer parte
     dele) e a próxima troca automática/fim de faixa segue a lógica normal do
-    modo ativo. O botão **"Trocar"** limpa a faixa salva e volta pro campo de
-    colar um novo link.
+    modo ativo. O link discreto **"Trocar"**, abaixo do botão vermelho,
+    limpa a faixa salva e volta pro campo de colar um novo link.
 
 ## Instalando como app no celular
 

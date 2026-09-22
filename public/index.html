@@ -125,7 +125,7 @@
     </div>
     <p id="cadence-wait-hint" class="cadence-wait-hint" hidden data-i18n="cadenceWaitHint">🏃 Pode começar a correr! Estamos esperando os primeiros passos.</p>
     <div class="run-info">
-      <p class="run-info-title" data-i18n="nowPlayingTitle">Tocando agora:</p>
+      <p class="run-info-title" data-i18n="nowPlayingTitle">Tocando:</p>
       <ul class="run-info-list">
         <li><span class="run-info-label" data-i18n="trackNameLabel">Música:</span> <strong id="track-name-value">—</strong></li>
         <li><span class="run-info-label" data-i18n="trackSourceLabel">Playlist:</span> <strong id="track-source-value">—</strong></li>
@@ -157,17 +157,14 @@
     </div>
 
     <div id="boost-section" class="boost-section">
-      <p class="run-info-title" data-i18n="boostSectionTitle">🚀 Música Especial</p>
       <div id="boost-configure" class="boost-configure">
-        <input type="text" id="boost-track-input" data-i18n-placeholder="boostInputPlaceholder" placeholder="Cole o link da música no Spotify" />
+        <input type="text" id="boost-track-input" data-i18n-placeholder="boostInputPlaceholder" placeholder="Link da faixa bônus" />
         <button type="button" id="boost-save-btn" data-i18n="boostSaveBtn">Salvar</button>
       </div>
       <div id="boost-configured" class="boost-configured" hidden>
         <p class="boost-track-name" id="boost-track-name"></p>
-        <div class="boost-actions">
-          <button type="button" id="boost-btn" class="boost-btn" data-i18n="boostBtn">🚀 Turbinar!</button>
-          <button type="button" id="boost-change-btn" class="boost-change-btn" data-i18n="boostChangeBtn">Trocar</button>
-        </div>
+        <button type="button" id="boost-btn" class="boost-btn" data-i18n="boostBtn">Faixa Bônus</button>
+        <button type="button" id="boost-change-btn" class="boost-change-btn" data-i18n="boostChangeBtn">Trocar</button>
       </div>
       <p id="boost-error" class="error" hidden></p>
     </div>

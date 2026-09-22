@@ -240,11 +240,11 @@ let playRequestSeq = 0; // invalida trocas de faixa que ficaram pra trás no tem
 let history = []; // faixas já tocadas nesta corrida, em ordem — pra "Anterior"
 const playedIds = new Set();
 
-// "Música Especial" ("Turbinar") — faixa fixa escolhida pelo próprio
-// usuário (link colado, não vem do pool) que toca por cima da faixa atual
-// quando o botão é apertado. Persiste entre visitas (localStorage), já
-// resolvida (nome/artista/BPM) no momento em que foi salva, pra o botão
-// "Turbinar" não precisar esperar nenhuma chamada de API na hora do toque.
+// "Faixa Bônus" — faixa fixa escolhida pelo próprio usuário (link colado,
+// não vem do pool) que toca por cima da faixa atual quando o botão é
+// apertado. Persiste entre visitas (localStorage), já resolvida
+// (nome/artista/BPM) no momento em que foi salva, pra o botão não precisar
+// esperar nenhuma chamada de API na hora do toque.
 let boostTrack = null;
 
 // Pulso sonoro — agenda cliques via Web Audio API, cujo relógio é bem mais
@@ -972,7 +972,7 @@ async function skipToPrevious() {
   }
 }
 
-// --- "Música Especial" ("Turbinar") ---
+// --- "Faixa Bônus" ---
 
 // Aceita um link completo (https://open.spotify.com/track/<id>?...),
 // o esquema "spotify:track:<id>", ou só o ID cru — o que o usuário colar.
@@ -1003,8 +1003,8 @@ function loadBoostTrack() {
   updateBoostUi();
 }
 
-// Resolve nome/artista/BPM na hora de salvar (não no toque do "Turbinar")
-// — assim o botão em si é instantâneo, sem esperar nenhuma chamada de API.
+// Resolve nome/artista/BPM na hora de salvar (não no toque do botão) —
+// assim o botão em si é instantâneo, sem esperar nenhuma chamada de API.
 async function saveBoostTrack() {
   const id = extractSpotifyTrackId(el.boostTrackInput.value);
   if (!id) {
@@ -1037,7 +1037,7 @@ function forgetBoostTrack() {
   updateBoostUi();
 }
 
-// Toca a Música Especial por cima da faixa atual — mesma mecânica de
+// Toca a Faixa Bônus por cima da faixa atual — mesma mecânica de
 // playSpecificTrack()/scheduleEndOfTrack() usada pra qualquer troca normal,
 // só que a faixa já vem pronta (fixa) em vez de escolhida pelo matcher.
 // Depois que ela termina, a troca automática volta ao normal sozinha.
@@ -1122,7 +1122,7 @@ function startRun() {
   setPlayPauseIcon(true);
   el.prevBtn.hidden = false;
   el.nextBtn.hidden = false;
-  updateBoostUi(); // libera o botão "Turbinar", que fica desabilitado até a corrida começar
+  updateBoostUi(); // libera o botão "Faixa Bônus", que fica desabilitado até a corrida começar
   showRunError("");
   hideNoDeviceLink();
   el.warmupRow.hidden = true;

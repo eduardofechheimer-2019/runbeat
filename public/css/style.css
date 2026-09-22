@@ -205,7 +205,12 @@ header h1 {
    liberar a tela pra corrida. Um toque no título expande de volta (ver
    app.js), igual num cartão "completed" comum. */
 .step-card[data-state="condensed"] {
-  padding: 14px 20px;
+  /* Bem mais estreito que o cartão normal (padding/margin reduzidos) — uma
+     vez que a corrida está em andamento, esses 3 primeiros passos só
+     servem de lembrete do que foi escolhido; o espaço da tela importa mais
+     pros controles de corrida logo abaixo. */
+  margin-top: 8px;
+  padding: 8px 14px;
 }
 
 .step-card[data-state="condensed"] > *:not(h2) {
@@ -214,9 +219,20 @@ header h1 {
 
 .step-card[data-state="condensed"] h2 {
   margin: 0;
-  /* Um pouco menor que o título normal (1.05rem) — sobra mais espaço pro
-     resumo ao lado sem cortar tanto (ver .step-title/.step-summary). */
-  font-size: 0.92rem;
+  gap: 8px;
+  /* Bem menor que o título normal (1.05rem) — condiz com o cartão mais
+     estreito acima. */
+  font-size: 0.8rem;
+}
+
+.step-card[data-state="condensed"] .step-badge {
+  width: 18px;
+  height: 18px;
+  font-size: 0.62rem;
+}
+
+.step-card[data-state="condensed"] .step-summary {
+  font-size: 0.72rem;
 }
 
 h2 {
@@ -833,35 +849,43 @@ button:disabled {
 
 .side-btn[hidden] { display: none; }
 
-/* --- "Música Especial" ("Turbinar") --- */
+/* --- "Faixa Bônus" --- */
 
+/* De propósito sem caixa/destaque de fundo (ao contrário do .beat-visual
+   acima) — item pedido pra ficar discreto na tela, não competir com os
+   mostradores de cadência/música, que continuam sendo o principal durante
+   a corrida. */
 .boost-section {
-  margin-top: 20px;
-  padding: 16px;
-  border-radius: var(--radius-sm);
-  background: rgba(255, 221, 0, 0.1);
-  border: 1px solid rgba(255, 221, 0, 0.3);
-}
-
-.boost-section .run-info-title {
-  margin: 0 0 4px;
+  margin-top: 16px;
   text-align: center;
 }
 
+/* Formulário de configurar o link (antes de salvar) — linha única e
+   discreta: input + botão pequenos, sem destaque de cor. */
 .boost-configure {
   display: flex;
-  gap: 8px;
-  align-items: flex-start;
+  gap: 6px;
+  align-items: center;
 }
 
 .boost-configure input[type="text"] {
+  flex: 1;
   margin-top: 0;
+  padding: 9px 10px;
+  font-size: 0.78rem;
 }
 
 .boost-configure button {
   width: auto;
-  margin-top: 0;
   flex-shrink: 0;
+  margin-top: 0;
+  padding: 9px 14px;
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--muted);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.78rem;
 }
 
 .boost-configured[hidden],
@@ -869,30 +893,59 @@ button:disabled {
   display: none;
 }
 
-.boost-track-name {
-  margin: 0 0 8px;
-  text-align: center;
-  color: var(--fg);
-  font-weight: 700;
-}
-
-.boost-actions {
+.boost-configured {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
+.boost-track-name {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+/* O botão principal, uma vez configurado — estilo "botão de emergência"
+   (vermelho, pílula, texto em caixa alta) pra chamar atenção na hora de
+   apertar durante a corrida, mesmo com o resto da seção discreto. */
 .boost-btn {
-  flex: 1;
+  width: auto;
+  min-width: 170px;
+  padding: 14px 26px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 16px rgba(248, 81, 73, 0.4);
+}
+
+.boost-btn:disabled {
+  background: rgba(248, 81, 73, 0.25);
+  box-shadow: none;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .boost-change-btn {
   width: auto;
-  flex-shrink: 0;
+  margin-top: 2px;
+  padding: 4px;
   background: transparent;
-  border: 1.5px solid var(--card-border);
+  border: none;
   color: var(--muted);
   font-family: inherit;
-  font-weight: 700;
+  font-weight: 400;
+  font-size: 0.72rem;
+  text-decoration: underline;
+}
+
+.boost-section .error {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
 }
 
 .icon {

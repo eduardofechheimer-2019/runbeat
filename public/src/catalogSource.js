@@ -1,4 +1,4 @@
-// Catálogo RunBeat: seleção própria de ~8 mil músicas com BPM e gênero já
+// Catálogo RunBeat: seleção própria de ~1000 músicas com BPM e gênero já
 // conhecidos, cada uma já classificada na faixa de cadência certa (BPM ->
 // nível de FIXED_PACE_OPTIONS) — cada entrada já traz o ID da faixa no
 // Spotify, então não precisa buscar por nome (zero risco de casar com a

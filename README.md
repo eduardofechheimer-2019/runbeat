@@ -130,7 +130,7 @@ dependem.
    **"Todos"** (primeira opção — junta automaticamente todas as suas
    playlists, as Curtidas, e a Playlist RunBeat inteira de uma vez; é
    exclusiva, marcar ela desmarca qualquer outra escolha), **"Playlist
-   RunBeat"** — uma seleção própria de ~750 músicas com BPM e gênero já
+   RunBeat"** — uma seleção própria de ~1000 músicas com BPM e gênero já
    classificados (marcando essa opção sozinha aparece um segundo painel pra
    filtrar por gênero musical, ex. Rock, Pagode, Samba, Funk, com sua
    própria opção "Todos" — é obrigatório marcar ao menos um gênero, ou
@@ -329,7 +329,7 @@ runbeat/
     ├── img/
     │   └── bg-marble.webp    # textura de fundo
     ├── data/
-    │   └── runbeat-catalog.json # Catálogo RunBeat (~750 músicas, BPM + gênero)
+    │   └── runbeat-catalog.json # Catálogo RunBeat (~1000 músicas, BPM + gênero)
     └── src/
         ├── config.js         # client ID do Spotify e parâmetros ajustáveis
         ├── spotifyAuth.js     # login OAuth (Authorization Code + PKCE)

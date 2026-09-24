@@ -242,8 +242,19 @@ dependem.
    evita que a tela apague se você apertar o botão físico de bloquear o
    celular — não existe API que intercepte isso; nesse caso a faixa atual
    continua tocando normalmente (é o app Spotify nativo, não a página do
-   RunBeat, que toca o áudio), mas a troca automática de faixa só volta a
-   acontecer quando você desbloquear e voltar pro RunBeat.
+   RunBeat, que toca o áudio), mas o sistema suspende a aba do RunBeat
+   (comportamento do navegador em segundo plano, fora do controle do app) e
+   o cronômetro de troca de faixa para de contar até você desbloquear.
+   Assim que a tela do RunBeat fica visível de novo, o app confere se a
+   faixa atual já deveria ter acabado (pela duração dela, não pelo timer que
+   ficou pra trás) e troca na hora se for o caso — em vez de esperar o
+   navegador decidir quando (ou se) o timer atrasado dispara sozinho. Isso
+   não faz a troca acontecer enquanto a tela segue bloqueada (não existe
+   forma confiável de manter JavaScript rodando em segundo plano por tempo
+   indeterminado numa PWA no iOS sem tocar áudio pela própria aba, o que
+   arriscaria interromper o áudio do Spotify) — mas garante que, ao
+   desbloquear, a música já esteja na faixa certa pro momento, sem precisar
+   esperar nem tocar em nada.
 9. Um **"Marca-Passo Sonoro"** (checkbox, opt-in) toca um clique curto no navegador
    a cada batida do BPM-alvo, pra ajudar a sincronizar o passo com a
    batida. Não é sincronizado com o áudio real da faixa (a API do Spotify
@@ -274,6 +285,23 @@ dependem.
     se também fizer parte dele) e a próxima troca automática/fim de faixa
     segue a lógica normal do modo ativo. "Trocar" limpa a faixa salva e
     volta pro campo de colar um novo link.
+11. **Faixa indisponível no Spotify.** Quando o app tenta tocar uma faixa
+    (troca automática, "Próxima" ou fim de faixa) e o Spotify responde que
+    ela não existe mais (HTTP 404 — comum em faixas antigas do Catálogo
+    RunBeat, curado numa data própria, que podem ter saído do catálogo do
+    Spotify desde então), o app escolhe outra faixa do pool na hora sozinho,
+    sem mostrar nenhum erro na tela nem esperar o intervalo normal de retry
+    — pro usuário, é como se a troca tivesse ido direto pra uma faixa boa. A
+    faixa quebrada fica marcada como "já tocada" nessa corrida, então não
+    tenta ela de novo. Isso se repete em cascata até achar uma faixa que
+    funcione, com um limite de segurança
+    (`MAX_TRANSPARENT_TRACK_RETRIES` em `config.js`, hoje 5) contra o
+    cenário raro do pool inteiro estar quebrado — depois desse limite, volta
+    ao comportamento normal (mostra o erro, espera `RETRY_AFTER_ERROR_MS`).
+    Esse tratamento é só pra troca automática de faixa; o botão "Anterior" e
+    a Faixa Bônus continuam mostrando erro normalmente se a faixa específica
+    que eles tentam tocar não existir mais, já que ali não existe uma
+    "próxima candidata" natural pra tentar no lugar.
 
 ## Instalando como app no celular
 

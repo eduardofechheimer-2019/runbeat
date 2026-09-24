@@ -51,6 +51,15 @@ export const CADENCE_DISPLAY_INTERVAL_MS = 1000;
 // ficou inativo), tenta de novo depois desse tempo.
 export const RETRY_AFTER_ERROR_MS = 5000;
 
+// Quando a faixa escolhida não existe mais no Spotify (comum em faixas
+// antigas do Catálogo RunBeat, curado numa data própria), o app tenta outra
+// na hora, sem esperar RETRY_AFTER_ERROR_MS nem mostrar erro nenhum — pro
+// usuário, a troca só "pula" pra uma faixa boa (ver playNextAndSchedule em
+// app.js). Esse limite existe só como proteção contra um cenário bem raro
+// (pool inteiro com faixas quebradas): depois dele, volta ao comportamento
+// normal de mostrar o erro e esperar o intervalo de retry.
+export const MAX_TRANSPARENT_TRACK_RETRIES = 5;
+
 // Modo automático: a escolha da próxima faixa sorteia entre todo o pool,
 // com peso maior pras faixas mais próximas da cadência medida (curva
 // gaussiana, ver matcher.js) — esse valor é o desvio-padrão dessa curva,

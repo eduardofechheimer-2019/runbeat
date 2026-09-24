@@ -4,6 +4,7 @@ import {
   FALLBACK_TRACK_DURATION_MS,
   CADENCE_DISPLAY_INTERVAL_MS,
   RETRY_AFTER_ERROR_MS,
+  MAX_TRANSPARENT_TRACK_RETRIES,
   CADENCE_WAIT_HINT_DELAY_MS,
   FIXED_PACE_OPTIONS,
 } from "./config.js";
@@ -236,6 +237,11 @@ let cadenceWaitHintTimer = null;
 // língua nova quando o idioma muda — ver refreshDynamicTexts().
 let lastLibraryItemCount = null;
 let playRequestSeq = 0; // invalida trocas de faixa que ficaram pra trás no tempo
+// Contagem de tentativas seguidas de "faixa não existe mais no Spotify" —
+// zera a cada troca bem-sucedida (ver playNextAndSchedule). Protege contra
+// um loop apertado no cenário raro do pool inteiro estar com faixas
+// quebradas (ver MAX_TRANSPARENT_TRACK_RETRIES em config.js).
+let notFoundRetryCount = 0;
 let history = []; // faixas já tocadas nesta corrida, em ordem — pra "Anterior"
 const playedIds = new Set();
 
@@ -931,10 +937,22 @@ async function playNextAndSchedule() {
   try {
     const applied = await playSpecificTrack(track, requestId);
     if (!applied) return; // uma troca mais recente já assumiu enquanto isso tocava
+    notFoundRetryCount = 0;
     history.push(track);
     scheduleEndOfTrack(track);
   } catch (err) {
     if (requestId !== playRequestSeq) return;
+    if (err.code === "TRACK_NOT_FOUND" && notFoundRetryCount < MAX_TRANSPARENT_TRACK_RETRIES) {
+      // A faixa já foi marcada como "tentada" acima (playedIds.add), então
+      // chamar de novo escolhe outra sozinha — transparente pro usuário, sem
+      // mostrar esse erro na tela nem esperar o intervalo normal de retry
+      // (ver MAX_TRANSPARENT_TRACK_RETRIES em config.js).
+      notFoundRetryCount++;
+      console.warn("Faixa indisponível no Spotify, tentando outra automaticamente:", err.message);
+      playNextAndSchedule();
+      return;
+    }
+    notFoundRetryCount = 0;
     showRunError(err.message);
     if (err.code === "NO_ACTIVE_DEVICE") {
       showNoDeviceLink(track);
@@ -944,7 +962,8 @@ async function playNextAndSchedule() {
       noDeviceRetryPending = true;
     }
     // Não trava o loop — tenta de novo em breve (ex. dispositivo Spotify
-    // pode ter ficado inativo temporariamente, ou a faixa não existe mais).
+    // pode ter ficado inativo temporariamente, ou muitas faixas quebradas
+    // seguidas, além do limite transparente acima).
     endOfTrackTimer = setTimeout(playNextAndSchedule, RETRY_AFTER_ERROR_MS);
   }
 }
@@ -1437,6 +1456,23 @@ async function init() {
     if (noDeviceRetryPending) {
       clearTimeout(endOfTrackTimer);
       playNextAndSchedule().catch((err) => showRunError(err.message));
+      return;
+    }
+    // Com a tela bloqueada (ou o app em segundo plano por tempo suficiente),
+    // o sistema suspende a aba e o setTimeout da troca de faixa (ver
+    // scheduleEndOfTrack) para de contar — ele só continua de onde parou
+    // quando a aba volta a rodar, o que pode demorar bem mais que o
+    // agendado original, ou nem disparar sozinho a tempo. Ao voltar, confere
+    // se a faixa atual já deveria ter trocado (pela duração conhecida dela,
+    // não por esse timer que pode ter ficado pra trás) e troca na hora, em
+    // vez de esperar o navegador decidir quando o timer atrasado dispara.
+    if (!runPaused && trackSegmentStartedAt != null && trackRemainingMs != null) {
+      const elapsed = Date.now() - trackSegmentStartedAt;
+      const scheduledDelay = Math.max(trackRemainingMs - END_OF_TRACK_LEAD_MS, 1000);
+      if (elapsed >= scheduledDelay) {
+        clearTimeout(endOfTrackTimer);
+        playNextAndSchedule().catch((err) => showRunError(err.message));
+      }
     }
   });
 }

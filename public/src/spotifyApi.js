@@ -183,7 +183,12 @@ export async function playTrackUri(uri) {
     // faixas do Catálogo RunBeat, que tem uma data de curadoria própria).
     if (isNoActiveDeviceError(err)) throw noActiveDeviceError();
     if (err.status === 404) {
-      throw new Error(t("trackNotFound", { uri }));
+      // `code` deixa o chamador (ver playNextAndSchedule em app.js) tratar
+      // esse caso específico de forma transparente pro usuário — escolhendo
+      // outra faixa na hora, em vez de mostrar esse erro na tela.
+      const notFoundErr = new Error(t("trackNotFound", { uri }));
+      notFoundErr.code = "TRACK_NOT_FOUND";
+      throw notFoundErr;
     }
     throw err;
   }

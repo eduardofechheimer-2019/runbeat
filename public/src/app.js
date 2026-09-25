@@ -313,7 +313,13 @@ function startBeatPulse(effectiveBpm) {
   currentEffectiveBpm = effectiveBpm;
   el.beatBpmValue.textContent = t("beatsPerMin", { n: Math.round(effectiveBpm) });
   el.beatVisual.hidden = false;
-  startAudiblePulse(effectiveBpm);
+  // Chamada em toda troca de faixa (não só quando o checkbox é marcado) —
+  // sem o catch, uma falha aqui (ex. iOS recusando o resume() do
+  // AudioContext depois que o Spotify retoma a sessão de áudio pra tocar a
+  // faixa nova) virava uma rejeição de Promise não tratada, silenciosa: o
+  // pulso simplesmente parava de funcionar sem nem atualizar o aviso "🔇
+  // iOS não liberou o som" que já existe pra esse tipo de situação.
+  startAudiblePulse(effectiveBpm).catch((err) => console.warn("Falha ao (re)iniciar áudio do pulso:", err.message));
 }
 
 // --- Pulso sonoro ---

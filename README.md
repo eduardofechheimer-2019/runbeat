@@ -263,7 +263,11 @@ dependem.
    música. Também não tem garantia de tocar junto com o Spotify sem
    interferir — por isso é opt-in. (A versão anterior tinha um metrônomo
    visual — removido após teste real, não ajudou o suficiente a perceber a
-   batida.)
+   batida.) Quando o iOS bloqueia o som (interruptor de silêncio, ou a
+   sessão de áudio ocupada pelo Spotify), o app mostra o aviso "🔇 iOS não
+   liberou o som" em vez de falhar em silêncio — esse aviso é reavaliado a
+   cada troca de faixa (`startBeatPulse` em app.js), não só quando o
+   checkbox é marcado.
 10. **Faixa Bônus**: cada usuário pode colar o link de uma faixa do Spotify
     (`https://open.spotify.com/track/<id>`) num campo discreto (sem caixa de
     destaque, só um input + "Salvar" pequenos) e guardar como sua faixa

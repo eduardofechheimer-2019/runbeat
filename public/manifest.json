@@ -6,8 +6,8 @@
   "start_url": "./index.html?homescreen=3",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0b0f14",
-  "theme_color": "#ffdd00",
+  "background_color": "#15181c",
+  "theme_color": "#fddc06",
   "icons": [
     { "src": "icon-120.png", "sizes": "120x120", "type": "image/png", "purpose": "any" },
     { "src": "icon-152.png", "sizes": "152x152", "type": "image/png", "purpose": "any" },

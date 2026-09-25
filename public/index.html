@@ -41,10 +41,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="RunBeat" />
-<meta name="theme-color" content="#ffdd00" />
+<meta name="theme-color" content="#fddc06" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,700;0,800;1,900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:ital,wght@0,700;0,800;0,900;1,700;1,800;1,900&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -67,7 +67,9 @@
           <button type="button" id="lang-pt-btn" class="lang-btn" data-lang="pt">PT</button>
           <button type="button" id="lang-en-btn" class="lang-btn" data-lang="en">EN</button>
         </div>
-        <button id="help-btn" class="help-btn" type="button" data-i18n-aria-label="helpAriaLabel" aria-label="Como funciona">?</button>
+        <button id="help-btn" class="help-btn" type="button" data-i18n-aria-label="helpAriaLabel" aria-label="Como funciona">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065Z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
       </div>
     </div>
   </header>
@@ -110,20 +112,31 @@
   <section id="card-run" class="step-card" data-step="run" hidden>
     <p id="beat-visual-title" class="run-info-title" hidden data-i18n="liveDashboardTitle">Painel em tempo real:</p>
     <div id="beat-visual" class="beat-visual" hidden>
-      <div class="beat-visual-legend">
-        <p data-i18n="spmLegend">SPM = Passos por Minuto</p>
-        <p data-i18n="bpmLegend">BPM = Batidas por Minuto</p>
+      <div class="beat-columns">
+        <div class="beat-col">
+          <p class="beat-col-label">SPM</p>
+          <p class="beat-col-sublabel" data-i18n="spmSubLabel">Passos por Minuto</p>
+          <p class="beat-col-value" id="cadence-live-value">—</p>
+        </div>
+        <div class="beat-col-divider" aria-hidden="true"></div>
+        <div class="beat-col">
+          <p class="beat-col-label">BPM</p>
+          <p class="beat-col-sublabel" data-i18n="bpmSubLabel">Batidas por Minuto</p>
+          <p class="beat-col-value" id="beat-bpm-value">—</p>
+        </div>
       </div>
-      <ul class="run-info-list">
-        <li><span class="run-info-label" data-i18n="liveCadenceLabel">Tempo real (SPM):</span> <strong id="cadence-live-value">—</strong></li>
-        <li><span class="run-info-label" data-i18n="beatBpmLabel">Batida da música (BPM):</span> <strong id="beat-bpm-value">—</strong></li>
-        <li><span class="run-info-label" id="cadence-last-label" data-i18n="lastMeasurementLabel">Última medição (SPM):</span> <strong id="cadence-last-value">—</strong></li>
-      </ul>
-      <label class="checkbox-row">
-        <input type="checkbox" id="audible-pulse-toggle" />
-        <span>
+      <div class="beat-extra-row">
+        <span class="run-info-label" id="cadence-last-label" data-i18n="lastMeasurementLabel">Última medição (SPM):</span>
+        <strong id="cadence-last-value">—</strong>
+      </div>
+      <label class="toggle-row">
+        <span class="toggle-row-text">
           <span data-i18n="audiblePulseTitle">Marca-Passo Sonoro</span>
           <em class="checkbox-subtitle" data-i18n="audiblePulseSubtitle">Pode interferir no áudio do Spotify — faça o teste.</em>
+        </span>
+        <span class="toggle-switch">
+          <input type="checkbox" id="audible-pulse-toggle" />
+          <span class="toggle-switch-track"><span class="toggle-switch-knob"></span></span>
         </span>
       </label>
       <p id="audio-status" class="audio-status" hidden></p>
@@ -131,11 +144,14 @@
     <p id="cadence-wait-hint" class="cadence-wait-hint" hidden data-i18n="cadenceWaitHint">🏃 Pode começar a correr! Estamos esperando os primeiros passos.</p>
     <div class="run-info">
       <p class="run-info-title" data-i18n="nowPlayingTitle">Tocando:</p>
-      <ul class="run-info-list">
-        <li><span class="run-info-label" data-i18n="trackNameLabel">Música:</span> <strong id="track-name-value">—</strong></li>
-        <li><span class="run-info-label" data-i18n="trackSourceLabel">Playlist:</span> <strong id="track-source-value">—</strong></li>
-        <li id="track-genre-row" hidden><span class="run-info-label" data-i18n="trackGenreLabel">Gênero:</span> <strong id="track-genre-value">—</strong></li>
-      </ul>
+      <div class="now-playing-row">
+        <ul class="run-info-list">
+          <li><span class="run-info-label" data-i18n="trackNameLabel">Música:</span> <strong id="track-name-value">—</strong></li>
+          <li><span class="run-info-label" data-i18n="trackSourceLabel">Playlist:</span> <strong id="track-source-value">—</strong></li>
+          <li id="track-genre-row" hidden><span class="run-info-label" data-i18n="trackGenreLabel">Gênero:</span> <strong id="track-genre-value">—</strong></li>
+        </ul>
+        <svg class="now-playing-spotify-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.59 14.41c-.19.3-.58.4-.89.21-2.44-1.49-5.51-1.83-9.12-1a.626.626 0 0 1-.28-1.22c3.95-.9 7.34-.51 10.07 1.13.31.19.4.58.22.88zm1.22-2.72c-.24.37-.73.49-1.1.26-2.79-1.72-7.05-2.22-10.35-1.21a.744.744 0 0 1-.94-.49.746.746 0 0 1 .49-.94c3.77-1.14 8.46-.59 11.65 1.37.37.23.49.73.25 1.01zm.11-2.83c-3.35-1.99-8.87-2.17-12.06-1.2a.895.895 0 1 1-.52-1.71c3.67-1.11 9.76-.9 13.61 1.39.5.29.65.94.36 1.44a1.04 1.04 0 0 1-1.39.08z"/></svg>
+      </div>
     </div>
     <p id="run-error" class="error" hidden></p>
 

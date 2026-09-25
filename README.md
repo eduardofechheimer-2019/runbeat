@@ -9,17 +9,41 @@ de cadência e troca automática de faixa testados numa corrida de verdade.
 
 ## Identidade visual
 
-Fundo com textura marmorizada preta (imagem em `public/img/bg-marble.webp`),
-tipografia em itálico bold (Google Fonts "Archivo") no nome "RunBeat" e nos
-títulos, e amarelo/dourado como cor de destaque (`--accent` em `style.css`,
-com variações de intensidade `--accent-soft`/`--accent-strong`) em vez do
-verde do Spotify — usada em botões, ícone do app e nos indicadores numerados
-dos cartões. Os cartões (seções) têm fundo semitransparente com desfoque
-(`backdrop-filter`), deixando a textura do fundo aparecer sutilmente atrás
-do conteúdo. O logo (`icon.svg`) — um círculo com linhas de movimento e uma
-nota musical — aparece ao lado do nome "RunBeat" no
+Paleta oficial (definida a partir do moodboard de marca, com os 6 papéis de
+cor nomeados) em variáveis CSS (`:root` em `style.css`):
+
+| Papel     | Uso                                 | Cor       |
+|-----------|--------------------------------------|-----------|
+| Principal | Destaque/ação — `--accent`           | `#fddc06` |
+| Fundo     | Fundo do app — `--bg`                | `#15181c` |
+| Texto     | Texto secundário — `--muted`         | `#8a8d92` |
+| Suporte   | Texto principal — `--fg`             | `#eae9e9` |
+| Sucesso   | Conectado/ativo — `--success`        | `#29c34f` |
+| Alerta    | Bônus/avisos — `--danger`            | `#fa4343` |
+
+O tom "Texto" do moodboard original (`#4a4c4f`) foi clareado pra `#8a8d92`:
+usado ao pé da letra como cor de texto sobre o fundo escuro, o contraste
+ficava em ~2:1 (abaixo do mínimo de 4.5:1 do WCAG AA pra texto normal); a
+versão clareada mantém o mesmo tom acinzentado "frio" e passa a ~5.3:1.
+
+Tipografia "Inter" (texto corrido, via Google Fonts) e "Poppins" (itálico
+bold — `--font-display`, nos títulos e no nome "RunBeat"), no lugar da
+"Archivo" anterior. Fundo com textura marmorizada preta (imagem em
+`public/img/bg-marble.webp`). Os cartões (seções) têm fundo semitransparente
+com desfoque (`backdrop-filter`), deixando a textura do fundo aparecer
+sutilmente atrás do conteúdo. O logo (`icon.svg`) — um círculo com linhas de
+movimento e uma nota musical — aparece ao lado do nome "RunBeat" no
 cabeçalho, que fica com um respiro extra no topo (`env(safe-area-inset-top)`)
-pra não ficar atrás do relógio/notch do celular.
+pra não ficar atrás do relógio/notch do celular. O botão de ajuda (antes um
+"?") agora usa um ícone de engrenagem.
+
+O painel da tela de corrida ("Painel em tempo real") foi reformulado num
+layout de duas colunas — SPM (cadência real) à esquerda, BPM (batida da
+faixa) à direita, separadas por um traço vertical — com os números bem
+maiores que o resto do texto do cartão. A cadência real muda de cor
+(verde/amarelo/vermelho) comparando com a batida da faixa tocando (ver
+`updateLiveCadenceColor` em `app.js`). O Marca-Passo Sonoro usa um
+interruptor estilo iOS no lugar do checkbox nativo.
 
 ## Idioma
 
@@ -85,29 +109,26 @@ uma trocação instantânea:
    lembrar a configuração sem precisar reabrir o cartão.
 4. **Cartão de corrida.** Um título **"Painel em tempo real:"** ("Live
    Dashboard:" em EN) antecede o card do "Marca-Passo Sonoro" — os dois só
-   aparecem juntos depois que a primeira faixa começa a tocar. Logo no
-   topo do card, uma legenda pequena explica as siglas uma vez só ("SPM =
-   Passos por Minuto" / "BPM = Batidas por Minuto") — por causa disso, os
-   3 números abaixo aparecem "crus" (ex. `117`, sem repetir "passos/min"/
-   "beats/min" em cada linha), num tamanho maior que o texto do rótulo, e
-   sempre encostados na borda direita do card, na mesma coluna nas 3
-   linhas (rótulo com `flex-shrink:0`+`nowrap` pra nunca quebrar em 2
-   linhas, número com `margin-left:auto` pra empurrar pra direita, e um
-   fallback de reticências só pro caso raro de não caber). As 3 linhas,
-   nessa ordem: a leitura de cadência em tempo real (SPM) — colorida (ver
-   abaixo), o BPM da faixa tocando agora, e a última medição/alvo (SPM,
-   usada pra escolher a faixa atual no modo automático, ou o alvo fixo no
-   modo ritmo fixo). A cor da cadência em tempo real muda comparando com o
-   BPM da faixa: **verde** se já alcançou/passou a batida, **amarelo** se
-   está até 10 SPM abaixo, **vermelho** se mais que isso
-   (`updateLiveCadenceColor` em app.js) — fica na cor padrão enquanto não
-   há cadência real nem faixa tocando ainda. Abaixo disso, fora desse card
-   mas ainda na mesma seção, fica
-   "Tocando" com bullets — música, playlist/fonte de onde ela veio, e o
-   gênero (linha própria, só aparece quando é uma faixa do Catálogo
-   RunBeat) — cada linha fica sempre numa só, cortando com "..." no fim se
-   o nome for longo demais pra caber (em vez de quebrar pra uma segunda
-   linha). Os controles: um botão central **▶ Play / ⏸ Pause** com
+   aparecem juntos depois que a primeira faixa começa a tocar. O card é um
+   painel de duas colunas lado a lado, separadas por um traço vertical:
+   **SPM** (cadência real, com a legenda "Passos por Minuto" abaixo) à
+   esquerda, **BPM** (batida da faixa tocando, "Batidas por Minuto") à
+   direita — cada número num tamanho bem maior que o rótulo acima dele
+   (`overflow:hidden`+`ellipsis` como rede de segurança pro caso raro de não
+   caber). A cor do número de SPM muda comparando com o BPM da faixa:
+   **verde** se já alcançou/passou a batida, **amarelo** se está até 10 SPM
+   abaixo, **vermelho** se mais que isso (`updateLiveCadenceColor` em
+   app.js) — fica na cor padrão (amarelo) enquanto não há cadência real nem
+   faixa tocando ainda. Abaixo das colunas, separado por um traço fino, fica
+   a última medição/alvo (SPM — usada pra escolher a faixa atual no modo
+   automático, ou o alvo fixo no modo ritmo fixo), e mais abaixo o
+   "Marca-Passo Sonoro" com um interruptor estilo iOS (em vez de um
+   checkbox nativo). Fora desse card mas ainda na mesma seção, fica
+   "Tocando" — música, playlist/fonte de onde ela veio, e o gênero (linha
+   própria, só aparece quando é uma faixa do Catálogo RunBeat), com um
+   ícone do Spotify ao lado — cada linha fica sempre numa só, cortando com
+   "..." no fim se o nome for longo demais pra caber (em vez de quebrar pra
+   uma segunda linha). Os controles: um botão central **▶ Play / ⏸ Pause** com
    **⏮ Anterior** / **⏭ Próxima** ao lado, que só aparecem depois que a
    corrida começa. Antes do primeiro toque, assim que o usuário volta do
    "Spotify sync" (ver item 6), o Play pulsa de forma bem chamativa (cresce
@@ -271,7 +292,7 @@ dependem.
    arriscaria interromper o áudio do Spotify) — mas garante que, ao
    desbloquear, a música já esteja na faixa certa pro momento, sem precisar
    esperar nem tocar em nada.
-9. Um **"Marca-Passo Sonoro"** (checkbox, opt-in) toca um clique curto no navegador
+9. Um **"Marca-Passo Sonoro"** (interruptor estilo iOS, opt-in) toca um clique curto no navegador
    a cada batida do BPM-alvo, pra ajudar a sincronizar o passo com a
    batida. Não é sincronizado com o áudio real da faixa (a API do Spotify
    não expõe posição/fase de batida) — é um guia de ritmo constante a

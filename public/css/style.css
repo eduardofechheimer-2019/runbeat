@@ -7,20 +7,27 @@
      de badge/check, botões redondos, ícones) não escalam junto de propósito
      — continuam do mesmo tamanho, só o texto cresce. */
   font-size: 19.5px;
-  --bg: #0b0f14;
-  --card-bg: rgba(20, 26, 33, 0.82);
-  --card-border: #2a323c;
-  --input-bg: rgba(15, 21, 27, 0.9);
-  --fg: #e8edf2;
-  --muted: #9aa5b1;
-  --accent: #ffdd00;
-  --accent-soft: #ffe873;
-  --accent-strong: #b39400;
+  /* Paleta "identidade visual" (moodboard): PRINCIPAL/FUNDO/SUPORTE/SUCESSO/
+     ALERTA usados como no swatch original. TEXTO (#4a4c4f) foi clareado pra
+     #8a8d92 — o tom original, usado como texto de verdade sobre o FUNDO
+     escuro, não passa de ~2:1 de contraste (falha o mínimo de 4.5:1 do
+     WCAG AA pra texto normal); essa versão mais clara mantém o mesmo tom
+     acinzentado "frio" mas fica em ~5.3:1. */
+  --bg: #15181c;
+  --card-bg: rgba(30, 34, 39, 0.82);
+  --card-border: #2f343a;
+  --input-bg: rgba(20, 23, 27, 0.9);
+  --fg: #eae9e9;
+  --muted: #8a8d92;
+  --accent: #fddc06;
+  --accent-soft: #ffe75a;
+  --accent-strong: #b19a04;
   --accent-ink: #1a1400;
-  --danger: #f85149;
+  --success: #29c34f;
+  --danger: #fa4343;
   --radius: 14px;
   --radius-sm: 10px;
-  --font-display: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -31,7 +38,7 @@ body {
   min-height: 100vh;
   background: var(--bg);
   color: var(--fg);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 body::before {
@@ -150,9 +157,15 @@ header h1 {
   background: transparent;
   border: 1px solid var(--card-border);
   color: var(--muted);
-  font-weight: 700;
-  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+}
+
+.help-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 .step-card {
@@ -290,8 +303,8 @@ h2 {
   height: 36px;
   margin-left: auto;
   border-radius: 50%;
-  border: 3px solid #1db954;
-  color: #1db954;
+  border: 3px solid var(--success);
+  color: var(--success);
   font-size: 1.2rem;
   font-weight: 900;
   flex-shrink: 0;
@@ -311,7 +324,7 @@ h2 {
   display: none;
   margin-left: auto;
   min-width: 0;
-  color: #1db954;
+  color: var(--success);
   font-style: italic;
   font-weight: 700;
   font-size: 0.85rem;
@@ -581,7 +594,7 @@ button:disabled {
   margin-top: 14px;
   padding: 12px 14px;
   border-left: 3px solid var(--accent);
-  background: rgba(255, 221, 0, 0.08);
+  background: rgba(253, 220, 6, 0.08);
   border-radius: 0 10px 10px 0;
 }
 
@@ -625,8 +638,8 @@ button:disabled {
   margin: 8px 0 0;
   padding: 8px 12px;
   border-radius: var(--radius-sm);
-  background: rgba(255, 221, 0, 0.12);
-  border: 1px solid rgba(255, 221, 0, 0.35);
+  background: rgba(253, 220, 6, 0.12);
+  border: 1px solid rgba(253, 220, 6, 0.35);
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--accent);
@@ -641,8 +654,8 @@ button:disabled {
   margin: 0 0 16px;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
-  background: rgba(255, 221, 0, 0.12);
-  border: 1px solid rgba(255, 221, 0, 0.35);
+  background: rgba(253, 220, 6, 0.12);
+  border: 1px solid rgba(253, 220, 6, 0.35);
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--accent);
@@ -691,94 +704,124 @@ button:disabled {
 .beat-visual {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 10px;
+  gap: 14px;
   margin: 16px 0;
-  padding: 10px;
-  border-radius: var(--radius-sm);
-  background: rgba(255, 221, 0, 0.1);
-  border: 1px solid rgba(255, 221, 0, 0.3);
+  padding: 18px 16px;
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
 }
 
-/* A lista de cadência/batida dentro do card do marca-passo (ver
-   .beat-visual acima) precisa ocupar a largura toda pra ficar alinhada à
-   esquerda — sem isso, herdaria o align-items:center do flex pai e
-   encolheria/centralizaria como um bloco só. Padding-left reduzido (o
-   padrão de 20px, pensado pro bullet num texto maior, sobrava demais
-   aqui) — abre espaço extra pro valor à direita não cortar em telas
-   estreitas (ver .strong mais abaixo). */
-.beat-visual .run-info-list {
-  align-self: stretch;
-  padding-left: 14px;
+/* Painel principal: SPM (cadência real) à esquerda, BPM (batida da faixa)
+   à direita, com um traço vertical separando as duas colunas — layout de
+   "identidade visual" adotado do moodboard, no lugar da lista antiga. */
+.beat-columns {
+  display: flex;
+  align-items: stretch;
 }
 
-/* Cada linha vira label à esquerda + valor encostado na borda direita do
-   card, todas as 3 linhas alinhadas na mesma coluna (uniforme) — só nesse
-   card (não afeta a lista de "Tocando", que continua no fluxo normal). */
-.beat-visual .run-info-list li {
+.beat-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  /* align-items fica no padrão (stretch) de propósito: os parágrafos
+     (label/sublabel/valor) precisam ocupar a largura toda da coluna pra
+     o overflow:hidden+ellipsis do número (ver .beat-col-value) realmente
+     cortar o texto em vez de vazar por cima da coluna vizinha —
+     align-items:center faria cada um encolher pro tamanho do próprio
+     conteúdo (sem limite), e "medindo..." vazava em cima do "BPM". */
+  text-align: center;
+  gap: 2px;
+}
+
+.beat-col-label {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--fg);
+  letter-spacing: 0.02em;
+}
+
+.beat-col-sublabel {
+  margin: 0 0 4px;
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+/* Número grande — mesmo espírito do pedido anterior de "só o número maior,
+   o texto continua do mesmo tamanho" (ver .beat-col-label/-sublabel acima). */
+.beat-col-value {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 2.1rem;
+  color: var(--accent);
+  line-height: 1.15;
+}
+
+.beat-col-divider {
+  width: 1px;
+  flex-shrink: 0;
+  margin: 4px 0;
+  background: var(--card-border);
+}
+
+/* Linha extra abaixo das colunas ("Última medição"/"Alvo") — label à
+   esquerda, valor encostado na borda direita, separada por um traço fino. */
+.beat-extra-row {
   display: flex;
   align-items: baseline;
-  gap: 4px;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--card-border);
+  font-size: 0.9rem;
 }
 
-/* flex-shrink:0 + nowrap no rótulo — sem isso, ele encolhia e quebrava em
-   2 linhas pra abrir espaço pro número maior (ver .strong abaixo); o
-   rótulo mantém sua largura natural numa linha só, e é o valor que fica
-   com a sobra do espaço, empurrado pra direita. */
-.beat-visual .run-info-list .run-info-label {
+.beat-extra-row .run-info-label {
   flex-shrink: 0;
   white-space: nowrap;
 }
 
-/* Número maior que o rótulo, encostado na borda direita do card — mesma
-   coluna nas 3 linhas (uniforme). min-width:0 + nowrap/ellipsis é rede de
-   segurança pro estado "medindo..." (mais largo que um número comum), que
-   sem isso passava da borda direita do card. */
-.beat-visual .run-info-list strong {
+.beat-extra-row strong {
   margin-left: auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 1.1rem;
-}
-
-/* Legenda explicando as siglas SPM/BPM, uma vez só no topo do card — os
-   valores abaixo (ver regra acima) não repetem mais a unidade por extenso. */
-.beat-visual-legend {
-  align-self: stretch;
-  margin-bottom: 4px;
-}
-
-.beat-visual-legend p {
-  margin: 0;
-  font-size: 0.72rem;
-  font-style: italic;
-  color: var(--muted);
+  color: var(--fg);
+  font-weight: 700;
 }
 
 .beat-visual[hidden] {
   display: none;
 }
 
-.checkbox-row {
+.toggle-row {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--card-border);
+  cursor: pointer;
+}
+
+.toggle-row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
   color: var(--fg);
   font-size: 0.95rem;
   font-weight: 700;
   text-align: left;
 }
 
-.checkbox-row input {
-  width: auto;
-  margin: 0;
-  margin-top: 3px;
-  flex-shrink: 0;
-}
-
-/* Subtítulo abaixo do título do checkbox — menos destaque que o título
+/* Subtítulo abaixo do título do interruptor — menos destaque que o título
    (itálico, mais claro, sem negrito), ex. "Marca-Passo Sonoro" +
    observação sobre interferência no áudio do Spotify. */
 .checkbox-subtitle {
@@ -788,6 +831,56 @@ button:disabled {
   font-weight: 400;
   font-size: 0.85em;
   color: var(--muted);
+}
+
+/* Interruptor estilo iOS no lugar do checkbox nativo — o <input> real fica
+   invisível (opacity:0) por cima do "trilho" visual, então o toque/clique
+   e o estado :checked continuam funcionando normalmente pro app.js, que só
+   lê/escuta o <input> como antes. */
+.toggle-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 46px;
+  height: 26px;
+}
+
+.toggle-switch input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.toggle-switch-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  transition: background 0.2s ease;
+}
+
+.toggle-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--fg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease;
+}
+
+.toggle-switch input:checked ~ .toggle-switch-track {
+  background: var(--accent);
+}
+
+.toggle-switch input:checked ~ .toggle-switch-track .toggle-switch-knob {
+  transform: translateX(20px);
 }
 
 .audio-status {
@@ -837,29 +930,54 @@ button:disabled {
   font-weight: 700;
 }
 
-/* Só o bloco "Tocando:" (não o card do marca-passo, que usa a mesma
-   .run-info-list) — nome de música/playlist/gênero longos ficam numa
-   linha só, cortados com "..." no fim em vez de quebrar pra uma segunda
-   linha. */
+/* Só o bloco "Tocando:" (não o card do marca-passo, que agora usa o
+   layout de colunas — ver .beat-columns) — sem marcador de lista (o
+   moodboard mostra as linhas soltas, sem bullet), nome de
+   música/playlist/gênero longos ficam numa linha só, cortados com "..."
+   no fim em vez de quebrar pra uma segunda linha. */
+.run-info .run-info-list {
+  list-style: none;
+  padding-left: 0;
+}
+
 .run-info .run-info-list li {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Cor de "Tempo real (SPM)" — compara com a batida da faixa tocando (ver
-   updateLiveCadenceColor em app.js): verde já alcançou/passou a batida,
-   amarelo até 10 SPM abaixo, vermelho mais que isso. Sem classe nenhuma
-   (cor padrão) enquanto não há cadência real ou faixa tocando ainda. */
-.run-info-list strong.cadence-live-good {
-  color: #1db954;
+.now-playing-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.run-info-list strong.cadence-live-warn {
+.now-playing-row .run-info-list {
+  flex: 1;
+  min-width: 0;
+}
+
+.now-playing-spotify-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  fill: var(--success);
+}
+
+/* Cor de "SPM" (cadência real) no painel — compara com a batida da faixa
+   tocando (ver updateLiveCadenceColor em app.js): verde já alcançou/passou
+   a batida, amarelo até 10 SPM abaixo, vermelho mais que isso. Sem classe
+   nenhuma (cor padrão do .beat-col-value) enquanto não há cadência real ou
+   faixa tocando ainda. */
+#cadence-live-value.cadence-live-good {
+  color: var(--success);
+}
+
+#cadence-live-value.cadence-live-warn {
   color: var(--accent);
 }
 
-.run-info-list strong.cadence-live-bad {
+#cadence-live-value.cadence-live-bad {
   color: var(--danger);
 }
 
@@ -890,11 +1008,11 @@ button:disabled {
 @keyframes play-pulse {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(255, 221, 0, 0.75);
+    box-shadow: 0 0 0 0 rgba(253, 220, 6, 0.75);
   }
   50% {
     transform: scale(1.08);
-    box-shadow: 0 0 0 22px rgba(255, 221, 0, 0);
+    box-shadow: 0 0 0 22px rgba(253, 220, 6, 0);
   }
 }
 
@@ -940,7 +1058,9 @@ button:disabled {
    a corrida. */
 .boost-section {
   margin-top: 16px;
-  text-align: center;
+  /* Alinhado à esquerda (não mais centralizado) — segue o layout do
+     moodboard, ícone+rótulo+"Trocar" partindo da margem esquerda do card. */
+  text-align: left;
 }
 
 /* Formulário de configurar o link (antes de salvar) — linha única e
@@ -981,7 +1101,7 @@ button:disabled {
 .boost-configured {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 8px;
 }
 

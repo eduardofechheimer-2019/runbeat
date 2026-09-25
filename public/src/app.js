@@ -64,6 +64,7 @@ const el = {
   warmupBtn: document.getElementById("warmup-btn"),
   warmupHint: document.getElementById("warmup-hint"),
   warmupStatus: document.getElementById("warmup-status"),
+  beatVisualTitle: document.getElementById("beat-visual-title"),
   beatVisual: document.getElementById("beat-visual"),
   audiblePulseToggle: document.getElementById("audible-pulse-toggle"),
   audioStatus: document.getElementById("audio-status"),
@@ -312,6 +313,7 @@ function startBeatPulse(effectiveBpm) {
   if (!effectiveBpm || effectiveBpm <= 0) return;
   currentEffectiveBpm = effectiveBpm;
   el.beatBpmValue.textContent = t("beatsPerMin", { n: Math.round(effectiveBpm) });
+  el.beatVisualTitle.hidden = false;
   el.beatVisual.hidden = false;
   // Chamada em toda troca de faixa (não só quando o checkbox é marcado) —
   // sem o catch, uma falha aqui (ex. iOS recusando o resume() do
@@ -857,9 +859,28 @@ async function buildPoolFromEverything() {
   updateBuildPoolAvailability();
 }
 
+// Compara a cadência real com a batida da faixa tocando (currentEffectiveBpm)
+// e pinta "Tempo real (SPM)" — verde se já alcançou/passou a batida, amarelo
+// se está até 10 SPM abaixo, vermelho se mais que isso. Sem cadência real
+// ainda (0) ou sem faixa tocando (currentEffectiveBpm null, ex. antes do
+// primeiro Play), fica na cor padrão (nenhuma classe).
+function updateLiveCadenceColor(liveCadence) {
+  el.cadenceLiveValue.classList.remove("cadence-live-good", "cadence-live-warn", "cadence-live-bad");
+  if (liveCadence <= 0 || !currentEffectiveBpm) return;
+  const diff = currentEffectiveBpm - liveCadence; // positivo = cadência abaixo da batida
+  if (diff <= 0) {
+    el.cadenceLiveValue.classList.add("cadence-live-good");
+  } else if (diff <= 10) {
+    el.cadenceLiveValue.classList.add("cadence-live-warn");
+  } else {
+    el.cadenceLiveValue.classList.add("cadence-live-bad");
+  }
+}
+
 function updateCadenceDisplay() {
   const liveCadence = tracker?.getCurrentSpm() ?? 0;
   el.cadenceLiveValue.textContent = liveCadence > 0 ? t("stepsPerMin", { n: liveCadence }) : t("measuring");
+  updateLiveCadenceColor(liveCadence);
 
   if (activeMode === "fixed") {
     el.cadenceLastLabel.textContent = t("targetLabel");

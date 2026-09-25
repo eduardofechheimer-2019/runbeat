@@ -131,6 +131,14 @@ header h1 {
 .tagline {
   color: var(--muted);
   margin: 4px 0 0;
+  /* Fonte um pouco menor que o texto padrão (que quebrava em 2 linhas
+     nesse espaço, ao lado do seletor de idioma/botão de ajuda) — cabe
+     numa linha só; o nowrap+ellipsis é só uma rede de segurança pra telas
+     ainda mais estreitas. */
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .help-btn {
@@ -778,6 +786,32 @@ button:disabled {
 .run-info-list strong {
   color: var(--accent);
   font-weight: 700;
+}
+
+/* Só o bloco "Tocando:" (não o card do marca-passo, que usa a mesma
+   .run-info-list) — nome de música/playlist/gênero longos ficam numa
+   linha só, cortados com "..." no fim em vez de quebrar pra uma segunda
+   linha. */
+.run-info .run-info-list li {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Cor de "Tempo real (SPM)" — compara com a batida da faixa tocando (ver
+   updateLiveCadenceColor em app.js): verde já alcançou/passou a batida,
+   amarelo até 10 SPM abaixo, vermelho mais que isso. Sem classe nenhuma
+   (cor padrão) enquanto não há cadência real ou faixa tocando ainda. */
+.run-info-list strong.cadence-live-good {
+  color: #1db954;
+}
+
+.run-info-list strong.cadence-live-warn {
+  color: var(--accent);
+}
+
+.run-info-list strong.cadence-live-bad {
+  color: var(--danger);
 }
 
 /* --- Play/Pause --- */

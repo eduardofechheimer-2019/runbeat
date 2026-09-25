@@ -83,15 +83,23 @@ uma trocação instantânea:
    título condensado ganha um resumo curto em verde do que foi escolhido
    nele (ex. "Conectado", "2 Items", "Automático"/nome do nível), pra
    lembrar a configuração sem precisar reabrir o cartão.
-4. **Cartão de corrida.** O card do "Marca-Passo Sonoro" (só aparece depois
-   que a primeira faixa começa a tocar) mostra 3 linhas antes do checkbox:
-   última medição/alvo (SPM, usada pra escolher a faixa atual no modo
-   automático, ou o alvo fixo no modo ritmo fixo), a leitura de cadência em
-   tempo real (SPM), e o BPM da faixa tocando agora. Abaixo disso, fora
-   desse card mas ainda na mesma seção, fica "Tocando" com bullets —
-   música, playlist/fonte de onde ela veio, e o gênero (linha própria, só
-   aparece quando é uma faixa do Catálogo RunBeat). Os controles: um botão
-   central **▶ Play / ⏸ Pause** com
+4. **Cartão de corrida.** Um título **"Painel em tempo real:"** ("Live
+   Dashboard:" em EN) antecede o card do "Marca-Passo Sonoro" — os dois só
+   aparecem juntos depois que a primeira faixa começa a tocar. Dentro do
+   card, 3 linhas antes do checkbox, nessa ordem: a leitura de cadência em
+   tempo real (SPM) — colorida (ver abaixo), o BPM da faixa tocando agora,
+   e a última medição/alvo (SPM, usada pra escolher a faixa atual no modo
+   automático, ou o alvo fixo no modo ritmo fixo). A cor da cadência em
+   tempo real muda comparando com o BPM da faixa: **verde** se já
+   alcançou/passou a batida, **amarelo** se está até 10 SPM abaixo,
+   **vermelho** se mais que isso (`updateLiveCadenceColor` em app.js) —
+   fica na cor padrão enquanto não há cadência real nem faixa tocando
+   ainda. Abaixo disso, fora desse card mas ainda na mesma seção, fica
+   "Tocando" com bullets — música, playlist/fonte de onde ela veio, e o
+   gênero (linha própria, só aparece quando é uma faixa do Catálogo
+   RunBeat) — cada linha fica sempre numa só, cortando com "..." no fim se
+   o nome for longo demais pra caber (em vez de quebrar pra uma segunda
+   linha). Os controles: um botão central **▶ Play / ⏸ Pause** com
    **⏮ Anterior** / **⏭ Próxima** ao lado, que só aparecem depois que a
    corrida começa. Antes do primeiro toque, assim que o usuário volta do
    "Spotify sync" (ver item 6), o Play pulsa de forma bem chamativa (cresce

@@ -694,7 +694,7 @@ button:disabled {
   align-items: center;
   gap: 10px;
   margin: 16px 0;
-  padding: 16px;
+  padding: 10px;
   border-radius: var(--radius-sm);
   background: rgba(255, 221, 0, 0.1);
   border: 1px solid rgba(255, 221, 0, 0.3);
@@ -703,9 +703,58 @@ button:disabled {
 /* A lista de cadência/batida dentro do card do marca-passo (ver
    .beat-visual acima) precisa ocupar a largura toda pra ficar alinhada à
    esquerda — sem isso, herdaria o align-items:center do flex pai e
-   encolheria/centralizaria como um bloco só. */
+   encolheria/centralizaria como um bloco só. Padding-left reduzido (o
+   padrão de 20px, pensado pro bullet num texto maior, sobrava demais
+   aqui) — abre espaço extra pro valor à direita não cortar em telas
+   estreitas (ver .strong mais abaixo). */
 .beat-visual .run-info-list {
   align-self: stretch;
+  padding-left: 14px;
+}
+
+/* Cada linha vira label à esquerda + valor encostado na borda direita do
+   card, todas as 3 linhas alinhadas na mesma coluna (uniforme) — só nesse
+   card (não afeta a lista de "Tocando", que continua no fluxo normal). */
+.beat-visual .run-info-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+/* flex-shrink:0 + nowrap no rótulo — sem isso, ele encolhia e quebrava em
+   2 linhas pra abrir espaço pro número maior (ver .strong abaixo); o
+   rótulo mantém sua largura natural numa linha só, e é o valor que fica
+   com a sobra do espaço, empurrado pra direita. */
+.beat-visual .run-info-list .run-info-label {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Número maior que o rótulo, encostado na borda direita do card — mesma
+   coluna nas 3 linhas (uniforme). min-width:0 + nowrap/ellipsis é rede de
+   segurança pro estado "medindo..." (mais largo que um número comum), que
+   sem isso passava da borda direita do card. */
+.beat-visual .run-info-list strong {
+  margin-left: auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.1rem;
+}
+
+/* Legenda explicando as siglas SPM/BPM, uma vez só no topo do card — os
+   valores abaixo (ver regra acima) não repetem mais a unidade por extenso. */
+.beat-visual-legend {
+  align-self: stretch;
+  margin-bottom: 4px;
+}
+
+.beat-visual-legend p {
+  margin: 0;
+  font-size: 0.72rem;
+  font-style: italic;
+  color: var(--muted);
 }
 
 .beat-visual[hidden] {

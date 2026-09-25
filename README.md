@@ -85,16 +85,24 @@ uma trocação instantânea:
    lembrar a configuração sem precisar reabrir o cartão.
 4. **Cartão de corrida.** Um título **"Painel em tempo real:"** ("Live
    Dashboard:" em EN) antecede o card do "Marca-Passo Sonoro" — os dois só
-   aparecem juntos depois que a primeira faixa começa a tocar. Dentro do
-   card, 3 linhas antes do checkbox, nessa ordem: a leitura de cadência em
-   tempo real (SPM) — colorida (ver abaixo), o BPM da faixa tocando agora,
-   e a última medição/alvo (SPM, usada pra escolher a faixa atual no modo
-   automático, ou o alvo fixo no modo ritmo fixo). A cor da cadência em
-   tempo real muda comparando com o BPM da faixa: **verde** se já
-   alcançou/passou a batida, **amarelo** se está até 10 SPM abaixo,
-   **vermelho** se mais que isso (`updateLiveCadenceColor` em app.js) —
-   fica na cor padrão enquanto não há cadência real nem faixa tocando
-   ainda. Abaixo disso, fora desse card mas ainda na mesma seção, fica
+   aparecem juntos depois que a primeira faixa começa a tocar. Logo no
+   topo do card, uma legenda pequena explica as siglas uma vez só ("SPM =
+   Passos por Minuto" / "BPM = Batidas por Minuto") — por causa disso, os
+   3 números abaixo aparecem "crus" (ex. `117`, sem repetir "passos/min"/
+   "beats/min" em cada linha), num tamanho maior que o texto do rótulo, e
+   sempre encostados na borda direita do card, na mesma coluna nas 3
+   linhas (rótulo com `flex-shrink:0`+`nowrap` pra nunca quebrar em 2
+   linhas, número com `margin-left:auto` pra empurrar pra direita, e um
+   fallback de reticências só pro caso raro de não caber). As 3 linhas,
+   nessa ordem: a leitura de cadência em tempo real (SPM) — colorida (ver
+   abaixo), o BPM da faixa tocando agora, e a última medição/alvo (SPM,
+   usada pra escolher a faixa atual no modo automático, ou o alvo fixo no
+   modo ritmo fixo). A cor da cadência em tempo real muda comparando com o
+   BPM da faixa: **verde** se já alcançou/passou a batida, **amarelo** se
+   está até 10 SPM abaixo, **vermelho** se mais que isso
+   (`updateLiveCadenceColor` em app.js) — fica na cor padrão enquanto não
+   há cadência real nem faixa tocando ainda. Abaixo disso, fora desse card
+   mas ainda na mesma seção, fica
    "Tocando" com bullets — música, playlist/fonte de onde ela veio, e o
    gênero (linha própria, só aparece quando é uma faixa do Catálogo
    RunBeat) — cada linha fica sempre numa só, cortando com "..." no fim se

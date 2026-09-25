@@ -312,7 +312,7 @@ function applyLiveModeChange() {
 function startBeatPulse(effectiveBpm) {
   if (!effectiveBpm || effectiveBpm <= 0) return;
   currentEffectiveBpm = effectiveBpm;
-  el.beatBpmValue.textContent = t("beatsPerMin", { n: Math.round(effectiveBpm) });
+  el.beatBpmValue.textContent = String(Math.round(effectiveBpm));
   el.beatVisualTitle.hidden = false;
   el.beatVisual.hidden = false;
   // Chamada em toda troca de faixa (não só quando o checkbox é marcado) —
@@ -879,18 +879,16 @@ function updateLiveCadenceColor(liveCadence) {
 
 function updateCadenceDisplay() {
   const liveCadence = tracker?.getCurrentSpm() ?? 0;
-  el.cadenceLiveValue.textContent = liveCadence > 0 ? t("stepsPerMin", { n: liveCadence }) : t("measuring");
+  el.cadenceLiveValue.textContent = liveCadence > 0 ? String(liveCadence) : t("measuring");
   updateLiveCadenceColor(liveCadence);
 
   if (activeMode === "fixed") {
     el.cadenceLastLabel.textContent = t("targetLabel");
-    el.cadenceLastValue.textContent = fixedRange
-      ? t("stepsPerMinRange", { min: fixedRange.min, max: fixedRange.max })
-      : "—";
+    el.cadenceLastValue.textContent = fixedRange ? `${fixedRange.min}–${fixedRange.max}` : "—";
     return;
   }
   el.cadenceLastLabel.textContent = t("lastMeasurementLabel");
-  el.cadenceLastValue.textContent = lastMatchCadence > 0 ? t("stepsPerMin", { n: lastMatchCadence }) : "—";
+  el.cadenceLastValue.textContent = lastMatchCadence > 0 ? String(lastMatchCadence) : "—";
 }
 
 // Extraído de playSpecificTrack() pra poder recalcular o texto na língua
@@ -1276,7 +1274,6 @@ function refreshDynamicTexts() {
 
   const lastTrack = history[history.length - 1];
   if (lastTrack) renderTrackInfo(lastTrack);
-  if (currentEffectiveBpm) el.beatBpmValue.textContent = t("beatsPerMin", { n: Math.round(currentEffectiveBpm) });
 
   // O pop-up de multiseleção (playlists/gêneros) constrói suas linhas a
   // partir do texto das opções na hora que abre (ver renderMultiselectPanel)

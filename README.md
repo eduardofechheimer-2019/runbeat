@@ -31,11 +31,20 @@ bold — `--font-display`, nos títulos e no nome "RunBeat"), no lugar da
 "Archivo" anterior. Fundo com textura marmorizada preta (imagem em
 `public/img/bg-marble.webp`). Os cartões (seções) têm fundo semitransparente
 com desfoque (`backdrop-filter`), deixando a textura do fundo aparecer
-sutilmente atrás do conteúdo. O logo (`icon.svg`) — um círculo com linhas de
-movimento e uma nota musical — aparece ao lado do nome "RunBeat" no
-cabeçalho, que fica com um respiro extra no topo (`env(safe-area-inset-top)`)
-pra não ficar atrás do relógio/notch do celular. O botão de ajuda (antes um
-"?") agora usa um ícone de engrenagem.
+sutilmente atrás do conteúdo. O logo (`img/logo-mark.png`) — o boneco
+correndo com linhas de movimento e a nota musical, recortado do ícone
+oficial do app com fundo transparente — aparece ao lado do nome "RunBeat"
+no cabeçalho, que fica com um respiro extra no topo
+(`env(safe-area-inset-top)`) pra não ficar atrás do relógio/notch do
+celular. O botão de ajuda (antes um "?") agora usa um ícone de engrenagem.
+
+O ícone do app (tela de início, splash, favicon) foi trocado pelo ícone
+oficial da marca: quadrado preto com borda amarela arredondada, o mesmo
+boneco correndo + nota musical, e o nome "RunBeat" por extenso embaixo.
+Os arquivos quadrados (`apple-touch-icon*.png`, `icon-120/152/167/180/
+192.png`) são versões achatadas/opacas dele (sem canal alpha — exigência do
+iOS, ver comentário em `index.html`); só o `icon-512.png` (splash e
+manifest) mantém a transparência original nos cantos arredondados.
 
 O painel da tela de corrida ("Painel em tempo real") foi reformulado num
 layout de duas colunas — SPM (cadência real) à esquerda, BPM (batida da
@@ -365,7 +374,7 @@ runbeat/
     ├── index.html
     ├── manifest.json         # manifesto PWA
     ├── sw.js                 # service worker (cache do app shell)
-    ├── icon.svg
+    ├── icon-*.png            # ícones do app (tela de início/splash/favicon)
     ├── css/style.css
     ├── img/
     │   └── bg-marble.webp    # textura de fundo

@@ -68,13 +68,19 @@ header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
 }
 
+/* min-width:0 pra poder encolher (ver .title-text abaixo) — sem isso, um
+   item flex não encolhe além da largura intrínseca do conteúdo, e a logo
+   mais larga (glifo horizontal, recortado do ícone novo) empurrava o botão
+   de ajuda (.header-actions) pra fora da tela em vez de dividir o espaço. */
 .title-row {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
 }
 
 .header-logo {
@@ -83,6 +89,21 @@ header {
   height: 36px;
   width: auto;
   flex-shrink: 0;
+}
+
+/* Bloco do título+tagline: precisa de min-width:0 (mesmo motivo do
+   .title-row acima) — e o <h1> ganha o mesmo tratamento de nowrap+ellipsis
+   que a .tagline já tinha, como rede de segurança pro caso raro de faltar
+   espaço (nunca deve realmente cortar "RunBeat" na prática). */
+.title-text {
+  min-width: 0;
+}
+
+.title-text h1 {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .header-actions {
@@ -106,7 +127,7 @@ header {
 .lang-btn {
   width: auto;
   margin-top: 0;
-  padding: 4px 9px;
+  padding: 4px 7px;
   border-radius: 999px;
   background: transparent;
   border: none;
@@ -149,8 +170,8 @@ header h1 {
 }
 
 .help-btn {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   padding: 0;
   margin-top: 2px;
   border-radius: 50%;
@@ -164,8 +185,8 @@ header h1 {
 }
 
 .help-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
 }
 
 .step-card {

@@ -553,31 +553,41 @@ h2 {
 }
 
 .rb-step-card:not([data-state="completed"]):not([data-state="condensed"]) h2 {
-  /* Com badge/título escondidos, o <h2> só mostra o check (transitório) —
-     margem pequena em vez de 0 pra não colar no texto de status logo
-     abaixo nesse raro instante em que o check aparece. */
-  margin-bottom: var(--rb-space-2);
+  /* Badge/título/check somem juntos agora (ver .step-check abaixo) — sem
+     nada visível sobrando no <h2>, margem 0 mesmo. */
+  margin-bottom: 0;
   min-height: 0;
 }
 
-/* Sinal de "conectado" discreto — só o check menor, sem palavra nova ao
-   lado: "Conectado"/"Connected" exigiria uma chave em i18n.js. O texto
-   "Conectado ao Spotify." (.rb-status abaixo) já cobre essa informação,
-   então nada é duplicado. Sem guarda de estado — o check some sozinho
-   pelo atributo "hidden" (finishStep em app.js), não por CSS de estado. */
-.rb-step-card .step-check {
-  width: 22px;
-  height: 22px;
-  border-width: 2px;
-  font-size: 0.75rem;
+/* O check verde isolado ficou redundante: o indicador de fluxo (.rb-flow
+   abaixo) já comunica "etapa concluída" sozinho. Continua no DOM (usado
+   por finishStep() via querySelector(".step-check") em app.js) — só
+   escondido enquanto o cartão está na aparência ativa/reaberta; completo/
+   condensado volta a mostrá-lo do tamanho padrão, igual aos cartões 2/3. */
+.rb-step-card:not([data-state="completed"]):not([data-state="condensed"]) .step-check {
+  display: none;
 }
 
-/* Indicador de fluxo — agora o elemento de identificação principal da
-   etapa (era discreto, virou protagonista): números maiores, "SPOTIFY"
-   legível, conectores que esticam (flex:1) pra ocupar a largura toda do
-   card de forma equilibrada. Continua puramente decorativo (aria-hidden
-   no HTML), sem estado/JS próprio — soma junto com o card (hidden) ou
-   quando completed/condensed (guarda dedicada mais abaixo). */
+/* "Conectado ao Spotify." também ficou redundante com o indicador de
+   fluxo — mas só quando conectado: "Não conectado."/"Verificando
+   login..." continuam aparecendo (item 4: texto explicativo pequeno,
+   reaproveitando a estrutura existente, sem chave i18n nova). Não dá pra
+   diferenciar o conteúdo do texto só com CSS, então a guarda usa um sinal
+   que já existe e já é controlado por app.js: o botão "Desconectar" só
+   fica visível (sem o atributo hidden) quando conectado — o mesmo
+   momento em que #status mostra essa frase. */
+.rb-step-card:has(#disconnect-btn:not([hidden])) .rb-status {
+  display: none;
+}
+
+/* Indicador de fluxo — elemento principal de identificação da etapa
+   (tanto a atual quanto as concluídas): números/círculos maiores,
+   "Spotify" sem caixa alta forçada e com mais destaque que os números
+   futuros, conectores que esticam (flex:1) pra ocupar a largura do card
+   de forma equilibrada. Continua puramente decorativo (aria-hidden no
+   HTML), sem estado/JS próprio — some junto com o card (hidden) ou
+   quando completed/condensed (guarda dedicada mais abaixo). Classe
+   genérica, pronta pra reuso: nada aqui é específico de #card-connect. */
 .rb-flow {
   display: flex;
   align-items: center;
@@ -593,12 +603,14 @@ h2 {
   font-family: var(--rb-font-ui);
   font-size: var(--rb-text-sm);
   font-weight: var(--rb-weight-semibold);
-  letter-spacing: var(--rb-tracking-wide);
-  text-transform: uppercase;
   color: var(--rb-text-secondary);
 }
 
+/* Etapa atual = número + nome, com mais peso que os números futuros —
+   "Spotify" sem text-transform (item 1: não usar caixa alta forçada). */
 .rb-flow-item.is-active {
+  font-size: var(--rb-text-md);
+  font-weight: var(--rb-weight-bold);
   color: var(--rb-text);
 }
 
@@ -606,13 +618,13 @@ h2 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   flex-shrink: 0;
   border-radius: 50%;
   border: 1.5px solid var(--rb-border-strong);
   font-family: var(--rb-font-display);
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: var(--rb-weight-bold);
   color: var(--rb-text-secondary);
 }
@@ -620,6 +632,16 @@ h2 {
 .rb-flow-item.is-active .rb-flow-num {
   border-color: var(--rb-yellow);
   background: var(--rb-yellow);
+  color: var(--rb-ink);
+}
+
+/* Etapa concluída = só o check (ver princípio da Tela 2/3 documentado
+   acima do arquivo) — classe pronta desde já; nenhuma etapa usa "is-done"
+   ainda nesta rodada (0 lógica JS nova), mas o CSS já sabe como
+   desenhá-la quando a Tela 2 passar a alternar essa classe. */
+.rb-flow-item.is-done .rb-flow-num {
+  border-color: var(--rb-success);
+  background: var(--rb-success);
   color: var(--rb-ink);
 }
 
@@ -646,9 +668,10 @@ h2 {
   display: none;
 }
 
-/* "Não conectado."/"Verificando login..."/"Conectado ao Spotify." —
-   secundário, discreto, não compete com o CTA logo abaixo (mesmo texto em
-   qualquer estado, ver setStatus() em app.js — não removido nem escondido). */
+/* "Não conectado."/"Verificando login..." — secundário, discreto, não
+   compete com o CTA logo abaixo. "Conectado ao Spotify." é escondido pela
+   guarda ":has()" acima; o resto do texto (ver setStatus() em app.js) não
+   é removido nem alterado. */
 .rb-status {
   margin: 0 0 var(--rb-space-5);
   color: var(--rb-text-secondary);

@@ -289,9 +289,10 @@ header h1 {
   font-family: var(--font-display);
   font-style: italic;
   font-weight: var(--rb-weight-black);
-  /* 2rem -> 1.75rem (~12,5%): reduz o conjunto logo+"RunBeat" no header,
-     junto com .header-logo acima. */
-  font-size: 1.75rem;
+  /* 1.75rem -> 1.5rem (~14%): equilíbrio óptico com o símbolo ao lado —
+     o wordmark ainda parecia grande demais em relação à logo no iPhone
+     real, mesmo depois da redução da rodada anterior (2rem -> 1.75rem). */
+  font-size: 1.5rem;
   letter-spacing: var(--rb-tracking-tight);
   /* font-weight já está no máximo (900) — o contorno fininho engrossa o
      traço visualmente sem precisar de um peso de fonte mais pesado. */
@@ -301,13 +302,15 @@ header h1 {
 .tagline {
   color: var(--muted);
   margin: var(--rb-space-1) 0 0;
-  font-size: 0.85rem;
-  /* A tagline precisa aparecer sempre completa, nunca cortada com "..." —
-     em vez do nowrap+ellipsis de antes, deixa quebrar em 2 linhas quando
-     não couber numa só (o header ficou mais compacto acima, e title-row/
-     header-actions são irmãos flex independentes, então uma tagline mais
-     alta não empurra nem colide com PT/EN ou a engrenagem). */
-  white-space: normal;
+  /* 0.85rem -> 0.78rem: cabe numa linha só nas 3 larguras testadas
+     (375/390/430px) nos dois idiomas, sem precisar quebrar nem truncar —
+     ver clamp() abaixo como reforço pras larguras mais estreitas. */
+  font-size: clamp(0.68rem, 0.5rem + 1.8vw, 0.78rem);
+  /* Sem ellipsis de propósito (pedido explícito): nowrap garante uma
+     linha só; se algum dia realmente não couber, prefere um leve overflow
+     visível (raro, e a fonte responsiva acima já evita isso nas larguras
+     testadas) a truncar ou quebrar. */
+  white-space: nowrap;
   overflow: visible;
 }
 
@@ -507,22 +510,28 @@ h2 {
 }
 
 /* ================================================================
-   ETAPA 3A — Tela-piloto "Conecte ao Spotify" (#card-connect)
-   Tudo abaixo é escopado por #card-connect: não toca a aparência de
-   repouso de #card-library/#card-pace/#card-run, que continuam usando
-   só as regras compartilhadas acima (.step-card/.step-badge/h2/button).
+   PADRÃO REUTILIZÁVEL — ".rb-step-card" / ".rb-status" / ".rb-cta"
+   Nasceu como CSS só de #card-connect (Etapa 3A); esta rodada troca os
+   seletores por ID pelas classes abaixo, já aplicadas no HTML só de
+   #card-connect por enquanto. #card-library/#card-pace continuam sem
+   essas classes — pixel-idênticos a hoje — mas quando a etapa deles
+   chegar, basta adicionar a mesma classe no HTML, sem CSS novo:
+     .rb-step-card  -> superfície do card (padding/radius/borda/sombra)
+                       + esconde badge/título grandes em favor do
+                       indicador de fluxo (.rb-flow) + check discreto
+     .rb-status     -> texto de status secundário (não conectado/
+                       verificando/conectado)
+     .rb-cta        -> botão principal (Conectar/Desconectar)
    ================================================================ */
 
-/* Daqui pra baixo, ":not([data-state=completed]):not([data-state=condensed])"
-   aparece em mais de uma regra de propósito: as genéricas
-   ".step-card[data-state=completed/condensed]" (mais acima no arquivo) já
-   regulam padding/fundo/borda/badge/h2 pros 3 cartões quando não estão
-   ativos, e um seletor por ID sozinho (mais específico) ganharia delas —
-   sem essa guarda, #card-connect ficava "grande" mesmo completo/condensado,
-   destoando dos cartões 2/3 nesses mesmos estados (bug pego testando o
-   fluxo completo na rodada anterior). */
-#card-connect:not([data-state="completed"]):not([data-state="condensed"]) {
-  /* 32px/24px -> 24px/24px: padding vertical mais leve, mesma largura. */
+/* ":not([data-state=completed]):not([data-state=condensed])" continua
+   necessário: as regras genéricas ".step-card[data-state=completed/
+   condensed]" (mais acima) regulam padding/fundo/borda/badge/h2 pros 3
+   cartões quando não estão ativos, e uma classe sozinha (mesma
+   especificidade delas ou menor) não venceria de forma confiável em
+   todas as propriedades — sem essa guarda, o cartão ficaria "grande"
+   mesmo completo/condensado, destoando dos cartões 2/3 nesses estados. */
+.rb-step-card:not([data-state="completed"]):not([data-state="condensed"]) {
   padding: var(--rb-space-6);
   border-radius: var(--rb-radius-lg);
   border: 1px solid var(--rb-border);
@@ -530,104 +539,117 @@ h2 {
   box-shadow: var(--rb-shadow-md);
 }
 
-/* Indicador de fluxo (1 · 2 · 3) — puramente visual/decorativo (aria-hidden
-   no HTML), sem estado ou JS próprio: por estar dentro de #card-connect,
-   ele some sozinho junto com o card (hidden, ou data-state="condensed" via
-   ".step-card[data-state=condensed] > *:not(h2)" já existente) sem precisar
-   de nenhuma lógica nova. Nesta etapa é sempre "1 ativo, 2/3 futuros" — a
-   tela 1 é a única redesenhada agora. */
-#card-connect .rb-flow {
-  display: flex;
-  align-items: center;
-  gap: var(--rb-space-2);
-  margin-bottom: var(--rb-space-5);
-  font-family: var(--rb-font-ui);
-  font-size: var(--rb-text-xs);
-  font-weight: var(--rb-weight-medium);
-  letter-spacing: var(--rb-tracking-wide);
-  text-transform: uppercase;
-  color: var(--rb-text-secondary);
-}
-
-#card-connect .rb-flow-item {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--rb-space-1);
-}
-
-#card-connect .rb-flow-item.is-active {
-  color: var(--rb-text);
-}
-
-#card-connect .rb-flow-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  font-size: 0.65rem;
-  font-weight: var(--rb-weight-bold);
-  background: var(--rb-border);
-  color: var(--rb-text-secondary);
-}
-
-#card-connect .rb-flow-item.is-active .rb-flow-num {
-  background: var(--rb-yellow);
-  color: var(--rb-ink);
-}
-
-#card-connect .rb-flow-sep {
-  width: 14px;
-  height: 1px;
-  flex-shrink: 0;
-  background: var(--rb-border);
-}
-
-/* Mesmo motivo do ".rb-flow" acima ter especificidade maior que a regra
-   genérica de esconder filhos não-h2 quando condensado: guarda equivalente
-   pra completed também, por simetria/robustez (na prática #card-connect
-   nunca fica "completed" visível por mais que um instante — ver app.js,
-   revealStep() esconde o card assim que avança pro passo 2 — mas nada
-   impede escondê-lo nos dois estados, como pedido). */
-#card-connect[data-state="completed"] .rb-flow,
-#card-connect[data-state="condensed"] .rb-flow {
+/* O badge "1" e o título "Conecte ao Spotify" ficaram redundantes depois
+   que o indicador de fluxo (.rb-flow abaixo) virou o identificador
+   principal da etapa — escondidos só enquanto ativo; completo/condensado
+   volta a mostrá-los (mesmo texto que os cartões 2/3 usam nesse estado,
+   pra manter a linha condensada consistente). Nem badge nem título têm
+   dependência em app.js (só o <h2> em si e o .step-check — ver abaixo —
+   são lidos por querySelector), por isso é seguro escondê-los sem tocar
+   no DOM. */
+.rb-step-card:not([data-state="completed"]):not([data-state="condensed"]) .step-badge,
+.rb-step-card:not([data-state="completed"]):not([data-state="condensed"]) .step-title {
   display: none;
 }
 
-#card-connect:not([data-state="completed"]):not([data-state="condensed"]) h2 {
-  gap: var(--rb-space-3);
-  margin-bottom: var(--rb-space-4);
+.rb-step-card:not([data-state="completed"]):not([data-state="condensed"]) h2 {
+  /* Com badge/título escondidos, o <h2> só mostra o check (transitório) —
+     margem pequena em vez de 0 pra não colar no texto de status logo
+     abaixo nesse raro instante em que o check aparece. */
+  margin-bottom: var(--rb-space-2);
+  min-height: 0;
 }
 
-/* Número "1" com mais peso visual só nessa tela-piloto, e só enquanto o
-   cartão está na sua aparência normal — completo/condensado usa o mesmo
-   badge pequeno (18px) que os cartões 2/3 já usam nesses estados (regra
-   genérica ".step-card[data-state=condensed] .step-badge" mais acima). */
-#card-connect:not([data-state="completed"]):not([data-state="condensed"]) .step-badge {
-  width: 40px;
-  height: 40px;
-  font-family: var(--rb-font-display);
-  font-size: var(--rb-text-lg);
-  font-weight: var(--rb-weight-bold);
-  box-shadow: var(--rb-shadow-sm);
-}
-
-/* Sinal de "conectado" discreto — só o check menor (ver .step-check
-   abaixo), sem palavra nova ao lado: "Conectado"/"Connected" exigiria uma
-   chave em i18n.js, fora do escopo desta rodada. O texto "Conectado ao
-   Spotify." (#status logo abaixo) já cobre essa informação. */
-#card-connect .step-check {
+/* Sinal de "conectado" discreto — só o check menor, sem palavra nova ao
+   lado: "Conectado"/"Connected" exigiria uma chave em i18n.js. O texto
+   "Conectado ao Spotify." (.rb-status abaixo) já cobre essa informação,
+   então nada é duplicado. Sem guarda de estado — o check some sozinho
+   pelo atributo "hidden" (finishStep em app.js), não por CSS de estado. */
+.rb-step-card .step-check {
   width: 22px;
   height: 22px;
   border-width: 2px;
   font-size: 0.75rem;
 }
 
+/* Indicador de fluxo — agora o elemento de identificação principal da
+   etapa (era discreto, virou protagonista): números maiores, "SPOTIFY"
+   legível, conectores que esticam (flex:1) pra ocupar a largura toda do
+   card de forma equilibrada. Continua puramente decorativo (aria-hidden
+   no HTML), sem estado/JS próprio — soma junto com o card (hidden) ou
+   quando completed/condensed (guarda dedicada mais abaixo). */
+.rb-flow {
+  display: flex;
+  align-items: center;
+  gap: var(--rb-space-2);
+  margin-bottom: var(--rb-space-5);
+}
+
+.rb-flow-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rb-space-2);
+  flex-shrink: 0;
+  font-family: var(--rb-font-ui);
+  font-size: var(--rb-text-sm);
+  font-weight: var(--rb-weight-semibold);
+  letter-spacing: var(--rb-tracking-wide);
+  text-transform: uppercase;
+  color: var(--rb-text-secondary);
+}
+
+.rb-flow-item.is-active {
+  color: var(--rb-text);
+}
+
+.rb-flow-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--rb-border-strong);
+  font-family: var(--rb-font-display);
+  font-size: 0.95rem;
+  font-weight: var(--rb-weight-bold);
+  color: var(--rb-text-secondary);
+}
+
+.rb-flow-item.is-active .rb-flow-num {
+  border-color: var(--rb-yellow);
+  background: var(--rb-yellow);
+  color: var(--rb-ink);
+}
+
+/* flex:1 — os traços entre os números esticam pra preencher o espaço
+   sobrando, deixando o indicador todo (números + traços) ocupar a
+   largura do card de forma equilibrada, em vez de um bloco pequeno
+   flutuando à esquerda. */
+.rb-flow-sep {
+  flex: 1;
+  height: 1.5px;
+  min-width: var(--rb-space-4);
+  background: var(--rb-border-strong);
+}
+
+/* Mesmo motivo do card acima: uma classe sozinha não venceria com
+   segurança a regra genérica de esconder filhos não-h2 quando condensado
+   (especificidades próximas); guarda dedicada, com "completed" incluído
+   por simetria (ver nota da rodada anterior — completed nunca fica
+   visível por mais que um instante pra #card-connect hoje, mas a mesma
+   classe será reusada pra #card-library/#card-pace, onde completed É um
+   estado visível e duradouro). */
+.rb-step-card[data-state="completed"] .rb-flow,
+.rb-step-card[data-state="condensed"] .rb-flow {
+  display: none;
+}
+
 /* "Não conectado."/"Verificando login..."/"Conectado ao Spotify." —
    secundário, discreto, não compete com o CTA logo abaixo (mesmo texto em
    qualquer estado, ver setStatus() em app.js — não removido nem escondido). */
-#card-connect #status {
+.rb-status {
   margin: 0 0 var(--rb-space-5);
   color: var(--rb-text-secondary);
   font-size: var(--rb-text-sm);
@@ -637,31 +659,23 @@ h2 {
 /* CTA principal — mesma base compartilhada (button{}: fundo amarelo, texto
    escuro, sem borda) já herdada; aqui só reforça o alvo de toque, o radius
    e a hierarquia visual, sem tocar em id/handler/estado nenhum. */
-#card-connect #connect-btn,
-#card-connect #disconnect-btn {
+.rb-cta {
   margin-top: var(--rb-space-2);
-  /* 16px -> 12px vertical: acompanha o padding mais leve do card acima,
-     mantendo folga confortável de toque (ainda bem acima do mínimo de
-     44px recomendado). */
   padding: var(--rb-space-3) var(--rb-space-5);
   font-size: var(--rb-text-md);
   border-radius: var(--rb-radius-md);
   box-shadow: var(--rb-shadow-sm);
 }
 
-#card-connect #connect-btn:active,
-#card-connect #disconnect-btn:active {
+.rb-cta:active {
   box-shadow: none;
 }
 
 /* Sem isso, o anel de foco global (":focus-visible" no topo do arquivo)
-   ficava sem efeito nesses dois botões: "#card-connect #connect-btn"
-   (2 IDs) tem mais especificidade que ":focus-visible" sozinho (1 pseudo-
-   classe), então o box-shadow de repouso acima sempre ganhava, mesmo com
-   o botão focado pelo teclado — bug pego só nesta rodada, ao revisar o
-   item "preservar focus-visible". */
-#card-connect #connect-btn:focus-visible,
-#card-connect #disconnect-btn:focus-visible {
+   ficava sem efeito neste botão: ".rb-cta:focus-visible" precisa de mais
+   especificidade que ".rb-cta" sozinho pro box-shadow de foco vencer o de
+   repouso (bug pego na rodada anterior, mantido corrigido aqui). */
+.rb-cta:focus-visible {
   box-shadow: var(--rb-focus-ring);
 }
 

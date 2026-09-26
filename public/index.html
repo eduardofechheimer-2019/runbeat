@@ -59,7 +59,7 @@
         <img src="img/logo-mark.png" alt="" class="header-logo" />
         <div class="title-text">
           <h1>RunBeat</h1>
-          <p class="tagline" data-i18n="tagline">A música certa na hora certa.</p>
+          <p class="tagline" data-i18n="tagline">Música certa no passo certo.</p>
         </div>
       </div>
       <div class="header-actions">
@@ -74,7 +74,7 @@
     </div>
   </header>
 
-  <section id="card-connect" class="step-card" data-step="connect">
+  <section id="card-connect" class="step-card rb-step-card" data-step="connect">
     <div class="rb-flow" aria-hidden="true">
       <span class="rb-flow-item is-active"><span class="rb-flow-num">1</span> Spotify</span>
       <span class="rb-flow-sep"></span>
@@ -83,9 +83,9 @@
       <span class="rb-flow-item"><span class="rb-flow-num">3</span></span>
     </div>
     <h2><span class="step-badge">1</span> <span class="step-title" data-i18n="step1Title">Conecte ao Spotify</span> <span class="step-check" hidden>✓</span><span id="connect-summary" class="step-summary"></span></h2>
-    <p id="status">Verificando login...</p>
-    <button id="connect-btn" data-i18n="connectBtn">Conectar ao Spotify</button>
-    <button id="disconnect-btn" hidden data-i18n="disconnectBtn">Desconectar do Spotify</button>
+    <p id="status" class="rb-status">Verificando login...</p>
+    <button id="connect-btn" class="rb-cta" data-i18n="connectBtn">Conectar ao Spotify</button>
+    <button id="disconnect-btn" class="rb-cta" hidden data-i18n="disconnectBtn">Desconectar do Spotify</button>
   </section>
 
   <section id="card-library" class="step-card" data-step="library" hidden>

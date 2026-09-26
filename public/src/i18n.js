@@ -14,7 +14,7 @@ import { STORAGE_KEYS } from "./config.js";
 
 const translations = {
   pt: {
-    tagline: "A música certa na hora certa.",
+    tagline: "Música certa no passo certo.",
     helpAriaLabel: "Como funciona",
     langSwitchAriaLabel: "Idioma",
 
@@ -119,7 +119,7 @@ const translations = {
     catalogLoadFailed: "Falha ao carregar o Catálogo RunBeat (HTTP {status})",
   },
   en: {
-    tagline: "The right song at the right moment.",
+    tagline: "The right song for every step.",
     helpAriaLabel: "How it works",
     langSwitchAriaLabel: "Language",
 

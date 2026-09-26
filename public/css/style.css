@@ -1,5 +1,143 @@
 :root {
   color-scheme: dark;
+
+  /* ============================================================
+     RUNBEAT DESIGN SYSTEM — ETAPA 2 (fundação de tokens)
+     Migração visual progressiva: esta seção define a nova identidade
+     (prefixo --rb-*) e, logo abaixo, faz as variáveis ANTIGAS (--bg,
+     --accent, --radius etc.) apontarem pra elas. Nenhuma regra fora deste
+     bloco :root foi tocada — todo o resto do arquivo continua lendo as
+     variáveis antigas normalmente, sem saber que a fonte mudou.
+     ============================================================ */
+
+  /* --- Cor: paleta base --- */
+  --rb-yellow: #ffd900;
+  --rb-bg: #090b0d;
+  --rb-surface: #14181d;
+  --rb-surface-elevated: #1b2026;
+  --rb-text: #f5f6f7;
+  --rb-text-secondary: #a7adb5;
+  --rb-success: #27c866;
+  --rb-danger: #ff4d52;
+  /* Texto/ícone sobre fundo de cor sólida (amarelo, success, danger) — tom
+     quase preto com leve viés quente, mais aconchegante que preto puro em
+     cima do amarelo da marca. */
+  --rb-ink: #1a1400;
+
+  /* --- Cor: bordas --- */
+  --rb-border: rgba(255, 255, 255, 0.1);
+  --rb-border-strong: rgba(255, 255, 255, 0.18);
+
+  /* --- Cor: overlays (scrim de modal/onboarding) --- */
+  --rb-overlay: rgba(3, 6, 9, 0.72);
+
+  /* --- Cor: estado disabled — nunca só a cor: ver --rb-disabled-opacity
+     (aplicado junto de cursor:default) já em uso em button:disabled. */
+  --rb-disabled-opacity: 0.45;
+  --rb-disabled-text: rgba(245, 246, 247, 0.5);
+
+  /* --- Cor: foco (focus-visible) — anel amarelo, alto contraste sobre o
+     fundo escuro do app em qualquer tela. */
+  --rb-focus-color: #ffd900;
+  --rb-focus-ring-width: 3px;
+  --rb-focus-ring-offset: 2px;
+  --rb-focus-ring: 0 0 0 var(--rb-focus-ring-width) rgba(255, 217, 0, 0.55);
+
+  /* --- Cor: hover/pressed (variações do amarelo da marca) --- */
+  --rb-yellow-hover: #ffe14d;
+  --rb-yellow-pressed: #d9b800;
+
+  /* --- Cor: sombras --- */
+  --rb-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --rb-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --rb-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
+
+  /* --- Cor: soft/tint (fundo translúcido pra badges, avisos, destaques) --- */
+  --rb-yellow-soft: rgba(255, 217, 0, 0.12);
+  --rb-yellow-soft-border: rgba(255, 217, 0, 0.35);
+  --rb-success-soft: rgba(39, 200, 102, 0.14);
+  --rb-success-soft-border: rgba(39, 200, 102, 0.35);
+  --rb-danger-soft: rgba(255, 77, 82, 0.14);
+  --rb-danger-soft-border: rgba(255, 77, 82, 0.35);
+
+  /* --- Tipografia --- */
+  --rb-font-display: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --rb-font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --rb-weight-regular: 400;
+  --rb-weight-medium: 500;
+  --rb-weight-semibold: 600;
+  --rb-weight-bold: 700;
+  --rb-weight-extrabold: 800;
+  --rb-weight-black: 900;
+
+  /* Escala de tamanho — cobre do texto auxiliar mais miúdo até os números
+     grandes do painel de corrida (SPM/BPM). */
+  --rb-text-xs: 0.72rem;
+  --rb-text-sm: 0.85rem;
+  --rb-text-base: 0.95rem;
+  --rb-text-md: 1.05rem;
+  --rb-text-lg: 1.2rem;
+  --rb-text-xl: 1.5rem;
+  --rb-text-2xl: 2rem;
+  --rb-text-display: 2.1rem;
+
+  --rb-leading-tight: 1.1;
+  --rb-leading-normal: 1.4;
+  --rb-leading-relaxed: 1.5;
+
+  --rb-tracking-tight: -0.01em;
+  --rb-tracking-normal: 0;
+  --rb-tracking-wide: 0.02em;
+
+  /* --- Spacing: escala em múltiplos de 4px --- */
+  --rb-space-1: 4px;
+  --rb-space-2: 8px;
+  --rb-space-3: 12px;
+  --rb-space-4: 16px;
+  --rb-space-5: 20px;
+  --rb-space-6: 24px;
+  --rb-space-8: 32px;
+  --rb-space-10: 40px;
+  --rb-space-12: 48px;
+
+  /* --- Radius --- */
+  --rb-radius-sm: 8px;
+  --rb-radius-md: 14px;
+  --rb-radius-lg: 20px;
+  --rb-radius-pill: 999px;
+
+  /* --- Interação --- */
+  --rb-transition-fast: 0.12s ease;
+  --rb-transition-normal: 0.2s ease;
+
+  /* ============================================================
+     COMPATIBILIDADE — variáveis antigas apontando pros tokens novos.
+     Nada foi removido; todo o CSS abaixo (e o HTML/JS, que não foi
+     tocado) continua funcionando exatamente como antes, só que lendo a
+     cor/medida da nova fonte. Migração progressiva: quando cada seletor
+     for redesenhado, passa a usar --rb-* direto e a linha correspondente
+     aqui pode ser removida.
+     ============================================================ */
+  --bg: var(--rb-bg);
+  /* Superfície elevada e translúcida (mantém o efeito de vidro fosco do
+     backdrop-filter já usado nos cards) — color-mix() em vez de uma rgba()
+     solta preserva --rb-surface-elevated como única fonte da cor. */
+  --card-bg: color-mix(in srgb, var(--rb-surface-elevated) 82%, transparent);
+  --card-border: var(--rb-border-strong);
+  --input-bg: color-mix(in srgb, var(--rb-bg) 90%, transparent);
+  --fg: var(--rb-text);
+  --muted: var(--rb-text-secondary);
+  --accent: var(--rb-yellow);
+  --accent-soft: var(--rb-yellow-hover);
+  --accent-strong: var(--rb-yellow-pressed);
+  --accent-ink: var(--rb-ink);
+  --success: var(--rb-success);
+  --danger: var(--rb-danger);
+  --radius: var(--rb-radius-md);
+  --radius-sm: var(--rb-radius-sm);
+  --font-display: var(--rb-font-display);
+
   /* Tudo no app usa rem, então esse valor único escala a fonte inteira —
      16px (padrão do navegador) estava pequeno demais pra leitura durante
      a corrida; foi pra 17.5px numa rodada anterior e segue pequeno, então
@@ -7,27 +145,6 @@
      de badge/check, botões redondos, ícones) não escalam junto de propósito
      — continuam do mesmo tamanho, só o texto cresce. */
   font-size: 19.5px;
-  /* Paleta "identidade visual" (moodboard): PRINCIPAL/FUNDO/SUPORTE/SUCESSO/
-     ALERTA usados como no swatch original. TEXTO (#4a4c4f) foi clareado pra
-     #8a8d92 — o tom original, usado como texto de verdade sobre o FUNDO
-     escuro, não passa de ~2:1 de contraste (falha o mínimo de 4.5:1 do
-     WCAG AA pra texto normal); essa versão mais clara mantém o mesmo tom
-     acinzentado "frio" mas fica em ~5.3:1. */
-  --bg: #15181c;
-  --card-bg: rgba(30, 34, 39, 0.82);
-  --card-border: #2f343a;
-  --input-bg: rgba(20, 23, 27, 0.9);
-  --fg: #eae9e9;
-  --muted: #8a8d92;
-  --accent: #fddc06;
-  --accent-soft: #ffe75a;
-  --accent-strong: #b19a04;
-  --accent-ink: #1a1400;
-  --success: #29c34f;
-  --danger: #fa4343;
-  --radius: 14px;
-  --radius-sm: 10px;
-  --font-display: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -41,12 +158,33 @@ body {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* Etapa 3A: a textura entra como marca de fundo discreta, não protagonista
+   — um scrim escuro (tom --rb-bg) por cima da imagem, deixando só um traço
+   sutil dela aparecer. A imagem em si (bg-marble.webp) não muda. */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 0;
-  background: url("../img/bg-marble.webp") center/cover no-repeat;
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--rb-bg) 89%, transparent),
+      color-mix(in srgb, var(--rb-bg) 89%, transparent)
+    ),
+    url("../img/bg-marble.webp");
+  background-position: center, center;
+  background-size: cover, cover;
+  background-repeat: no-repeat, no-repeat;
+}
+
+/* Anel de foco (teclado/leitor de tela) — não existia nenhum estilo de foco
+   dedicado no app até aqui; adicionado de forma aditiva (só aparece com
+   navegação por teclado, não muda a aparência de repouso de nenhum
+   elemento) pra atender ao requisito de acessibilidade desta etapa. */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--rb-focus-ring);
+  border-radius: var(--rb-radius-sm);
 }
 
 .app {
@@ -61,14 +199,14 @@ body::before {
 }
 
 header {
-  margin-bottom: 20px;
+  margin-bottom: var(--rb-space-6);
 }
 
 .header-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--rb-space-2);
 }
 
 /* min-width:0 pra poder encolher (ver .title-text abaixo) — sem isso, um
@@ -78,15 +216,17 @@ header {
 .title-row {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--rb-space-2);
   min-width: 0;
   flex: 1;
 }
 
 .header-logo {
   /* A logo (fundo transparente) não é quadrada — altura fixa e largura
-     automática preserva a proporção original em vez de esticar. */
-  height: 36px;
+     automática preserva a proporção original em vez de esticar.
+     36px -> 31px (~14%): o conjunto logo+"RunBeat" estava grande demais no
+     iPhone real, sobrando pouco respiro pro PT/EN e a engrenagem ao lado. */
+  height: 31px;
   width: auto;
   flex-shrink: 0;
 }
@@ -148,9 +288,11 @@ header h1 {
   color: var(--accent);
   font-family: var(--font-display);
   font-style: italic;
-  font-weight: 900;
-  font-size: 2rem;
-  letter-spacing: -0.01em;
+  font-weight: var(--rb-weight-black);
+  /* 2rem -> 1.75rem (~12,5%): reduz o conjunto logo+"RunBeat" no header,
+     junto com .header-logo acima. */
+  font-size: 1.75rem;
+  letter-spacing: var(--rb-tracking-tight);
   /* font-weight já está no máximo (900) — o contorno fininho engrossa o
      traço visualmente sem precisar de um peso de fonte mais pesado. */
   -webkit-text-stroke: 0.6px var(--accent);
@@ -158,15 +300,15 @@ header h1 {
 
 .tagline {
   color: var(--muted);
-  margin: 4px 0 0;
-  /* Fonte um pouco menor que o texto padrão (que quebrava em 2 linhas
-     nesse espaço, ao lado do seletor de idioma/botão de ajuda) — cabe
-     numa linha só; o nowrap+ellipsis é só uma rede de segurança pra telas
-     ainda mais estreitas. */
+  margin: var(--rb-space-1) 0 0;
   font-size: 0.85rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* A tagline precisa aparecer sempre completa, nunca cortada com "..." —
+     em vez do nowrap+ellipsis de antes, deixa quebrar em 2 linhas quando
+     não couber numa só (o header ficou mais compacto acima, e title-row/
+     header-actions são irmãos flex independentes, então uma tagline mais
+     alta não empurra nem colide com PT/EN ou a engrenagem). */
+  white-space: normal;
+  overflow: visible;
 }
 
 .help-btn {
@@ -362,6 +504,165 @@ h2 {
   0% { transform: scale(0); opacity: 0; }
   60% { transform: scale(1.15); opacity: 1; }
   100% { transform: scale(1); }
+}
+
+/* ================================================================
+   ETAPA 3A — Tela-piloto "Conecte ao Spotify" (#card-connect)
+   Tudo abaixo é escopado por #card-connect: não toca a aparência de
+   repouso de #card-library/#card-pace/#card-run, que continuam usando
+   só as regras compartilhadas acima (.step-card/.step-badge/h2/button).
+   ================================================================ */
+
+/* Daqui pra baixo, ":not([data-state=completed]):not([data-state=condensed])"
+   aparece em mais de uma regra de propósito: as genéricas
+   ".step-card[data-state=completed/condensed]" (mais acima no arquivo) já
+   regulam padding/fundo/borda/badge/h2 pros 3 cartões quando não estão
+   ativos, e um seletor por ID sozinho (mais específico) ganharia delas —
+   sem essa guarda, #card-connect ficava "grande" mesmo completo/condensado,
+   destoando dos cartões 2/3 nesses mesmos estados (bug pego testando o
+   fluxo completo na rodada anterior). */
+#card-connect:not([data-state="completed"]):not([data-state="condensed"]) {
+  /* 32px/24px -> 24px/24px: padding vertical mais leve, mesma largura. */
+  padding: var(--rb-space-6);
+  border-radius: var(--rb-radius-lg);
+  border: 1px solid var(--rb-border);
+  background: color-mix(in srgb, var(--rb-surface-elevated) 88%, transparent);
+  box-shadow: var(--rb-shadow-md);
+}
+
+/* Indicador de fluxo (1 · 2 · 3) — puramente visual/decorativo (aria-hidden
+   no HTML), sem estado ou JS próprio: por estar dentro de #card-connect,
+   ele some sozinho junto com o card (hidden, ou data-state="condensed" via
+   ".step-card[data-state=condensed] > *:not(h2)" já existente) sem precisar
+   de nenhuma lógica nova. Nesta etapa é sempre "1 ativo, 2/3 futuros" — a
+   tela 1 é a única redesenhada agora. */
+#card-connect .rb-flow {
+  display: flex;
+  align-items: center;
+  gap: var(--rb-space-2);
+  margin-bottom: var(--rb-space-5);
+  font-family: var(--rb-font-ui);
+  font-size: var(--rb-text-xs);
+  font-weight: var(--rb-weight-medium);
+  letter-spacing: var(--rb-tracking-wide);
+  text-transform: uppercase;
+  color: var(--rb-text-secondary);
+}
+
+#card-connect .rb-flow-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rb-space-1);
+}
+
+#card-connect .rb-flow-item.is-active {
+  color: var(--rb-text);
+}
+
+#card-connect .rb-flow-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: var(--rb-weight-bold);
+  background: var(--rb-border);
+  color: var(--rb-text-secondary);
+}
+
+#card-connect .rb-flow-item.is-active .rb-flow-num {
+  background: var(--rb-yellow);
+  color: var(--rb-ink);
+}
+
+#card-connect .rb-flow-sep {
+  width: 14px;
+  height: 1px;
+  flex-shrink: 0;
+  background: var(--rb-border);
+}
+
+/* Mesmo motivo do ".rb-flow" acima ter especificidade maior que a regra
+   genérica de esconder filhos não-h2 quando condensado: guarda equivalente
+   pra completed também, por simetria/robustez (na prática #card-connect
+   nunca fica "completed" visível por mais que um instante — ver app.js,
+   revealStep() esconde o card assim que avança pro passo 2 — mas nada
+   impede escondê-lo nos dois estados, como pedido). */
+#card-connect[data-state="completed"] .rb-flow,
+#card-connect[data-state="condensed"] .rb-flow {
+  display: none;
+}
+
+#card-connect:not([data-state="completed"]):not([data-state="condensed"]) h2 {
+  gap: var(--rb-space-3);
+  margin-bottom: var(--rb-space-4);
+}
+
+/* Número "1" com mais peso visual só nessa tela-piloto, e só enquanto o
+   cartão está na sua aparência normal — completo/condensado usa o mesmo
+   badge pequeno (18px) que os cartões 2/3 já usam nesses estados (regra
+   genérica ".step-card[data-state=condensed] .step-badge" mais acima). */
+#card-connect:not([data-state="completed"]):not([data-state="condensed"]) .step-badge {
+  width: 40px;
+  height: 40px;
+  font-family: var(--rb-font-display);
+  font-size: var(--rb-text-lg);
+  font-weight: var(--rb-weight-bold);
+  box-shadow: var(--rb-shadow-sm);
+}
+
+/* Sinal de "conectado" discreto — só o check menor (ver .step-check
+   abaixo), sem palavra nova ao lado: "Conectado"/"Connected" exigiria uma
+   chave em i18n.js, fora do escopo desta rodada. O texto "Conectado ao
+   Spotify." (#status logo abaixo) já cobre essa informação. */
+#card-connect .step-check {
+  width: 22px;
+  height: 22px;
+  border-width: 2px;
+  font-size: 0.75rem;
+}
+
+/* "Não conectado."/"Verificando login..."/"Conectado ao Spotify." —
+   secundário, discreto, não compete com o CTA logo abaixo (mesmo texto em
+   qualquer estado, ver setStatus() em app.js — não removido nem escondido). */
+#card-connect #status {
+  margin: 0 0 var(--rb-space-5);
+  color: var(--rb-text-secondary);
+  font-size: var(--rb-text-sm);
+  line-height: var(--rb-leading-normal);
+}
+
+/* CTA principal — mesma base compartilhada (button{}: fundo amarelo, texto
+   escuro, sem borda) já herdada; aqui só reforça o alvo de toque, o radius
+   e a hierarquia visual, sem tocar em id/handler/estado nenhum. */
+#card-connect #connect-btn,
+#card-connect #disconnect-btn {
+  margin-top: var(--rb-space-2);
+  /* 16px -> 12px vertical: acompanha o padding mais leve do card acima,
+     mantendo folga confortável de toque (ainda bem acima do mínimo de
+     44px recomendado). */
+  padding: var(--rb-space-3) var(--rb-space-5);
+  font-size: var(--rb-text-md);
+  border-radius: var(--rb-radius-md);
+  box-shadow: var(--rb-shadow-sm);
+}
+
+#card-connect #connect-btn:active,
+#card-connect #disconnect-btn:active {
+  box-shadow: none;
+}
+
+/* Sem isso, o anel de foco global (":focus-visible" no topo do arquivo)
+   ficava sem efeito nesses dois botões: "#card-connect #connect-btn"
+   (2 IDs) tem mais especificidade que ":focus-visible" sozinho (1 pseudo-
+   classe), então o box-shadow de repouso acima sempre ganhava, mesmo com
+   o botão focado pelo teclado — bug pego só nesta rodada, ao revisar o
+   item "preservar focus-visible". */
+#card-connect #connect-btn:focus-visible,
+#card-connect #disconnect-btn:focus-visible {
+  box-shadow: var(--rb-focus-ring);
 }
 
 label {

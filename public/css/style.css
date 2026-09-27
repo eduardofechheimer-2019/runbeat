@@ -554,9 +554,39 @@ h2 {
 
 .rb-step-card:not([data-state="completed"]):not([data-state="condensed"]) h2 {
   /* Badge/título/check somem juntos agora (ver .step-check abaixo) — sem
-     nada visível sobrando no <h2>, margem 0 mesmo. */
+     nada visível sobrando no <h2>, margem 0 mesmo. Quando o título é
+     reaproveitado como texto de orientação (.rb-step-hint — ver Tela 2
+     abaixo), a regra seguinte devolve uma margem confortável. */
   margin-bottom: 0;
   min-height: 0;
+}
+
+/* ".step-title" some por padrão junto com o badge (regra acima) — em
+   telas onde o texto do título antigo ainda serve como orientação de
+   conteúdo (ex. "Escolha as Playlists" na Tela 2, já que o indicador de
+   fluxo por si só não descreve o que fazer na tela), a classe
+   ".rb-step-hint" traz esse MESMO texto/chave i18n de volta, só que
+   demovido: menor, peso normal, sem o visual de "título grande" do h2
+   compartilhado — não é uma segunda cópia do texto, é o próprio
+   .step-title existente, só reestilizado. Reutilizável por qualquer
+   cartão que precise do mesmo padrão (Tela 3 inclusive). */
+.rb-step-card:not([data-state="completed"]):not([data-state="condensed"]) .step-title.rb-step-hint {
+  display: block;
+  font-family: var(--rb-font-ui);
+  font-size: var(--rb-text-sm);
+  font-weight: var(--rb-weight-regular);
+  color: var(--rb-text-secondary);
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* Restaura uma margem abaixo do <h2> só quando ele tem esse texto de
+   orientação visível dentro — sem isso, ficaria colado no controle
+   seguinte (idêntico ao "vazio artificial" que a Tela 1 evitou, só que
+   ao contrário: aqui precisa SOBRAR margem, não faltar). */
+.rb-step-card:not([data-state="completed"]):not([data-state="condensed"]) h2:has(.rb-step-hint) {
+  margin-bottom: var(--rb-space-4);
 }
 
 /* O check verde isolado ficou redundante: o indicador de fluxo (.rb-flow
@@ -762,13 +792,19 @@ button:disabled {
    marcar/desmarcar. O <select> original continua no DOM, só escondido,
    servindo de "banco de dados" pra toda a lógica existente de
    seleção/exclusividade em app.js. */
+/* Etapa 3B (Tela 2) — visual próprio do RunBeat em vez do input genérico
+   herdado de "select, button, input[type=text]": surface elevada (mais
+   clara que o fundo do card, não o mesmo --input-bg de campos comuns),
+   borda sutil (--rb-border, não a --rb-border-strong das bordas de card)
+   e radius-md, deixando claro que é um componente próprio, não um
+   <select> disfarçado. Preserva id/evento/comportamento — só aparência. */
 .multiselect-summary {
   width: 100%;
-  padding: 13px 34px 13px 14px;
+  padding: var(--rb-space-4) var(--rb-space-10) var(--rb-space-4) var(--rb-space-4);
   margin-top: 8px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--card-border);
-  background: var(--input-bg);
+  border-radius: var(--rb-radius-md);
+  border: 1px solid var(--rb-border);
+  background: var(--rb-surface-elevated);
   color: var(--fg);
   font-family: inherit;
   font-weight: 400;
@@ -790,9 +826,9 @@ button:disabled {
   content: "⌄";
   position: absolute;
   top: 50%;
-  right: 14px;
+  right: var(--rb-space-4);
   transform: translateY(-50%);
-  color: var(--muted);
+  color: var(--rb-text-secondary);
   font-size: 1.1rem;
   line-height: 1;
 }

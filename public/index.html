@@ -88,8 +88,15 @@
     <button id="disconnect-btn" class="rb-cta" hidden data-i18n="disconnectBtn">Desconectar do Spotify</button>
   </section>
 
-  <section id="card-library" class="step-card" data-step="library" hidden>
-    <h2><span class="step-badge">2</span> <span class="step-title" data-i18n="step2Title">Escolha as Playlists</span> <span class="step-check" hidden>✓</span><span id="library-summary" class="step-summary"></span></h2>
+  <section id="card-library" class="step-card rb-step-card" data-step="library" hidden>
+    <div class="rb-flow" aria-hidden="true">
+      <span class="rb-flow-item is-done"><span class="rb-flow-num">✓</span></span>
+      <span class="rb-flow-sep"></span>
+      <span class="rb-flow-item is-active"><span class="rb-flow-num">2</span> Playlists</span>
+      <span class="rb-flow-sep"></span>
+      <span class="rb-flow-item"><span class="rb-flow-num">3</span></span>
+    </div>
+    <h2><span class="step-badge">2</span> <span class="step-title rb-step-hint" data-i18n="step2Title">Escolha as Playlists</span> <span class="step-check" hidden>✓</span><span id="library-summary" class="step-summary"></span></h2>
     <label class="label-emphasis">Playlists</label>
     <button type="button" id="playlist-summary-btn" class="multiselect-summary" aria-haspopup="dialog" data-i18n="selectPlaceholder">Selecione</button>
     <select id="playlist-select" multiple size="6" hidden></select>
@@ -98,8 +105,8 @@
       <button type="button" id="catalog-genre-summary-btn" class="multiselect-summary" aria-haspopup="dialog" data-i18n="selectPlaceholder">Selecione</button>
       <select id="catalog-genre-select" multiple size="6" hidden></select>
     </div>
-    <button id="build-pool-btn" disabled data-i18n="loadBpmBtn">Carregar BPM</button>
-    <p id="pool-progress" hidden></p>
+    <button id="build-pool-btn" class="rb-cta" disabled data-i18n="loadBpmBtn">Carregar BPM</button>
+    <p id="pool-progress" class="rb-status" hidden></p>
   </section>
 
   <section id="card-pace" class="step-card" data-step="pace" hidden>

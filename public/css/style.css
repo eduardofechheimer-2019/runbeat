@@ -852,15 +852,22 @@ button:disabled {
    divisória rebaixada de --card-border (--rb-border-strong, 18% opacidade)
    pra --rb-border (10%): a separação passa a vir principalmente do
    espaçamento/leveza do fundo, não de uma linha forte — tirando a
-   aparência de tabela sem virar cards soltos. */
+   aparência de tabela sem virar cards soltos.
+   Microajuste (rodada de polimento pós-avaliação em iPhone real): mais
+   ~15% de padding vertical cortado (12px -> 10px; nenhum token da escala
+   de 4px cai nesse meio-termo, por isso valor direto em px aqui) e
+   divisória ainda mais apagada (10% -> ~4% de opacidade efetiva via
+   color-mix em cima de --rb-border) — a lista deve ler como contínua, a
+   separação entre linhas some quase por completo. Tamanho de fonte,
+   checkbox e área clicável (todo o padding horizontal) preservados. */
 .multiselect-option {
   display: flex;
   align-items: center;
   gap: var(--rb-space-3);
-  padding: var(--rb-space-3) var(--rb-space-4);
+  padding: 10px var(--rb-space-4);
   font-size: var(--rb-text-base);
   cursor: pointer;
-  border-bottom: 1px solid var(--rb-border);
+  border-bottom: 1px solid color-mix(in srgb, var(--rb-border) 40%, transparent);
   transition: background var(--rb-transition-fast);
 }
 
@@ -941,10 +948,12 @@ button:disabled {
 
 /* Antes a linha selecionada virava um bloco sólido --accent (pesado demais
    pra uma lista, e ilegível com "Todos" marcando todas as linhas de uma
-   vez); agora é só um tingimento bem sutil — o quadradinho amarelo (acima)
-   já é o sinal principal de seleção, este tom só reforça sem competir. */
+   vez); depois virou um tingimento de 8% — ainda lia como uma faixa
+   oliva/amarela perceptível demais no aparelho real (ex. Funk/MPB
+   marcados). Reduzido para 3%: o quadradinho amarelo (acima) já é o sinal
+   principal de seleção, este tom só reforça de leve, sem competir. */
 .multiselect-option.is-selected {
-  background: color-mix(in srgb, var(--rb-yellow) 8%, transparent);
+  background: color-mix(in srgb, var(--rb-yellow) 3%, transparent);
 }
 
 /* --- Pop-up de marcar/desmarcar (compartilhado entre playlists e gêneros —
@@ -981,12 +990,15 @@ button:disabled {
   overflow: hidden;
 }
 
+/* Padding vertical cortado de 12px pra 8px (~8px a menos de altura total no
+   header) na rodada de polimento — título e touch target do X preservados
+   (ver .multiselect-modal-header h3 e .multiselect-modal-close abaixo). */
 .multiselect-modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--rb-space-3);
-  padding: var(--rb-space-3) var(--rb-space-4);
+  padding: var(--rb-space-2) var(--rb-space-4);
   border-bottom: 1px solid var(--rb-border);
   flex-shrink: 0;
 }

@@ -54,7 +54,7 @@ const translations = {
     unknownOwner: "desconhecido",
     genericErrorPrefix: "Erro: {message}",
 
-    step3Title: "Escolha o ritmo",
+    step3Title: "Escolha seu ritmo",
     paceLabel: "Ritmo",
     modeAuto: "Automático (minha cadência)",
     modeFixed: "Ritmo fixo",
@@ -163,7 +163,7 @@ const translations = {
     unknownOwner: "unknown",
     genericErrorPrefix: "Error: {message}",
 
-    step3Title: "Choose the pace",
+    step3Title: "Choose your pace",
     paceLabel: "Pace",
     modeAuto: "Automatic (my cadence)",
     modeFixed: "Fixed pace",

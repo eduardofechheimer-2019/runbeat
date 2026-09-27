@@ -109,18 +109,25 @@
     <p id="pool-progress" class="rb-status" hidden></p>
   </section>
 
-  <section id="card-pace" class="step-card" data-step="pace" hidden>
-    <h2><span class="step-badge">3</span> <span class="step-title" data-i18n="step3Title">Escolha o ritmo</span> <span class="step-check" hidden>✓</span><span id="pace-summary" class="step-summary"></span></h2>
-    <label for="mode-select" class="label-emphasis" data-i18n="paceLabel">Ritmo</label>
-    <select id="mode-select">
+  <section id="card-pace" class="step-card rb-step-card" data-step="pace" hidden>
+    <div class="rb-flow" aria-hidden="true">
+      <span class="rb-flow-item is-done"><span class="rb-flow-num">✓</span></span>
+      <span class="rb-flow-sep"></span>
+      <span class="rb-flow-item is-done"><span class="rb-flow-num">✓</span></span>
+      <span class="rb-flow-sep"></span>
+      <span class="rb-flow-item is-active"><span class="rb-flow-num">3</span> <span data-i18n="paceLabel">Ritmo</span></span>
+    </div>
+    <h2><span class="step-badge">3</span> <span class="step-title rb-step-hint" data-i18n="step3Title">Escolha seu ritmo</span> <span class="step-check" hidden>✓</span><span id="pace-summary" class="step-summary"></span></h2>
+    <label for="mode-select" class="label-emphasis rb-redundant-label" data-i18n="paceLabel">Ritmo</label>
+    <select id="mode-select" class="rb-select">
       <option value="auto" data-i18n="modeAuto">Automático (minha cadência)</option>
       <option value="fixed" data-i18n="modeFixed">Ritmo fixo</option>
     </select>
     <div id="pace-group" class="nested-group" hidden>
-      <label for="pace-select" data-i18n="paceLevelLabel">Nível</label>
-      <select id="pace-select"></select>
+      <label for="pace-select" class="label-emphasis" data-i18n="paceLevelLabel">Nível</label>
+      <select id="pace-select" class="rb-select"></select>
     </div>
-    <button id="confirm-pace-btn" data-i18n="continueBtn">Continuar</button>
+    <button id="confirm-pace-btn" class="rb-cta" data-i18n="continueBtn">Continuar</button>
   </section>
 
   <section id="card-run" class="step-card" data-step="run" hidden>

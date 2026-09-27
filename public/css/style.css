@@ -781,6 +781,26 @@ input[type="text"]::placeholder {
   color: var(--muted);
 }
 
+/* Tela 3 (Ritmo) — "mode-select"/"pace-select" continuam <select> nativos
+   de propósito (ver nota da Etapa 3C): o picker do iOS não pode ser
+   estilizado nem substituído, só o campo fechado. Mesma receita de
+   superfície do multiselect fechado da Tela 2 (.multiselect-summary), mas
+   sem a seta customizada dele (::after) — aqui o <select> já desenha a
+   própria seta nativa, duplicar criaria duas setas. :focus-visible não
+   precisa de override dedicado (diferente de .rb-cta): sem box-shadow em
+   repouso aqui, o anel de foco global já vence sem disputa. */
+.rb-select {
+  width: 100%;
+  margin-top: 8px;
+  padding: var(--rb-space-4);
+  border-radius: var(--rb-radius-md);
+  border: 1px solid var(--rb-border);
+  background: var(--rb-surface-elevated);
+  color: var(--rb-text);
+  font-family: inherit;
+  font-size: var(--rb-text-base);
+}
+
 button {
   background: var(--accent);
   color: var(--accent-ink);

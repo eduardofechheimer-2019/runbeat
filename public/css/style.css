@@ -391,13 +391,39 @@ header h1 {
    do conteúdo (selects, botões, texto de progresso) fica escondido pra
    liberar a tela pra corrida. Um toque no título expande de volta (ver
    app.js), igual num cartão "completed" comum. */
+/* Etapa 4C (polimento do player) — os 3 cards condensados (Spotify/
+   Playlists/Ritmo) viram uma ÚNICA faixa horizontal compacta acima do
+   player, em vez de 3 linhas empilhadas. ":has()" liga o flex-row só
+   quando existe ao menos um filho condensed (ou seja, só na tela de
+   corrida) — fora disso (Telas 1–3, um card ativo por vez) o wrapper fica
+   display:block normal, cada card ocupando a largura toda como sempre,
+   zero mudança visual nelas. flex-wrap garante zero overflow horizontal
+   mesmo se o texto não couber numa linha só em 375px. */
+.rb-condensed-nav:has(.step-card[data-state="condensed"]) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--rb-space-1) var(--rb-space-4);
+  margin-bottom: var(--rb-space-3);
+}
+
 .step-card[data-state="condensed"] {
   /* Bem mais estreito que o cartão normal (padding/margin reduzidos) — uma
      vez que a corrida está em andamento, esses 3 primeiros passos só
      servem de lembrete do que foi escolhido; o espaço da tela importa mais
-     pros controles de corrida logo abaixo. */
-  margin-top: 8px;
-  padding: 8px 14px;
+     pros controles de corrida logo abaixo. Cada um agora é um item da
+     faixa horizontal (ver .rb-condensed-nav acima), não mais uma linha
+     própria — sem margem/padding vertical extra. */
+  margin-top: 0;
+  padding: 0;
+  /* Sem fundo/borda própria (sobrepõe a regra combinada completed+condensed
+     mais acima, que continua intocada pro estado "completed" das Telas
+     1–3): as 3 linhas então se fundem num único bloco discreto no topo do
+     player, em vez de 3 cartões empilhados competindo com o hero SPM/BPM
+     logo abaixo. */
+  background: transparent;
+  border-color: transparent;
 }
 
 .step-card[data-state="condensed"] > *:not(h2) {
@@ -406,20 +432,75 @@ header h1 {
 
 .step-card[data-state="condensed"] h2 {
   margin: 0;
-  gap: 8px;
-  /* Bem menor que o título normal (1.05rem) — condiz com o cartão mais
-     estreito acima. */
-  font-size: 0.8rem;
+  gap: 4px;
+  /* Bem menor que o título normal (1.05rem) — condiz com o item minúsculo
+     da faixa horizontal acima. */
+  font-size: 0.7rem;
 }
 
+/* Etapa 4B (player): só na tela de corrida, "condensed" ganha um tratamento
+   próprio — badge vira check amarelo (RunBeat Yellow, nunca verde) em vez do
+   cinza herdado da regra combinada completed+condensed acima (que continua
+   valendo, sem alteração, pro estado "completed" isolado das Telas 1–3 — só
+   sobrepomos aqui, com mais especificidade, a variante "condensed"). O "1"/
+   "2"/"3" literal vira invisível (font-size:0) e um "✓" aparece via ::before
+   — zero mudança de DOM/JS, só troca visual do mesmo elemento. */
 .step-card[data-state="condensed"] .step-badge {
-  width: 18px;
-  height: 18px;
-  font-size: 0.62rem;
+  width: 14px;
+  height: 14px;
+  font-size: 0;
+  background: var(--rb-yellow);
+  color: var(--rb-ink);
+  position: relative;
 }
 
-.step-card[data-state="condensed"] .step-summary {
-  font-size: 0.72rem;
+.step-card[data-state="condensed"] .step-badge::before {
+  content: "✓";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  font-weight: 900;
+}
+
+/* Etapa 4C: o texto completo do passo ("Conecte ao Spotify", "Escolha suas
+   playlists"...) fica grande demais pra um item de faixa horizontal —
+   escondido só neste contexto (".step-title" continua normal em qualquer
+   outro estado, inclusive reaberto a partir daqui) e substituído por
+   ".rb-condensed-label", uma palavra curta já usada em outro lugar do app
+   (mesma literal "Spotify"/"Playlists" do .rb-flow de cada card, mesma
+   chave i18n "paceLabel" do rótulo "Ritmo"/"Pace") — zero texto novo,
+   zero chave i18n nova. */
+.step-card[data-state="condensed"] .step-title {
+  display: none;
+}
+
+.rb-condensed-label {
+  display: none;
+}
+
+.step-card[data-state="condensed"] .rb-condensed-label {
+  display: inline;
+  color: var(--rb-text-secondary);
+}
+
+/* O resumo "(Conectado)"/"(1 Item)"/"(Automático)" continua no DOM (outros
+   estados dependem dele — ver .step-card[data-state="condensed"]
+   .step-summary:not(:empty) mais abaixo, que o TORNA visível fora deste
+   contexto específico) — aqui, na faixa compacta, some visualmente: o
+   pedido é que a linha mostre só "✓ Spotify", sem o parêntese ao lado.
+   Precisa da âncora ".rb-condensed-nav" pra ganhar mais especificidade que
+   a regra ".step-card[data-state=condensed] .step-summary:not(:empty)"
+   (mesmo seletor-base) que já existe mais abaixo no arquivo. */
+.rb-condensed-nav .step-card[data-state="condensed"] .step-summary:not(:empty) {
+  display: none;
+  /* Verde (--success) é a cor padrão herdada de ".step-summary" — mesmo
+     esta linha nunca aparecendo (display:none acima), mantém a cor
+     correta (RunBeat Yellow, nunca verde) coerente com o resto da tela de
+     corrida, caso o elemento volte a ser mostrado no futuro. */
+  color: var(--rb-yellow);
 }
 
 h2 {
@@ -1079,49 +1160,54 @@ button:disabled {
 
 .nested-group label:first-of-type { margin-top: 0; }
 
+/* Etapa técnica de preparação (workaround de iOS/Spotify, ver auditoria),
+   não o CTA permanente do player — hairline no topo + tamanho reduzido,
+   pra ler como um passo de bastidor, não como a ação principal da tela
+   (essa é o Play, mais abaixo). Continua ficando em destaque total
+   (.is-highlighted, JS) até o 1º sync funcionar — só a "linha de base"
+   ficou mais discreta. */
 .warmup-row {
-  margin-top: 8px;
+  margin-top: var(--rb-space-3);
+  padding-top: var(--rb-space-3);
+  border-top: 1px solid var(--rb-border);
 }
 
 .warmup-row[hidden] {
   display: none;
 }
 
-/* Antes do primeiro sync bem-sucedido, esse botão é a ação sugerida (em
-   destaque cheio) e o Play fica esmaecido ao lado (ver .play-pause-btn.is-
-   muted) — um empurrãozinho visual pra sincronizar primeiro, sem travar
-   quem preferir ir direto no Play. Assim que o sync funciona
-   ("Spotify ativo em..."), a ênfase inverte: esse botão volta a esse
-   estado neutro/esmaecido e o Play vira o destaque (ver warmUpSpotify()
-   em app.js). */
 .warmup-btn {
+  width: auto;
+  min-width: 200px;
+  margin: 0 auto;
+  display: block;
+  padding: var(--rb-space-2) var(--rb-space-4);
+  border-radius: var(--rb-radius-pill);
   background: transparent;
-  border: 1.5px solid var(--card-border);
-  color: var(--muted);
-  font-size: 1.05rem;
+  border: 1.5px solid var(--rb-border);
+  color: var(--rb-text-secondary);
+  font-size: var(--rb-text-sm);
 }
 
 .warmup-btn.is-highlighted {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-ink);
+  background: var(--rb-yellow);
+  border-color: var(--rb-yellow);
+  color: var(--rb-ink);
 }
 
 /* Explica de antemão pra onde o toque no botão leva e como voltar — o
    indicador nativo do iOS pra voltar ("‹ RunBeat" no topo da tela) é
    discreto, então essa instrução fica sempre visível, não só num status
-   passageiro, pra reduzir o risco de perder o usuário no Spotify. Curta e
-   com destaque de cor/negrito (não mais um texto corrido apagado) pra
-   "beliscar" o olhar antes do toque no botão. */
+   passageiro, pra reduzir o risco de perder o usuário no Spotify. */
 .warmup-hint {
-  margin: 8px 0 0;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  background: rgba(253, 220, 6, 0.12);
-  border: 1px solid rgba(253, 220, 6, 0.35);
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--accent);
+  margin: var(--rb-space-2) 0 0;
+  padding: var(--rb-space-2) var(--rb-space-3);
+  border-radius: var(--rb-radius-sm);
+  background: var(--rb-yellow-soft);
+  border: 1px solid var(--rb-yellow-soft-border);
+  font-size: var(--rb-text-sm);
+  font-weight: var(--rb-weight-semibold);
+  color: var(--rb-yellow);
   text-align: center;
 }
 
@@ -1130,14 +1216,14 @@ button:disabled {
    waitForFirstCadence em app.js), incentivando o usuário a começar a se
    mexer em vez de deixar a tela parada sem explicação. */
 .cadence-wait-hint {
-  margin: 0 0 16px;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  background: rgba(253, 220, 6, 0.12);
-  border: 1px solid rgba(253, 220, 6, 0.35);
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--accent);
+  margin: 0 0 var(--rb-space-4);
+  padding: var(--rb-space-2) var(--rb-space-3);
+  border-radius: var(--rb-radius-sm);
+  background: var(--rb-yellow-soft);
+  border: 1px solid var(--rb-yellow-soft-border);
+  font-size: var(--rb-text-base);
+  font-weight: var(--rb-weight-semibold);
+  color: var(--rb-yellow);
   text-align: center;
 }
 
@@ -1146,9 +1232,9 @@ button:disabled {
 }
 
 .warmup-status {
-  margin: 8px 0 0;
-  font-size: 0.95rem;
-  color: var(--muted);
+  margin: var(--rb-space-2) 0 0;
+  font-size: var(--rb-text-sm);
+  color: var(--rb-text-secondary);
   text-align: center;
 }
 
@@ -1161,12 +1247,12 @@ button:disabled {
   width: 100%;
   padding: 13px 14px;
   margin-top: 8px;
-  border-radius: var(--radius-sm);
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 0.95rem;
+  border-radius: var(--rb-radius-sm);
+  background: var(--rb-yellow);
+  color: var(--rb-ink);
+  font-family: var(--rb-font-display);
+  font-weight: var(--rb-weight-extrabold);
+  font-size: var(--rb-text-base);
   text-align: center;
   text-decoration: none;
   box-sizing: border-box;
@@ -1177,23 +1263,34 @@ button:disabled {
 }
 
 .error {
-  color: var(--danger);
+  color: var(--rb-danger);
+  font-weight: var(--rb-weight-semibold);
 }
 
+/* Etapa 4C: "Painel em tempo real:" não acrescentava informação (o hero
+   logo abaixo já é auto-explicativo) e ocupava altura vertical — some
+   visualmente aqui, mas o <p id="beat-visual-title"> continua no DOM
+   (app.js ainda controla seu atributo hidden normalmente, só não tem mais
+   efeito visível) caso alguma dependência futura precise dele. */
+#beat-visual-title {
+  display: none;
+}
+
+/* Etapa 4B (redesign do player) — hero SPM/BPM. Sem border/background
+   próprios de propósito (ver seção "não criar painel dentro do painel" do
+   pedido): #card-run já é .rb-step-card (superfície elevada única); este
+   bloco só organiza espaçamento por cima dela, não abre uma segunda caixa
+   aninhada. */
 .beat-visual {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  margin: 16px 0;
-  padding: 18px 16px;
-  border-radius: var(--radius);
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  gap: var(--rb-space-3);
+  margin: 0 0 var(--rb-space-2);
 }
 
 /* Painel principal: SPM (cadência real) à esquerda, BPM (batida da faixa)
-   à direita, com um traço vertical separando as duas colunas — layout de
-   "identidade visual" adotado do moodboard, no lugar da lista antiga. */
+   à direita, com o símbolo "↔" entre as duas — a prioridade #1 da tela
+   (ver hierarquia do pedido), números grandes o bastante pra ler correndo. */
 .beat-columns {
   display: flex;
   align-items: stretch;
@@ -1205,7 +1302,7 @@ button:disabled {
   display: flex;
   flex-direction: column;
   /* align-items fica no padrão (stretch) de propósito: os parágrafos
-     (label/sublabel/valor) precisam ocupar a largura toda da coluna pra
+     (label/valor/sublabel) precisam ocupar a largura toda da coluna pra
      o overflow:hidden+ellipsis do número (ver .beat-col-value) realmente
      cortar o texto em vez de vazar por cima da coluna vizinha —
      align-items:center faria cada um encolher pro tamanho do próprio
@@ -1216,54 +1313,66 @@ button:disabled {
 
 .beat-col-label {
   margin: 0;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: var(--fg);
-  letter-spacing: 0.02em;
+  font-weight: var(--rb-weight-bold);
+  font-size: var(--rb-text-xs);
+  color: var(--rb-text-secondary);
+  letter-spacing: var(--rb-tracking-wide);
+  text-transform: uppercase;
 }
 
 .beat-col-sublabel {
-  margin: 0 0 4px;
-  font-size: 0.68rem;
-  color: var(--muted);
+  margin: 2px 0 0;
+  font-size: var(--rb-text-xs);
+  color: var(--rb-text-secondary);
 }
 
-/* Número grande — mesmo espírito do pedido anterior de "só o número maior,
-   o texto continua do mesmo tamanho" (ver .beat-col-label/-sublabel acima). */
+/* Número hero — o maior número da aplicação (pedido explícito): SPM e BPM
+   com o mesmo peso visual, ordem label -> valor -> sublabel (valor no
+   meio, não mais por último) pra ler como um painel esportivo, não uma
+   ficha técnica. */
 .beat-col-value {
   margin: 0;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 2.1rem;
-  color: var(--accent);
-  line-height: 1.15;
+  font-family: var(--rb-font-display);
+  font-weight: var(--rb-weight-black);
+  font-size: clamp(2.4rem, 14vw, 2.9rem);
+  color: var(--rb-yellow);
+  line-height: var(--rb-leading-tight);
 }
 
+/* Símbolo discreto entre as duas métricas — só uma representação visual da
+   relação SPM<->BPM (ver pedido), sem nenhum cálculo/estado novo por trás:
+   é puramente o caractere "↔" já escrito no HTML (aria-hidden), sem
+   depender de lógica nenhuma. */
 .beat-col-divider {
-  width: 1px;
   flex-shrink: 0;
-  margin: 4px 0;
-  background: var(--card-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--rb-space-8);
+  color: var(--rb-text-secondary);
+  font-size: var(--rb-text-lg);
 }
 
-/* Linha extra abaixo das colunas ("Última medição"/"Alvo") — label à
-   esquerda, valor encostado na borda direita, separada por um traço fino. */
+/* Linha extra abaixo das colunas ("Última medição"/"Alvo") — secundária de
+   propósito (menor, mais apagada que o hero acima), separada só por um
+   hairline (ver princípio "spacing/hairlines, não caixas" do pedido). */
 .beat-extra-row {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid var(--card-border);
-  font-size: 0.9rem;
+  gap: var(--rb-space-2);
+  padding-top: var(--rb-space-3);
+  border-top: 1px solid var(--rb-border);
+  font-size: var(--rb-text-sm);
 }
 
 .beat-extra-row .run-info-label {
   flex-shrink: 0;
   white-space: nowrap;
+  color: var(--rb-text-secondary);
 }
 
 .beat-extra-row strong {
@@ -1272,21 +1381,24 @@ button:disabled {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--fg);
-  font-weight: 700;
+  color: var(--rb-text-secondary);
+  font-weight: var(--rb-weight-semibold);
 }
 
 .beat-visual[hidden] {
   display: none;
 }
 
+/* Prioridade #2 da hierarquia do player (ver pedido) — mais destaque que
+   antes: título maior/mais forte, toggle maior (alvo de toque de corrida),
+   ainda como hairline (border-top), não uma caixa própria. */
 .toggle-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--card-border);
+  gap: var(--rb-space-3);
+  padding-top: var(--rb-space-3);
+  border-top: 1px solid var(--rb-border);
   cursor: pointer;
 }
 
@@ -1294,9 +1406,10 @@ button:disabled {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  color: var(--fg);
-  font-size: 0.95rem;
-  font-weight: 700;
+  color: var(--rb-text);
+  font-family: var(--rb-font-display);
+  font-size: var(--rb-text-md);
+  font-weight: var(--rb-weight-bold);
   text-align: left;
 }
 
@@ -1307,20 +1420,22 @@ button:disabled {
   display: block;
   margin-top: 2px;
   font-style: italic;
-  font-weight: 400;
-  font-size: 0.85em;
-  color: var(--muted);
+  font-weight: var(--rb-weight-regular);
+  font-size: 0.8em;
+  color: var(--rb-text-secondary);
 }
 
 /* Interruptor estilo iOS no lugar do checkbox nativo — o <input> real fica
    invisível (opacity:0) por cima do "trilho" visual, então o toque/clique
    e o estado :checked continuam funcionando normalmente pro app.js, que só
-   lê/escuta o <input> como antes. */
+   lê/escuta o <input> como antes. Maior que a versão anterior (46x26 ->
+   54x30) — alvo de toque mais confortável durante a corrida, e mais
+   coerente com o destaque maior pedido pra essa feature. */
 .toggle-switch {
   position: relative;
   flex-shrink: 0;
-  width: 46px;
-  height: 26px;
+  width: 54px;
+  height: 30px;
 }
 
 .toggle-switch input {
@@ -1337,52 +1452,71 @@ button:disabled {
 .toggle-switch-track {
   position: absolute;
   inset: 0;
-  border-radius: 999px;
+  border-radius: var(--rb-radius-pill);
   background: rgba(255, 255, 255, 0.18);
-  transition: background 0.2s ease;
+  transition: background var(--rb-transition-normal);
 }
 
 .toggle-switch-knob {
   position: absolute;
   top: 3px;
   left: 3px;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: var(--fg);
+  background: var(--rb-text);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  transition: transform 0.2s ease;
+  transition: transform var(--rb-transition-normal);
 }
 
 .toggle-switch input:checked ~ .toggle-switch-track {
-  background: var(--accent);
+  background: var(--rb-yellow);
 }
 
 .toggle-switch input:checked ~ .toggle-switch-track .toggle-switch-knob {
-  transform: translateX(20px);
+  transform: translateX(24px);
 }
 
 .audio-status {
   margin: 0;
-  font-size: 0.8rem;
-  color: var(--muted);
+  font-size: var(--rb-text-xs);
+  color: var(--rb-text-secondary);
+}
+
+/* Etapa 4C: o toggle amarelo já comunica "ligado" sozinho — a confirmação
+   textual permanente ("Marca-Passo Sonoro ativo") era redundante, então
+   o estado normal/positivo fica oculto. app.js continua controlando
+   #audio-status exatamente como antes (hidden/textContent/classe) — só a
+   aparência muda aqui. ".audio-status-warn" continua com máxima
+   prioridade: precisa ficar visível sempre que houver problema real de
+   áudio, então esta regra NÃO tem ":not()" — ela é mais específica (duas
+   classes) que a de cima e sempre vence quando a classe de warning está
+   presente. */
+.audio-status:not(.audio-status-warn) {
+  display: none;
 }
 
 .audio-status.audio-status-warn {
-  color: var(--danger);
+  color: var(--rb-danger);
+  font-weight: var(--rb-weight-semibold);
 }
 
-/* Bloco "Tocando agora" no cartão de corrida — título + lista com
-   marcador. A cadência/batida-alvo mora no card do marca-passo (ver
-   .beat-visual), não aqui. */
+/* Bloco "Tocando agora" no cartão de corrida — prioridade #3 da hierarquia
+   (ver pedido): música em destaque, playlist/gênero secundários. Hairline
+   no topo em vez de caixa própria, mesmo princípio do resto do player. */
 .run-info {
-  margin: 4px 0 16px;
+  margin: var(--rb-space-3) 0 0;
+  padding-top: var(--rb-space-3);
+  border-top: 1px solid var(--rb-border);
 }
 
 .run-info-title {
-  margin: 12px 0 4px;
-  font-weight: 700;
-  color: var(--fg);
+  margin: 0 0 4px;
+  font-weight: var(--rb-weight-bold);
+  font-size: var(--rb-text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--rb-tracking-wide);
+  color: var(--rb-text-secondary);
 }
 
 .run-info-title:first-child {
@@ -1397,16 +1531,16 @@ button:disabled {
 
 .run-info-list li {
   margin: 2px 0;
-  color: var(--fg);
+  color: var(--rb-text);
 }
 
 .run-info-label {
-  color: var(--muted);
+  color: var(--rb-text-secondary);
 }
 
 .run-info-list strong {
-  color: var(--accent);
-  font-weight: 700;
+  color: var(--rb-text);
+  font-weight: var(--rb-weight-semibold);
 }
 
 /* Só o bloco "Tocando:" (não o card do marca-passo, que agora usa o
@@ -1425,10 +1559,44 @@ button:disabled {
   text-overflow: ellipsis;
 }
 
+/* Nome da música é o único dado realmente "principal" desta seção (ver
+   hierarquia do pedido) — tipografia de destaque (Poppins/display),
+   maior. ".rb-redundant-label" (mesma classe já usada na Tela 2 pra
+   esconder o rótulo "Playlists" redundante) esconde o rótulo "Música:" —
+   redundante aqui porque o próprio destaque tipográfico já deixa claro
+   que é a música. */
+/* ".run-info-list strong" (specificidade classe+tag) venceria a cor/peso
+   de uma classe sozinha — a segunda classe extra no seletor (mesmo
+   elemento, sem alterar o HTML) resolve isso sem precisar de !important. */
+.run-info-list strong.rb-now-playing-track {
+  /* overflow/text-overflow precisam estar aqui, não só no <li> pai: uma vez
+     virando display:block (era inline antes), o "…" de text-overflow do
+     <li> (".run-info .run-info-list li") não se aplica mais a um filho em
+     bloco que estoura — sem isso, o nome de uma música muito longa era
+     cortado sem reticências (corte abrupto, ainda sem vazar a página, mas
+     sem indicar visualmente que foi truncado). */
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--rb-font-display);
+  font-size: var(--rb-text-lg);
+  font-weight: var(--rb-weight-bold);
+  color: var(--rb-text);
+}
+
+/* Playlist/gênero — secundários de propósito, tipografia normal (Inter),
+   sem o peso/cor de destaque que ".run-info-list strong" dava antes. */
+.run-info-list strong.rb-now-playing-secondary {
+  color: var(--rb-text-secondary);
+  font-weight: var(--rb-weight-regular);
+}
+
 .now-playing-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--rb-space-2);
 }
 
 .now-playing-row .run-info-list {
@@ -1437,10 +1605,11 @@ button:disabled {
 }
 
 .now-playing-spotify-icon {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
-  fill: var(--success);
+  opacity: 0.7;
+  fill: var(--rb-success);
 }
 
 /* Cor de "SPM" (cadência real) no painel — compara com a batida da faixa
@@ -1449,25 +1618,27 @@ button:disabled {
    nenhuma (cor padrão do .beat-col-value) enquanto não há cadência real ou
    faixa tocando ainda. */
 #cadence-live-value.cadence-live-good {
-  color: var(--success);
+  color: var(--rb-success);
 }
 
 #cadence-live-value.cadence-live-warn {
-  color: var(--accent);
+  color: var(--rb-yellow);
 }
 
 #cadence-live-value.cadence-live-bad {
-  color: var(--danger);
+  color: var(--rb-danger);
 }
 
 /* --- Play/Pause --- */
 
+/* Prioridade #3 — Play/Pause é a ação principal, Anterior/Próxima são
+   secundários (menores, escuros) — ver hierarquia do pedido. */
 .playpause-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
-  margin-top: 20px;
+  gap: var(--rb-space-5);
+  margin-top: var(--rb-space-4);
 }
 
 /* Enquanto o "Spotify sync" está em destaque (ver .warmup-btn.is-
@@ -1475,23 +1646,26 @@ button:disabled {
    ação principal", sem travar quem preferir tocar direto nele. */
 .play-pause-btn.is-muted {
   background: transparent;
-  border: 1.5px solid var(--card-border);
-  color: var(--muted);
+  border: 1.5px solid var(--rb-border);
+  color: var(--rb-text-secondary);
+  box-shadow: none;
 }
 
 /* Assim que o Play vira a ação principal (sync do Spotify funcionou), pulsa
    até o primeiro toque — o Spotify já pode ter começado a tocar uma faixa
    de aquecimento sozinho, então precisa chamar atenção pra apertar logo,
    não só ficar destacado parado. Some assim que a corrida realmente começa
-   (ver startRun() em app.js). */
+   (ver startRun() em app.js). Cor migrada do literal antigo #fddc06 (pré-
+   design-system) pro token --rb-yellow atual (#ffd900) — mesmo papel,
+   fonte da cor unificada. */
 @keyframes play-pulse {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(253, 220, 6, 0.75);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--rb-yellow) 75%, transparent);
   }
   50% {
     transform: scale(1.08);
-    box-shadow: 0 0 0 22px rgba(253, 220, 6, 0);
+    box-shadow: 0 0 0 22px color-mix(in srgb, var(--rb-yellow) 0%, transparent);
   }
 }
 
@@ -1501,27 +1675,32 @@ button:disabled {
 
 .play-pause-btn {
   width: auto;
-  min-width: 140px;
-  padding: 16px 28px;
+  min-width: 156px;
+  padding: var(--rb-space-4) var(--rb-space-6);
   margin-top: 0;
-  border-radius: 999px;
-  font-size: 1.05rem;
+  border-radius: var(--rb-radius-pill);
+  font-size: var(--rb-text-md);
+  box-shadow: var(--rb-shadow-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: var(--rb-space-2);
+}
+
+.play-pause-btn:focus-visible {
+  box-shadow: var(--rb-focus-ring);
 }
 
 .side-btn {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   flex-shrink: 0;
   margin-top: 0;
   padding: 0;
   border-radius: 50%;
-  background: transparent;
-  border: 1px solid var(--card-border);
-  color: var(--fg);
+  background: var(--rb-surface-elevated);
+  border: 1px solid var(--rb-border);
+  color: var(--rb-text);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1529,14 +1708,23 @@ button:disabled {
 
 .side-btn[hidden] { display: none; }
 
+.side-btn:disabled {
+  opacity: var(--rb-disabled-opacity);
+}
+
 /* --- "Faixa Bônus" --- */
 
 /* De propósito sem caixa/destaque de fundo (ao contrário do .beat-visual
    acima) — item pedido pra ficar discreto na tela, não competir com os
    mostradores de cadência/música, que continuam sendo o principal durante
    a corrida. */
+/* Secundário de propósito (ver hierarquia do pedido): não deve competir
+   com SPM/BPM, Marca-Passo ou Play/Pause acima — hairline no topo (mesmo
+   princípio do resto da tela) em vez de destaque próprio. */
 .boost-section {
-  margin-top: 16px;
+  margin-top: var(--rb-space-3);
+  padding-top: var(--rb-space-3);
+  border-top: 1px solid var(--rb-border);
   /* Alinhado à esquerda (não mais centralizado) — segue o layout do
      moodboard, ícone+rótulo+"Trocar" partindo da margem esquerda do card. */
   text-align: left;
@@ -1553,21 +1741,21 @@ button:disabled {
 .boost-configure input[type="text"] {
   flex: 1;
   margin-top: 0;
-  padding: 9px 10px;
-  font-size: 0.78rem;
+  padding: var(--rb-space-2) var(--rb-space-3);
+  font-size: var(--rb-text-xs);
 }
 
 .boost-configure button {
   width: auto;
   flex-shrink: 0;
   margin-top: 0;
-  padding: 9px 14px;
+  padding: var(--rb-space-2) var(--rb-space-3);
   background: transparent;
-  border: 1px solid var(--card-border);
-  color: var(--muted);
+  border: 1px solid var(--rb-border);
+  color: var(--rb-text-secondary);
   font-family: inherit;
-  font-weight: 700;
-  font-size: 0.78rem;
+  font-weight: var(--rb-weight-semibold);
+  font-size: var(--rb-text-xs);
 }
 
 .boost-configured[hidden],
@@ -1589,16 +1777,21 @@ button:disabled {
    chapada) — o relevo é só CSS (gradiente + sombras), sem depender de
    nenhum arquivo de imagem. Pequeno de propósito: o rótulo ao lado já
    identifica a função, o botão não precisa competir por espaço na tela. */
+/* Vermelho deliberadamente igual ao de sempre (é a identidade da própria
+   Faixa Bônus) — a diferenciação do vermelho de "cadência ruim"
+   (.cadence-live-bad) vem do CONTEXTO/layout (botão físico 3D pequeno,
+   numa linha secundária isolada por hairline, longe do hero SPM/BPM), não
+   de mudar a cor — ver pedido. */
 .boost-btn {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   min-width: 0;
   flex-shrink: 0;
   padding: 0;
   margin-top: 0;
   border-radius: 50%;
   border: 2px solid #3a0e0b;
-  background: radial-gradient(circle at 35% 30%, #ff8c82 0%, var(--danger) 45%, #a8271f 100%);
+  background: radial-gradient(circle at 35% 30%, #ff8c82 0%, var(--rb-danger) 45%, #a8271f 100%);
   box-shadow:
     0 0 0 1.5px rgba(248, 81, 73, 0.35),
     0 2px 5px rgba(0, 0, 0, 0.5),
@@ -1623,10 +1816,10 @@ button:disabled {
 }
 
 .boost-btn-label {
-  color: var(--danger);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 0.85rem;
+  color: var(--rb-text-secondary);
+  font-family: var(--rb-font-display);
+  font-weight: var(--rb-weight-semibold);
+  font-size: var(--rb-text-sm);
 }
 
 .boost-change-btn {
@@ -1636,16 +1829,16 @@ button:disabled {
   padding: 4px;
   background: transparent;
   border: none;
-  color: var(--muted);
+  color: var(--rb-text-secondary);
   font-family: inherit;
-  font-weight: 400;
-  font-size: 0.72rem;
+  font-weight: var(--rb-weight-regular);
+  font-size: var(--rb-text-xs);
   text-decoration: underline;
 }
 
 .boost-section .error {
   margin: 4px 0 0;
-  font-size: 0.78rem;
+  font-size: var(--rb-text-xs);
 }
 
 .icon {

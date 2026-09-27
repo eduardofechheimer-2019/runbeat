@@ -74,6 +74,7 @@
     </div>
   </header>
 
+  <div class="rb-condensed-nav">
   <section id="card-connect" class="step-card rb-step-card" data-step="connect">
     <div class="rb-flow" aria-hidden="true">
       <span class="rb-flow-item is-active"><span class="rb-flow-num">1</span> Spotify</span>
@@ -82,7 +83,7 @@
       <span class="rb-flow-sep"></span>
       <span class="rb-flow-item"><span class="rb-flow-num">3</span></span>
     </div>
-    <h2><span class="step-badge">1</span> <span class="step-title" data-i18n="step1Title">Conecte ao Spotify</span> <span class="step-check" hidden>✓</span><span id="connect-summary" class="step-summary"></span></h2>
+    <h2><span class="step-badge">1</span> <span class="step-title" data-i18n="step1Title">Conecte ao Spotify</span> <span class="rb-condensed-label" aria-hidden="true">Spotify</span> <span class="step-check" hidden>✓</span><span id="connect-summary" class="step-summary"></span></h2>
     <p id="status" class="rb-status">Verificando login...</p>
     <button id="connect-btn" class="rb-cta" data-i18n="connectBtn">Conectar ao Spotify</button>
     <button id="disconnect-btn" class="rb-cta" hidden data-i18n="disconnectBtn">Desconectar do Spotify</button>
@@ -96,7 +97,7 @@
       <span class="rb-flow-sep"></span>
       <span class="rb-flow-item"><span class="rb-flow-num">3</span></span>
     </div>
-    <h2><span class="step-badge">2</span> <span class="step-title rb-step-hint" data-i18n="step2Title">Escolha suas playlists</span> <span class="step-check" hidden>✓</span><span id="library-summary" class="step-summary"></span></h2>
+    <h2><span class="step-badge">2</span> <span class="step-title rb-step-hint" data-i18n="step2Title">Escolha suas playlists</span> <span class="rb-condensed-label" aria-hidden="true">Playlists</span> <span class="step-check" hidden>✓</span><span id="library-summary" class="step-summary"></span></h2>
     <label class="label-emphasis rb-redundant-label">Playlists</label>
     <button type="button" id="playlist-summary-btn" class="multiselect-summary" aria-haspopup="dialog" data-i18n="selectPlaceholder">Selecione</button>
     <select id="playlist-select" multiple size="6" hidden></select>
@@ -117,7 +118,7 @@
       <span class="rb-flow-sep"></span>
       <span class="rb-flow-item is-active"><span class="rb-flow-num">3</span> <span data-i18n="paceLabel">Ritmo</span></span>
     </div>
-    <h2><span class="step-badge">3</span> <span class="step-title rb-step-hint" data-i18n="step3Title">Escolha seu ritmo</span> <span class="step-check" hidden>✓</span><span id="pace-summary" class="step-summary"></span></h2>
+    <h2><span class="step-badge">3</span> <span class="step-title rb-step-hint" data-i18n="step3Title">Escolha seu ritmo</span> <span class="rb-condensed-label" aria-hidden="true" data-i18n="paceLabel">Ritmo</span> <span class="step-check" hidden>✓</span><span id="pace-summary" class="step-summary"></span></h2>
     <label for="mode-select" class="label-emphasis rb-redundant-label" data-i18n="paceLabel">Ritmo</label>
     <select id="mode-select" class="rb-select">
       <option value="auto" data-i18n="modeAuto">Automático (minha cadência)</option>
@@ -129,28 +130,29 @@
     </div>
     <button id="confirm-pace-btn" class="rb-cta" data-i18n="continueBtn">Continuar</button>
   </section>
+  </div>
 
-  <section id="card-run" class="step-card" data-step="run" hidden>
+  <section id="card-run" class="step-card rb-step-card rb-run-card" data-step="run" hidden>
     <p id="beat-visual-title" class="run-info-title" hidden data-i18n="liveDashboardTitle">Painel em tempo real:</p>
     <div id="beat-visual" class="beat-visual" hidden>
       <div class="beat-columns">
         <div class="beat-col">
           <p class="beat-col-label">SPM</p>
-          <p class="beat-col-sublabel" data-i18n="spmSubLabel">Passos por Minuto</p>
           <p class="beat-col-value" id="cadence-live-value">—</p>
+          <p class="beat-col-sublabel" data-i18n="spmSubLabel">Passos por Minuto</p>
         </div>
-        <div class="beat-col-divider" aria-hidden="true"></div>
+        <div class="beat-col-divider" aria-hidden="true">↔</div>
         <div class="beat-col">
           <p class="beat-col-label">BPM</p>
-          <p class="beat-col-sublabel" data-i18n="bpmSubLabel">Batidas por Minuto</p>
           <p class="beat-col-value" id="beat-bpm-value">—</p>
+          <p class="beat-col-sublabel" data-i18n="bpmSubLabel">Batidas por Minuto</p>
         </div>
       </div>
       <div class="beat-extra-row">
         <span class="run-info-label" id="cadence-last-label" data-i18n="lastMeasurementLabel">Última medição (SPM):</span>
         <strong id="cadence-last-value">—</strong>
       </div>
-      <label class="toggle-row">
+      <label class="toggle-row rb-pulse-row">
         <span class="toggle-row-text">
           <span data-i18n="audiblePulseTitle">Marca-Passo Sonoro</span>
           <em class="checkbox-subtitle" data-i18n="audiblePulseSubtitle">Pode interferir no áudio do Spotify — faça o teste.</em>
@@ -163,18 +165,20 @@
       <p id="audio-status" class="audio-status" hidden></p>
     </div>
     <p id="cadence-wait-hint" class="cadence-wait-hint" hidden data-i18n="cadenceWaitHint">🏃 Pode começar a correr! Estamos esperando os primeiros passos.</p>
-    <div class="run-info">
+
+    <p id="run-error" class="error" hidden></p>
+
+    <div class="run-info rb-now-playing">
       <p class="run-info-title" data-i18n="nowPlayingTitle">Tocando:</p>
       <div class="now-playing-row">
         <ul class="run-info-list">
-          <li><span class="run-info-label" data-i18n="trackNameLabel">Música:</span> <strong id="track-name-value">—</strong></li>
-          <li><span class="run-info-label" data-i18n="trackSourceLabel">Playlist:</span> <strong id="track-source-value">—</strong></li>
-          <li id="track-genre-row" hidden><span class="run-info-label" data-i18n="trackGenreLabel">Gênero:</span> <strong id="track-genre-value">—</strong></li>
+          <li><span class="run-info-label rb-redundant-label" data-i18n="trackNameLabel">Música:</span> <strong id="track-name-value" class="rb-now-playing-track">—</strong></li>
+          <li><span class="run-info-label" data-i18n="trackSourceLabel">Playlist:</span> <strong id="track-source-value" class="rb-now-playing-secondary">—</strong></li>
+          <li id="track-genre-row" hidden><span class="run-info-label" data-i18n="trackGenreLabel">Gênero:</span> <strong id="track-genre-value" class="rb-now-playing-secondary">—</strong></li>
         </ul>
         <svg class="now-playing-spotify-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.59 14.41c-.19.3-.58.4-.89.21-2.44-1.49-5.51-1.83-9.12-1a.626.626 0 0 1-.28-1.22c3.95-.9 7.34-.51 10.07 1.13.31.19.4.58.22.88zm1.22-2.72c-.24.37-.73.49-1.1.26-2.79-1.72-7.05-2.22-10.35-1.21a.744.744 0 0 1-.94-.49.746.746 0 0 1 .49-.94c3.77-1.14 8.46-.59 11.65 1.37.37.23.49.73.25 1.01zm.11-2.83c-3.35-1.99-8.87-2.17-12.06-1.2a.895.895 0 1 1-.52-1.71c3.67-1.11 9.76-.9 13.61 1.39.5.29.65.94.36 1.44a1.04 1.04 0 0 1-1.39.08z"/></svg>
       </div>
     </div>
-    <p id="run-error" class="error" hidden></p>
 
     <div id="warmup-row" class="warmup-row">
       <button id="warmup-btn" class="warmup-btn is-highlighted" type="button" data-i18n="warmupBtn">Spotify sync (clique aqui)</button>

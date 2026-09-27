@@ -586,7 +586,19 @@ h2 {
    seguinte (idêntico ao "vazio artificial" que a Tela 1 evitou, só que
    ao contrário: aqui precisa SOBRAR margem, não faltar). */
 .rb-step-card:not([data-state="completed"]):not([data-state="condensed"]) h2:has(.rb-step-hint) {
-  margin-bottom: var(--rb-space-4);
+  /* 16px -> 8px: com o label redundante "Playlists" escondido (ver
+     .rb-redundant-label mais abaixo), o controle de seleção passa a ser o
+     próximo elemento visível — aproxima ele da orientação, como pedido. */
+  margin-bottom: var(--rb-space-2);
+}
+
+/* Label "Playlists" que antes ficava entre a orientação ("Escolha suas
+   playlists") e o seletor — virou redundante (a mesma palavra já aparece
+   no indicador de fluxo E na orientação logo acima). Sem id/data-i18n e
+   sem nenhuma referência em app.js (só estilizado via .label-emphasis em
+   CSS) — seguro esconder sem tocar no DOM. */
+.rb-redundant-label {
+  display: none;
 }
 
 /* O check verde isolado ficou redundante: o indicador de fluxo (.rb-flow
@@ -665,13 +677,15 @@ h2 {
   color: var(--rb-ink);
 }
 
-/* Etapa concluída = só o check (ver princípio da Tela 2/3 documentado
-   acima do arquivo) — classe pronta desde já; nenhuma etapa usa "is-done"
-   ainda nesta rodada (0 lógica JS nova), mas o CSS já sabe como
-   desenhá-la quando a Tela 2 passar a alternar essa classe. */
+/* Etapa concluída = só o check. Usa RunBeat Yellow (não --rb-success) de
+   propósito: essa é a cor de marca do indicador de fluxo (amarelo/cinza),
+   sem introduzir o verde de sucesso usado em outras partes do app — mudança
+   exclusiva desta classe, dentro de .rb-flow; --rb-success e o .step-check
+   "de verdade" (usado por finishStep() em app.js) continuam verdes,
+   inalterados em qualquer outro lugar. */
 .rb-flow-item.is-done .rb-flow-num {
-  border-color: var(--rb-success);
-  background: var(--rb-success);
+  border-color: var(--rb-yellow);
+  background: var(--rb-yellow);
   color: var(--rb-ink);
 }
 
@@ -833,15 +847,21 @@ button:disabled {
   line-height: 1;
 }
 
+/* Linha da lista — altura reduzida (14px -> 10px de padding vertical, ainda
+   dentro do alvo de toque confortável somado ao checkbox de 18px) e
+   divisória rebaixada de --card-border (--rb-border-strong, 18% opacidade)
+   pra --rb-border (10%): a separação passa a vir principalmente do
+   espaçamento/leveza do fundo, não de uma linha forte — tirando a
+   aparência de tabela sem virar cards soltos. */
 .multiselect-option {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  font-size: 0.95rem;
+  gap: var(--rb-space-3);
+  padding: var(--rb-space-3) var(--rb-space-4);
+  font-size: var(--rb-text-base);
   cursor: pointer;
-  border-bottom: 1px solid var(--card-border);
-  transition: background 0.15s ease, color 0.15s ease;
+  border-bottom: 1px solid var(--rb-border);
+  transition: background var(--rb-transition-fast);
 }
 
 .multiselect-option:last-child {
@@ -849,76 +869,88 @@ button:disabled {
 }
 
 /* Quadradinho de marcar/desmarcar ao lado de cada opção — além do destaque
-   de fundo na linha inteira, que continua tocável por completo. */
+   sutil de fundo na linha inteira, que continua tocável por completo.
+   Levemente menor que antes (20px -> 18px) e com contorno translúcido em
+   vez de --muted sólido, pra ler como "discreto" em repouso. */
 .multiselect-check {
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
-  border: 1.5px solid var(--muted);
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1.5px solid color-mix(in srgb, var(--rb-text-secondary) 55%, transparent);
+  background: transparent;
   position: relative;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background var(--rb-transition-fast), border-color var(--rb-transition-fast);
 }
 
+/* Estado selecionado invertido em relação à versão anterior: antes o
+   quadrado ficava escuro com o check amarelo; agora o quadrado vira
+   RunBeat Yellow (superfície + borda) com o check em --rb-ink (escuro) —
+   pedido explícito desta rodada, só o quadradinho muda de cor, não a
+   linha inteira. */
 .multiselect-option.is-selected .multiselect-check {
-  background: var(--accent-ink);
-  border-color: var(--accent-ink);
+  background: var(--rb-yellow);
+  border-color: var(--rb-yellow);
 }
 
 .multiselect-option.is-selected .multiselect-check::after {
   content: "";
   position: absolute;
-  left: 6px;
+  left: 5px;
   top: 2px;
   width: 5px;
-  height: 10px;
-  border: solid var(--accent);
+  height: 9px;
+  border: solid var(--rb-ink);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
 
+/* min-width:0 é o que evita que um nome de playlist/gênero muito comprido
+   (sem espaços) force a linha inteira a estourar a largura do modal — sem
+   isso, um item flex sozinho ignora o overflow do pai. */
 .multiselect-label {
   flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 6px;
+  overflow-wrap: anywhere;
 }
 
 /* Logo pequena na linha da Playlist RunBeat dentro do multiseletor (ver
    app.js) — mesmo tratamento de altura fixa/largura automática do logo do
    cabeçalho, só menor pra caber numa linha de lista. */
 .multiselect-option-logo {
-  height: 20px;
+  height: 18px;
   width: auto;
   flex-shrink: 0;
 }
 
 /* Nome "RunBeat" com a mesma tipografia do <h1> do cabeçalho (itálico,
    peso 900, fonte de destaque), só sem o contorno extra — que existe lá só
-   por causa do tamanho grande do título. */
+   por causa do tamanho grande do título. Cor de marca (--rb-yellow) fixa em
+   qualquer estado — sem precisar de override quando selecionado, já que a
+   linha não vira mais um bloco sólido amarelo (ver .is-selected abaixo). */
 .brand-runbeat {
-  color: var(--accent);
-  font-family: var(--font-display);
+  color: var(--rb-yellow);
+  font-family: var(--rb-font-display);
   font-style: italic;
   font-weight: 900;
   letter-spacing: -0.01em;
 }
 
+/* Antes a linha selecionada virava um bloco sólido --accent (pesado demais
+   pra uma lista, e ilegível com "Todos" marcando todas as linhas de uma
+   vez); agora é só um tingimento bem sutil — o quadradinho amarelo (acima)
+   já é o sinal principal de seleção, este tom só reforça sem competir. */
 .multiselect-option.is-selected {
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-weight: 700;
-}
-
-/* Sem isso o "RunBeat" (cor --accent) ficaria ilegível em cima do fundo
-   --accent da própria linha selecionada — mesmo contraste escuro do resto
-   do texto da linha nesse estado. */
-.multiselect-option.is-selected .brand-runbeat {
-  color: var(--accent-ink);
+  background: color-mix(in srgb, var(--rb-yellow) 8%, transparent);
 }
 
 /* --- Pop-up de marcar/desmarcar (compartilhado entre playlists e gêneros —
-   só um fica aberto por vez, ver app.js) --- */
+   só um fica aberto por vez, ver app.js). Superfície elevada com a mesma
+   receita de --rb-* usada em .rb-step-card (Etapa 3A/3B), pra ler como
+   parte do mesmo sistema visual em vez de um componente à parte. */
 .multiselect-modal {
   position: fixed;
   inset: 0;
@@ -926,8 +958,8 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(3, 6, 9, 0.72);
-  padding: 20px;
+  background: var(--rb-overlay);
+  padding: var(--rb-space-5);
 }
 
 .multiselect-modal[hidden] {
@@ -940,12 +972,12 @@ button:disabled {
   width: 100%;
   max-width: 400px;
   max-height: 80vh;
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius);
-  background: var(--card-bg);
+  border: 1px solid var(--rb-border);
+  border-radius: var(--rb-radius-lg);
+  background: color-mix(in srgb, var(--rb-surface-elevated) 88%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--rb-shadow-lg);
   overflow: hidden;
 }
 
@@ -953,44 +985,64 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 16px 18px;
-  border-bottom: 1px solid var(--card-border);
+  gap: var(--rb-space-3);
+  padding: var(--rb-space-3) var(--rb-space-4);
+  border-bottom: 1px solid var(--rb-border);
   flex-shrink: 0;
 }
 
 .multiselect-modal-header h3 {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--rb-font-display);
   font-weight: 800;
-  font-size: 1rem;
+  font-size: var(--rb-text-base);
 }
 
+/* Alvo de toque de ~44px (acessibilidade), mas com aparência discreta:
+   sem preenchimento, borda sutil translúcida — a área clicável cresce sem
+   o botão "pesar" visualmente. Hover/pressed reaproveitam o vocabulário já
+   existente (color-mix translúcido / "button:active{scale(0.98)}" global);
+   :focus-visible herda o anel amarelo global (":focus-visible" no topo do
+   arquivo) automaticamente, por não ter box-shadow de repouso que o vença. */
 .multiselect-modal-close {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
   padding: 0;
   margin-top: 0;
   border-radius: 50%;
   background: transparent;
-  border: 1px solid var(--card-border);
-  color: var(--muted);
+  border: 1px solid var(--rb-border);
+  color: var(--rb-text-secondary);
   font-size: 0.85rem;
+  transition: background var(--rb-transition-fast);
+}
+
+.multiselect-modal-close:hover {
+  background: color-mix(in srgb, var(--rb-text) 8%, transparent);
 }
 
 .multiselect-modal .multiselect-panel {
   flex: 1;
   overflow-y: auto;
-  background: var(--input-bg);
+  -webkit-overflow-scrolling: touch;
+  background: color-mix(in srgb, var(--rb-bg) 90%, transparent);
 }
 
+/* Peso visual reduzido (rodada de refinamento da Tela 2): tom de fundo
+   mais discreto (8% -> 5%) e borda lateral mais fina (3px -> 2px) — a
+   assinatura amarela lateral continua (sinaliza "isso pertence à playlist
+   RunBeat"), mas sem ler como um sub-card grande dentro do card
+   principal. Continua reutilizado só aqui (bloco de gêneros). */
 .nested-group {
-  margin-top: 14px;
-  padding: 12px 14px;
-  border-left: 3px solid var(--accent);
-  background: rgba(253, 220, 6, 0.08);
-  border-radius: 0 10px 10px 0;
+  margin-top: var(--rb-space-3);
+  padding: var(--rb-space-3);
+  border-left: 2px solid var(--rb-yellow);
+  /* 5% -> 2%: ainda lia como um fundo oliva/amarelado perceptível demais
+     no aparelho real — a barra lateral já comunica sozinha a relação com
+     a RunBeat, o fundo só precisa de uma tonalidade quase imperceptível. */
+  background: color-mix(in srgb, var(--rb-yellow) 2%, transparent);
+  border-radius: 0 var(--rb-radius-sm) var(--rb-radius-sm) 0;
 }
 
 .nested-group label:first-of-type { margin-top: 0; }

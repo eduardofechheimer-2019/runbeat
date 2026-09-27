@@ -532,7 +532,7 @@ async function loadPlaylistOptions() {
   // herdar seleção de uma visita anterior.
   playlistExclusivity.sync();
   updateCatalogGenreVisibility();
-  updateMultiselectSummary(el.playlistSelect, el.playlistSummaryBtn);
+  updateMultiselectSummary(el.playlistSelect, el.playlistSummaryBtn, "onePlaylist", "nPlaylists");
   updateBuildPoolAvailability();
 }
 
@@ -646,10 +646,13 @@ function syncMultiselectSelection(selectEl, panelEl) {
 }
 
 // Campo fechado por padrão — o resumo mostra "Selecione" sem nada marcado,
-// ou a contagem depois de qualquer seleção.
-function updateMultiselectSummary(selectEl, summaryBtnEl) {
+// ou a contagem depois de qualquer seleção. `oneKey`/`nKey`: chaves i18n
+// pro singular/plural — cada chamador passa o par certo ("onePlaylist"/
+// "nPlaylists" ou "oneGenre"/"nGenres") pra o resumo ficar contextual
+// ("1 playlist"/"2 gêneros") em vez do "Item(s)" genérico de antes.
+function updateMultiselectSummary(selectEl, summaryBtnEl, oneKey, nKey) {
   const n = selectEl.selectedOptions.length;
-  summaryBtnEl.textContent = n === 0 ? t("selectPlaceholder") : t(n === 1 ? "oneItem" : "nItems", { n });
+  summaryBtnEl.textContent = n === 0 ? t("selectPlaceholder") : t(n === 1 ? oneKey : nKey, { n });
   summaryBtnEl.classList.toggle("is-placeholder", n === 0);
 }
 
@@ -717,7 +720,7 @@ async function populateCatalogGenreOptions() {
   // Idem: nenhum gênero começa marcado — só libera "Carregar BPM" depois
   // de uma escolha explícita (específica ou "Todos").
   genreExclusivity.sync();
-  updateMultiselectSummary(el.catalogGenreSelect, el.catalogGenreSummaryBtn);
+  updateMultiselectSummary(el.catalogGenreSelect, el.catalogGenreSummaryBtn, "oneGenre", "nGenres");
   updateBuildPoolAvailability();
 }
 
@@ -1263,8 +1266,8 @@ function refreshDynamicTexts() {
     if (allOpt) allOpt.textContent = t("allOption");
   }
 
-  updateMultiselectSummary(el.playlistSelect, el.playlistSummaryBtn);
-  updateMultiselectSummary(el.catalogGenreSelect, el.catalogGenreSummaryBtn);
+  updateMultiselectSummary(el.playlistSelect, el.playlistSummaryBtn, "onePlaylist", "nPlaylists");
+  updateMultiselectSummary(el.catalogGenreSelect, el.catalogGenreSummaryBtn, "oneGenre", "nGenres");
   updateLibrarySummary();
   updatePaceSummary();
   if (runActive) updateCadenceDisplay();
@@ -1314,13 +1317,13 @@ async function init() {
     playlistExclusivity.enforce();
     updateCatalogGenreVisibility();
     refreshMultiselectModalIfOpen(el.playlistSelect);
-    updateMultiselectSummary(el.playlistSelect, el.playlistSummaryBtn);
+    updateMultiselectSummary(el.playlistSelect, el.playlistSummaryBtn, "onePlaylist", "nPlaylists");
     updateBuildPoolAvailability();
   });
   el.catalogGenreSelect.addEventListener("change", () => {
     genreExclusivity.enforce();
     refreshMultiselectModalIfOpen(el.catalogGenreSelect);
-    updateMultiselectSummary(el.catalogGenreSelect, el.catalogGenreSummaryBtn);
+    updateMultiselectSummary(el.catalogGenreSelect, el.catalogGenreSummaryBtn, "oneGenre", "nGenres");
     updateBuildPoolAvailability();
   });
 

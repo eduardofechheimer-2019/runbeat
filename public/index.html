@@ -230,18 +230,19 @@
 <div id="onboarding-overlay" class="onboarding-overlay" hidden>
   <div class="onboarding-card">
     <header class="onboarding-header">
-      <div class="onboarding-header-row">
-        <div class="onboarding-brand">
-          <img src="img/logo-mark.png" alt="" class="onboarding-brand-logo" />
-          <span class="onboarding-brand-name">RunBeat</span>
-        </div>
-        <span class="onboarding-progress" id="onboarding-progress" aria-hidden="true">1 / 4</span>
+      <div class="onboarding-brand">
+        <img src="img/logo-mark.png" alt="" class="onboarding-brand-logo" />
+        <span class="onboarding-brand-name">RunBeat</span>
       </div>
-      <div class="onboarding-dots">
-        <span class="onboarding-dot" data-dot="1"></span>
-        <span class="onboarding-dot" data-dot="2"></span>
-        <span class="onboarding-dot" data-dot="3"></span>
-        <span class="onboarding-dot" data-dot="4"></span>
+      <p class="onboarding-eyebrow" data-i18n="onboardingTutorialLabel">Tutorial</p>
+      <div class="onboarding-progress-row">
+        <span class="onboarding-progress" id="onboarding-progress" aria-hidden="true">1 / 4</span>
+        <div class="onboarding-dots">
+          <span class="onboarding-dot" data-dot="1"></span>
+          <span class="onboarding-dot" data-dot="2"></span>
+          <span class="onboarding-dot" data-dot="3"></span>
+          <span class="onboarding-dot" data-dot="4"></span>
+        </div>
       </div>
     </header>
 
@@ -252,77 +253,77 @@
         <div class="onboarding-visual" aria-hidden="true">
           <img src="img/onboarding-runner.png" alt="" class="onboarding-runner-img" />
         </div>
-        <div class="beat-columns onboarding-metric-row">
-          <div class="beat-col">
-            <p class="beat-col-label">SPM</p>
-            <p class="beat-col-value">172</p>
-            <p class="beat-col-sublabel" data-i18n="spmSubLabel">Passos por Minuto</p>
+        <div class="onboarding-sync">
+          <div class="onboarding-sync-side">
+            <span class="onboarding-sync-value">172</span>
+            <span class="onboarding-sync-unit">SPM</span>
+            <span class="onboarding-sync-caption" data-i18n="onboardingSpmCaption">Passos por minuto</span>
           </div>
-          <div class="beat-col-divider" aria-hidden="true">↔</div>
-          <div class="beat-col">
-            <p class="beat-col-label">BPM</p>
-            <p class="beat-col-value">174</p>
-            <p class="beat-col-sublabel" data-i18n="bpmSubLabel">Batidas por Minuto</p>
+          <span class="onboarding-sync-arrow" aria-hidden="true">↔</span>
+          <div class="onboarding-sync-side onboarding-sync-side-bpm">
+            <span class="onboarding-sync-value">174</span>
+            <span class="onboarding-sync-unit">BPM</span>
+            <span class="onboarding-sync-caption" data-i18n="onboardingBpmCaption">Batidas por minuto</span>
           </div>
         </div>
       </div>
 
       <div class="onboarding-step" data-step="2" hidden>
         <h3 class="onboarding-title" data-i18n-html="onboardingTitle2">Escolha o que<br>quer <span class="onboarding-highlight">ouvir.</span></h3>
-        <div class="onboarding-cards">
-          <div class="onboarding-mini-card">
-            <div class="onboarding-mini-card-header">
-              <span class="onboarding-mini-badge onboarding-mini-badge-spotify">
-                <svg class="onboarding-mini-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.59 14.41c-.19.3-.58.4-.89.21-2.44-1.49-5.51-1.83-9.12-1a.626.626 0 0 1-.28-1.22c3.95-.9 7.34-.51 10.07 1.13.31.19.4.58.22.88zm1.22-2.72c-.24.37-.73.49-1.1.26-2.79-1.72-7.05-2.22-10.35-1.21a.744.744 0 0 1-.94-.49.746.746 0 0 1 .49-.94c3.77-1.14 8.46-.59 11.65 1.37.37.23.49.73.25 1.01zm.11-2.83c-3.35-1.99-8.87-2.17-12.06-1.2a.895.895 0 1 1-.52-1.71c3.67-1.11 9.76-.9 13.61 1.39.5.29.65.94.36 1.44a1.04 1.04 0 0 1-1.39.08z"/></svg>
+        <div class="onboarding-options">
+          <div class="onboarding-option">
+            <div class="onboarding-option-head">
+              <span class="onboarding-option-badge onboarding-option-badge-spotify">
+                <svg class="onboarding-option-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.59 14.41c-.19.3-.58.4-.89.21-2.44-1.49-5.51-1.83-9.12-1a.626.626 0 0 1-.28-1.22c3.95-.9 7.34-.51 10.07 1.13.31.19.4.58.22.88zm1.22-2.72c-.24.37-.73.49-1.1.26-2.79-1.72-7.05-2.22-10.35-1.21a.744.744 0 0 1-.94-.49.746.746 0 0 1 .49-.94c3.77-1.14 8.46-.59 11.65 1.37.37.23.49.73.25 1.01zm.11-2.83c-3.35-1.99-8.87-2.17-12.06-1.2a.895.895 0 1 1-.52-1.71c3.67-1.11 9.76-.9 13.61 1.39.5.29.65.94.36 1.44a1.04 1.04 0 0 1-1.39.08z"/></svg>
               </span>
-              <p class="onboarding-mini-card-title" data-i18n="onboardingCardYourPlaylists">Suas playlists</p>
-              <svg class="onboarding-mini-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+              <p class="onboarding-option-title" data-i18n="onboardingCardYourPlaylists">Suas playlists</p>
+              <svg class="onboarding-option-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5.5l6.5 6.5L9 18.5" /></svg>
             </div>
-            <div class="onboarding-mini-thumbs" aria-hidden="true"><span></span><span></span><span></span><span class="onboarding-mini-more">···</span></div>
+            <div class="onboarding-option-covers" aria-hidden="true"><span></span><span></span><span></span><span class="onboarding-option-more">•••</span></div>
           </div>
-          <div class="onboarding-mini-card onboarding-mini-card-brand">
-            <div class="onboarding-mini-card-header">
-              <span class="onboarding-mini-badge onboarding-mini-badge-brand">
-                <span class="onboarding-mini-badge-icon" aria-hidden="true"></span>
-              </span>
-              <p class="onboarding-mini-card-title" data-i18n="onboardingCardRunbeatPlaylist">RunBeat</p>
-              <svg class="onboarding-mini-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+          <div class="onboarding-option onboarding-option-brand">
+            <div class="onboarding-option-head">
+              <img src="img/logo-mark.png" alt="" class="onboarding-option-logo" />
+              <p class="onboarding-option-title" data-i18n="onboardingCardRunbeatPlaylist">Gêneros RunBeat</p>
+              <svg class="onboarding-option-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5.5l6.5 6.5L9 18.5" /></svg>
             </div>
-            <div class="onboarding-mini-chips" aria-hidden="true"><span>Rock</span><span>Funk</span><span>MPB</span><span class="onboarding-mini-chip-more">···</span></div>
+            <div class="onboarding-option-chips" aria-hidden="true"><span>Rock</span><span>Funk</span><span>MPB</span><span class="onboarding-option-more">•••</span></div>
           </div>
         </div>
       </div>
 
       <div class="onboarding-step" data-step="3" hidden>
         <h3 class="onboarding-title" data-i18n-html="onboardingTitle3">Corra do<br><span class="onboarding-highlight">seu jeito.</span></h3>
-        <div class="onboarding-cards">
-          <div class="onboarding-mini-card onboarding-mini-card-selected">
-            <div class="onboarding-mini-card-top">
-              <span class="onboarding-mini-badge onboarding-mini-badge-selected">
-                <svg class="onboarding-mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h3l2-7 4 14 2-7h7" /></svg>
-              </span>
-              <span class="onboarding-mini-radio onboarding-mini-radio-selected" aria-hidden="true"></span>
+        <div class="onboarding-options onboarding-options-equal">
+          <div class="onboarding-option onboarding-option-selected">
+            <div class="onboarding-option-head">
+              <svg class="onboarding-option-glyph onboarding-option-glyph-yellow" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M4 13v6M9 9v14M14 4v24M19 9v14M24 12v8M28 14.5v3" /></svg>
+              <span class="onboarding-option-radio onboarding-option-radio-selected" aria-hidden="true"></span>
             </div>
-            <p class="onboarding-mini-card-title" data-i18n="onboardingAutoLabel">Automático</p>
-            <p class="onboarding-mini-card-body" data-i18n="onboardingAutoBody">A música acompanha seus passos.</p>
+            <div class="onboarding-option-text">
+              <p class="onboarding-option-title" data-i18n="onboardingAutoLabel">Automático</p>
+              <p class="onboarding-option-body" data-i18n="onboardingAutoBody">A música acompanha seus passos.</p>
+            </div>
           </div>
-          <div class="onboarding-mini-card">
-            <div class="onboarding-mini-card-top">
-              <span class="onboarding-mini-badge">
-                <svg class="onboarding-mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 5v14M11 8v8M17 5v14" /></svg>
-              </span>
-              <span class="onboarding-mini-radio" aria-hidden="true"></span>
+          <div class="onboarding-option">
+            <div class="onboarding-option-head">
+              <svg class="onboarding-option-glyph" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><rect x="4" y="19" width="6" height="9" rx="1.5" /><rect x="13" y="12" width="6" height="16" rx="1.5" /><rect x="22" y="4" width="6" height="24" rx="1.5" /></svg>
+              <span class="onboarding-option-radio" aria-hidden="true"></span>
             </div>
-            <p class="onboarding-mini-card-title" data-i18n="modeFixed">Ritmo fixo</p>
-            <p class="onboarding-mini-card-body" data-i18n="onboardingFixedBody">Você escolhe o ritmo.</p>
+            <div class="onboarding-option-text">
+              <p class="onboarding-option-title" data-i18n="modeFixed">Ritmo fixo</p>
+              <p class="onboarding-option-body" data-i18n="onboardingFixedBody">Você escolhe o ritmo.</p>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="onboarding-step" data-step="4" hidden>
-        <p class="onboarding-title onboarding-title-phrase" data-i18n-html="onboardingPhraseA">A <span class="onboarding-highlight">batida</span> encontra o seu <span class="onboarding-highlight">passo</span>.</p>
-        <p class="onboarding-or" data-i18n="onboardingOr">ou</p>
-        <p class="onboarding-title onboarding-title-phrase" data-i18n-html="onboardingPhraseB">O seu <span class="onboarding-highlight">passo</span> encontra a <span class="onboarding-highlight">batida</span>.</p>
+        <div class="onboarding-phrases">
+          <p class="onboarding-title onboarding-title-phrase" data-i18n-html="onboardingPhraseA">A <span class="onboarding-highlight">batida</span> encontra o seu <span class="onboarding-highlight">passo</span>.</p>
+          <p class="onboarding-or"><span data-i18n="onboardingOr">ou</span></p>
+          <p class="onboarding-title onboarding-title-phrase" data-i18n-html="onboardingPhraseB">O seu <span class="onboarding-highlight">passo</span> encontra a <span class="onboarding-highlight">batida</span>.</p>
+        </div>
 
         <div class="onboarding-hero-circles" aria-hidden="true">
           <div class="onboarding-hero-circle onboarding-hero-circle-spm">
@@ -336,17 +337,13 @@
           </div>
         </div>
 
-        <div class="onboarding-pulse-row">
-          <span class="onboarding-mini-badge onboarding-mini-badge-selected">
-            <svg class="onboarding-mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M16 8a5 5 0 0 1 0 8"/></svg>
-          </span>
-          <span class="onboarding-pulse-text">
-            <strong data-i18n="audiblePulseTitle">Marca-Passo Sonoro</strong>
-            <em data-i18n="onboardingPulseTeaser">Sinta a batida enquanto corre.</em>
-          </span>
-          <span class="onboarding-toggle-decorative" aria-hidden="true">
-            <span class="toggle-switch-track"><span class="toggle-switch-knob"></span></span>
-          </span>
+        <div class="onboarding-option onboarding-pulse-card">
+          <svg class="onboarding-option-glyph onboarding-option-glyph-yellow" viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M4 12.5h5L16 6v20l-7-6.5H4z" /><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" d="M20.5 11.5a6.5 6.5 0 0 1 0 9M24.5 7.5a12 12 0 0 1 0 17" /></svg>
+          <div class="onboarding-option-text">
+            <p class="onboarding-option-title" data-i18n="audiblePulseTitle">Marca-Passo Sonoro</p>
+            <p class="onboarding-option-body" data-i18n="onboardingPulseTeaser">Sinta a batida enquanto corre.</p>
+          </div>
+          <span class="onboarding-toggle-decorative" aria-hidden="true"><span class="onboarding-toggle-knob"></span></span>
         </div>
       </div>
 

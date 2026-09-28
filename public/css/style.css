@@ -1882,17 +1882,20 @@ button:disabled {
   to { opacity: 1; }
 }
 
-/* --- Onboarding --- */
-
+/* --- Onboarding (primeiro acesso) ---
+   Fullscreen mobile-first, própria tela (não um modal sobre o app) —
+   é a primeira coisa que um usuário novo vê, antes até do cartão
+   "Conecte ao Spotify". Reaproveita ao máximo componentes/tokens já
+   existentes (.beat-columns do hero do player, .rb-cta, .toggle-switch,
+   o SVG da Spotify) em vez de inventar uma segunda linguagem visual. */
 .onboarding-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(3, 6, 9, 0.72);
+  background: var(--rb-bg);
+  z-index: 2000;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  z-index: 1000;
+  flex-direction: column;
+  padding: max(var(--rb-space-5), env(safe-area-inset-top)) var(--rb-space-5) max(var(--rb-space-5), env(safe-area-inset-bottom));
 }
 
 .onboarding-overlay[hidden] {
@@ -1900,101 +1903,541 @@ button:disabled {
 }
 
 .onboarding-card {
-  background: var(--card-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius);
-  padding: 28px 24px 20px;
-  max-width: 360px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  max-width: 420px;
   width: 100%;
-  text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  margin: 0 auto;
 }
 
-.onboarding-step[hidden] {
-  display: none;
+.onboarding-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rb-space-3);
 }
 
-.onboarding-emoji {
-  font-size: 2.2rem;
-  margin: 0 0 8px;
+.onboarding-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.onboarding-step h3 {
-  margin: 0 0 8px;
-  font-size: 1.15rem;
-  font-family: var(--font-display);
-  font-weight: 800;
+.onboarding-brand-logo {
+  width: 22px;
+  height: 22px;
 }
 
-.onboarding-step p {
-  color: var(--muted);
-  font-size: 0.92rem;
-  line-height: 1.5;
-  margin: 0;
+.onboarding-brand-name {
+  font-family: var(--rb-font-display);
+  font-style: italic;
+  font-weight: var(--rb-weight-black);
+  color: var(--rb-yellow);
+  font-size: var(--rb-text-md);
 }
 
-.onboarding-step strong {
-  color: var(--fg);
+.onboarding-progress {
+  font-size: var(--rb-text-xs);
+  font-weight: var(--rb-weight-semibold);
+  color: var(--rb-text-secondary);
 }
 
 .onboarding-dots {
   display: flex;
   justify-content: center;
   gap: 6px;
-  margin: 20px 0 16px;
+  margin: var(--rb-space-3) 0 0;
 }
 
 .onboarding-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--card-border);
-  transition: all 0.2s ease;
+  background: var(--rb-border-strong);
+  transition: all var(--rb-transition-normal);
 }
 
 .onboarding-dot.active {
-  background: var(--accent);
+  background: var(--rb-yellow);
   width: 18px;
   border-radius: 3px;
 }
 
-.onboarding-actions {
+.onboarding-steps {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow-y: auto;
+}
+
+/* Prancha de referência aprovada: títulos/cards predominantemente à
+   esquerda, não centralizados — só elementos pontuais (o divisor "ou" da
+   Tela 4, os dots do header) recentralizam a si mesmos. */
+.onboarding-step {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+  width: 100%;
+  gap: var(--rb-space-4);
+  margin: auto 0;
+  padding: var(--rb-space-4) 0;
+}
+
+.onboarding-step[hidden] {
+  display: none;
+}
+
+/* Transição entre slides (fade + leve deslocamento horizontal, ~250ms) —
+   dispara sozinha sempre que o atributo "hidden" sai (display:none vira
+   flex), sem precisar de classe/JS extra: onboarding.js só alterna
+   "hidden" como já fazia, a animação é 100% CSS. */
+@keyframes onboarding-step-in {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.onboarding-step:not([hidden]) {
+  animation: onboarding-step-in 0.25s ease-out;
+}
+
+.onboarding-title {
+  margin: 0;
+  font-family: var(--rb-font-display);
+  font-weight: var(--rb-weight-extrabold);
+  font-size: var(--rb-text-2xl);
+  line-height: var(--rb-leading-tight);
+  color: var(--rb-text);
+}
+
+.onboarding-highlight {
+  color: var(--rb-yellow);
+}
+
+/* Tela 1 — asset gráfico entregue (foto/CGI da corredora com fundo
+   transparente que funde na cor de fundo do app), único elemento visual
+   externo do onboarding. Sangra até a borda da tela (margin negativa
+   cancelando o padding do card) pra ganhar presença de "hero" — o resto
+   (título, SPM/BPM) continua 100% HTML/CSS. */
+.onboarding-visual {
+  margin: 0 calc(var(--rb-space-5) * -1);
+  height: clamp(140px, 30vh, 220px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.onboarding-runner-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Reaproveita .beat-columns/.beat-col/.beat-col-value/.beat-col-sublabel do
+   hero do player (Tela 1) — mesmos número/legenda por coluna que o usuário
+   vai ver de verdade durante a corrida, cada coluna autocentrada (mesmo
+   tratamento da prancha), largura total como no player real. */
+.onboarding-metric-row {
+  margin: 0;
+  gap: var(--rb-space-3);
+}
+
+.onboarding-metric-row .beat-col-value {
+  font-size: clamp(2rem, 12vw, 2.4rem);
+}
+
+/* Tela 2/3 — cartões ilustrativos empilhados (largura praticamente total),
+   não mais lado a lado. Mesma receita de superfície elevada do resto do
+   app (.rb-step-card/.multiselect-modal-card), não uma linguagem nova. */
+.onboarding-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rb-space-3);
+  width: 100%;
+}
+
+.onboarding-mini-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rb-space-3);
+  width: 100%;
+  padding: var(--rb-space-4);
+  border-radius: var(--rb-radius-lg);
+  border: 1px solid var(--rb-border);
+  background: color-mix(in srgb, var(--rb-surface-elevated) 88%, transparent);
+  text-align: left;
+}
+
+/* Card da RunBeat (Tela 2) ganha borda amarela — reforça que é a opção
+   própria do RunBeat, mesmo princípio da barra amarela do ".nested-group"
+   já usado na Tela 2 real. */
+.onboarding-mini-card-brand {
+  border-color: var(--rb-yellow);
+}
+
+.onboarding-mini-card-selected {
+  border-color: var(--rb-yellow);
+  background: color-mix(in srgb, var(--rb-yellow) 6%, transparent);
+}
+
+/* Linha de cabeçalho do card (Tela 2): badge + título + chevron, todos na
+   mesma linha horizontal — hierarquia da prancha. */
+.onboarding-mini-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--rb-space-3);
+}
+
+/* Linha de topo do card (Tela 3): badge à esquerda, radio ilustrativo à
+   direita — título/corpo ficam abaixo, ocupando a largura toda. */
+.onboarding-mini-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+}
+
+.onboarding-mini-badge {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--rb-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--rb-surface);
+  border: 1px solid var(--rb-border);
+}
+
+.onboarding-mini-badge-spotify {
+  border-radius: 50%;
+  border-color: transparent;
+  background: var(--rb-success);
+}
+
+.onboarding-mini-badge-spotify .onboarding-mini-icon {
+  fill: #fff;
+}
+
+/* Badge amarelo da RunBeat (Tela 2) — o ícone é o próprio logo-mark.png já
+   usado no cabeçalho do onboarding, recolorido via CSS mask (sem editar o
+   arquivo) pra virar um silhueta escura legível sobre o amarelo, no lugar
+   do amarelo-sobre-amarelo que a imagem original (ícone amarelo) daria. */
+.onboarding-mini-badge-brand {
+  border-color: transparent;
+  background: var(--rb-yellow);
+}
+
+.onboarding-mini-badge-icon {
+  width: 20px;
+  height: 20px;
+  background-color: var(--rb-ink);
+  -webkit-mask-image: url("../img/logo-mark.png");
+  mask-image: url("../img/logo-mark.png");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+.onboarding-mini-badge-selected {
+  border-color: var(--rb-yellow-soft-border);
+  background: var(--rb-yellow-soft);
+}
+
+.onboarding-mini-badge-selected .onboarding-mini-icon {
+  color: var(--rb-yellow);
+}
+
+.onboarding-mini-icon {
+  width: 18px;
+  height: 18px;
+  fill: var(--rb-text-secondary);
+  color: var(--rb-text-secondary);
+}
+
+.onboarding-mini-chevron {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--rb-text-secondary);
+}
+
+/* Radio ilustrativo (Tela 3) — não é um <input>, nenhum estado real por
+   trás; só reforça visualmente qual card está "selecionado" na prancha. */
+.onboarding-mini-radio {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--rb-border-strong);
+}
+
+.onboarding-mini-radio-selected {
+  border-color: var(--rb-yellow);
+  background: radial-gradient(circle, var(--rb-yellow) 0 40%, transparent 42%);
+}
+
+.onboarding-mini-card-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--rb-font-display);
+  font-weight: var(--rb-weight-bold);
+  font-size: var(--rb-text-sm);
+  color: var(--rb-text);
+}
+
+.onboarding-mini-card-body {
+  margin: 0;
+  font-size: var(--rb-text-xs);
+  color: var(--rb-text-secondary);
+  line-height: var(--rb-leading-normal);
+}
+
+/* Miniaturas/chips puramente ilustrativos (aria-hidden) — não têm nenhuma
+   relação com os dados reais de playlists/gêneros do usuário. */
+.onboarding-mini-thumbs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.onboarding-mini-thumbs span:not(.onboarding-mini-more) {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--rb-border-strong);
+}
+
+.onboarding-mini-more,
+.onboarding-mini-chip-more {
+  color: var(--rb-text-secondary);
+  font-size: var(--rb-text-xs);
+  letter-spacing: 1px;
+}
+
+.onboarding-mini-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.onboarding-mini-chips span:not(.onboarding-mini-chip-more) {
+  padding: 2px 8px;
+  border-radius: var(--rb-radius-pill);
+  background: color-mix(in srgb, var(--rb-yellow) 12%, transparent);
+  color: var(--rb-yellow);
+  font-size: var(--rb-text-xs);
+  font-weight: var(--rb-weight-semibold);
+}
+
+/* Tela 4 — hero SPM/BPM + as duas frases + Marca-Passo precisam se ler
+   como UM bloco conceitual só (pedido explícito de refinamento), não como
+   elementos soltos. Duas mudanças: 1) essa tela não centraliza mais com
+   margin:auto como as outras (sobe moderadamente, ver ".onboarding-step"
+   acima) 2) o "gap" entre os filhos diminui um pouco só aqui — ainda com
+   respiro, só sem o vazio grande que existia antes entre o header e o
+   hero. */
+.onboarding-step[data-step="4"] {
+  gap: var(--rb-space-3);
+  margin-top: var(--rb-space-2);
+  margin-bottom: auto;
+}
+
+/* Hero circular SPM/BPM da Tela 4 — inteiramente HTML/CSS (nenhuma
+   imagem): dois círculos com anel colorido + glow (box-shadow) + uma
+   pulsação bem discreta via ::before, sem JS/estado novo nenhum. SPM em
+   verde (--rb-success, intencional — mesma cor já usada pro ícone do
+   Spotify no player) e BPM em RunBeat Yellow, distinto do tratamento
+   plano dos .beat-columns da Tela 1. */
+.onboarding-hero-circles {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--rb-space-4);
+  padding: var(--rb-space-2) 0;
+}
+
+.onboarding-hero-circle {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.onboarding-hero-circle::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  opacity: 0.5;
+  animation: onboarding-pulse 2.4s ease-out infinite;
+}
+
+.onboarding-hero-circle-spm {
+  color: var(--rb-success);
+  border: 2px solid var(--rb-success);
+  background: color-mix(in srgb, var(--rb-success) 10%, var(--rb-surface));
+  box-shadow: 0 0 20px color-mix(in srgb, var(--rb-success) 45%, transparent);
+}
+
+.onboarding-hero-circle-bpm {
+  color: var(--rb-yellow);
+  border: 2px solid var(--rb-yellow);
+  background: color-mix(in srgb, var(--rb-yellow) 10%, var(--rb-surface));
+  box-shadow: 0 0 20px color-mix(in srgb, var(--rb-yellow) 45%, transparent);
+}
+
+.onboarding-hero-circle-bpm::before {
+  animation-delay: 1.2s;
+}
+
+.onboarding-hero-circle-value {
+  font-family: var(--rb-font-display);
+  font-weight: var(--rb-weight-black);
+  font-size: var(--rb-text-xl);
+  line-height: 1;
+}
+
+.onboarding-hero-circle-label {
+  font-size: var(--rb-text-xs);
+  font-weight: var(--rb-weight-bold);
+  letter-spacing: var(--rb-tracking-wide);
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.onboarding-hero-divider {
+  flex-shrink: 0;
+  font-size: var(--rb-text-lg);
+  color: var(--rb-text-secondary);
+}
+
+@keyframes onboarding-pulse {
+  0% { transform: scale(0.85); opacity: 0.6; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+.onboarding-title-phrase {
+  font-size: var(--rb-text-lg);
+}
+
+.onboarding-or {
+  margin: 0;
+  font-size: var(--rb-text-xs);
+  font-weight: var(--rb-weight-semibold);
+  color: var(--rb-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: var(--rb-tracking-wide);
+}
+
+.onboarding-pulse-row {
+  display: flex;
+  align-items: center;
+  gap: var(--rb-space-3);
+  width: 100%;
+  padding: var(--rb-space-3) var(--rb-space-4);
+  border-radius: var(--rb-radius-lg);
+  border: 1px solid var(--rb-border);
+  background: color-mix(in srgb, var(--rb-surface-elevated) 88%, transparent);
+  text-align: left;
+}
+
+.onboarding-pulse-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.onboarding-pulse-text strong {
+  font-family: var(--rb-font-display);
+  font-size: var(--rb-text-sm);
+  color: var(--rb-text);
+}
+
+.onboarding-pulse-text em {
+  font-style: italic;
+  font-size: var(--rb-text-xs);
+  color: var(--rb-text-secondary);
+}
+
+/* Reaproveita o visual do .toggle-switch real (mesmo trilho/bolinha do
+   Marca-Passo de verdade), mas SEM <input> nenhum por baixo — puramente
+   decorativo, sempre "ligado", nunca respondendo a toque. */
+.onboarding-toggle-decorative {
+  flex-shrink: 0;
+  position: relative;
+  width: 46px;
+  height: 26px;
+  pointer-events: none;
+}
+
+.onboarding-toggle-decorative .toggle-switch-track {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--rb-radius-pill);
+  background: var(--rb-yellow);
+}
+
+.onboarding-toggle-decorative .toggle-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 23px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--rb-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.onboarding-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--rb-space-2);
+  padding-top: var(--rb-space-4);
+}
+
+#onboarding-next {
+  width: 100%;
 }
 
 .onboarding-skip {
   width: auto;
   background: none;
   border: none;
-  color: var(--muted);
+  color: var(--rb-text-secondary);
   font-family: inherit;
-  font-weight: 400;
+  font-weight: var(--rb-weight-regular);
+  font-size: var(--rb-text-sm);
   margin-top: 0;
   padding: 8px;
 }
 
-.onboarding-nav {
-  display: flex;
-  gap: 8px;
-}
+/* Transição entre slides (fade + leve deslocamento) e a pulsação da Tela 4
+   somem pra quem pede menos movimento — só a troca de "hidden" continua,
+   sem nenhuma das duas animações. */
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-hero-circle::before {
+    animation: none;
+    opacity: 0;
+  }
 
-.onboarding-nav button {
-  width: auto;
-  padding: 10px 20px;
-  margin-top: 0;
-}
-
-.onboarding-back {
-  background: transparent;
-  border: 1px solid var(--card-border);
-  color: var(--fg);
-}
-
-.onboarding-back[hidden] {
-  display: none;
+  .onboarding-step:not([hidden]) {
+    animation: none;
+  }
 }

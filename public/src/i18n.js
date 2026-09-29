@@ -15,7 +15,7 @@ import { STORAGE_KEYS } from "./config.js";
 const translations = {
   pt: {
     tagline: "Música certa no passo certo.",
-    helpAriaLabel: "Como funciona",
+    helpAriaLabel: "Configurações",
     langSwitchAriaLabel: "Idioma",
 
     step1Title: "Conecte ao Spotify",
@@ -96,7 +96,6 @@ const translations = {
     multiselectCloseAriaLabel: "Fechar",
 
     onboardingNext: "Próximo",
-    onboardingStart: "Começar",
     onboardingLetsRun: "Bora correr",
     onboardingSkip: "Pular",
     onboardingTitle1: "Você e a música.<br><span class=\"onboarding-highlight\">Juntos, no mesmo ritmo.</span>",
@@ -114,6 +113,8 @@ const translations = {
     onboardingTutorialLabel: "Tutorial",
     onboardingSpmCaption: "Passos por minuto",
     onboardingBpmCaption: "Batidas por minuto",
+    settingsTitle: "Configurações",
+    settingsReplayTutorial: "Ver tutorial novamente",
 
     configureClientId: "Configure SPOTIFY_CLIENT_ID em src/config.js antes de conectar (ver README).",
     spotifyRefusedLogin: "Spotify recusou o login: {error}",
@@ -129,7 +130,7 @@ const translations = {
   },
   en: {
     tagline: "The right song for every step.",
-    helpAriaLabel: "How it works",
+    helpAriaLabel: "Settings",
     langSwitchAriaLabel: "Language",
 
     step1Title: "Connect to Spotify",
@@ -210,7 +211,6 @@ const translations = {
     multiselectCloseAriaLabel: "Close",
 
     onboardingNext: "Next",
-    onboardingStart: "Get started",
     onboardingLetsRun: "Let's run",
     onboardingSkip: "Skip",
     onboardingTitle1: "You and the music.<br><span class=\"onboarding-highlight\">Together, in sync.</span>",
@@ -228,6 +228,8 @@ const translations = {
     onboardingTutorialLabel: "Tutorial",
     onboardingSpmCaption: "Steps per minute",
     onboardingBpmCaption: "Beats per minute",
+    settingsTitle: "Settings",
+    settingsReplayTutorial: "View tutorial again",
 
     configureClientId: "Set SPOTIFY_CLIENT_ID in src/config.js before connecting (see README).",
     spotifyRefusedLogin: "Spotify refused the login: {error}",

@@ -1882,6 +1882,58 @@ button:disabled {
   to { opacity: 1; }
 }
 
+/* --- Configurações (engrenagem do cabeçalho) ---
+   Reaproveita o pop-up de .multiselect-modal (overlay, cartão elevado,
+   header com título + X de 44px); aqui só a lista de opções. Hoje uma
+   opção só: "Ver tutorial novamente" (ver onboarding.js). */
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  padding: var(--rb-space-2);
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: var(--rb-space-3);
+  width: 100%;
+  min-height: 52px;
+  margin: 0;
+  padding: var(--rb-space-3) var(--rb-space-3);
+  border: none;
+  border-radius: var(--rb-radius-md);
+  background: transparent;
+  color: var(--rb-text);
+  font-family: inherit;
+  font-size: var(--rb-text-base);
+  font-weight: var(--rb-weight-semibold);
+  text-align: left;
+  transition: background var(--rb-transition-fast);
+}
+
+.settings-row:hover {
+  background: color-mix(in srgb, var(--rb-text) 6%, transparent);
+}
+
+.settings-row-icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  color: var(--rb-yellow);
+}
+
+.settings-row-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-row-chevron {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--rb-text-secondary);
+}
+
 /* --- Onboarding (primeiro acesso) ---
    Fullscreen mobile-first, própria tela (não um modal sobre o app) —
    é a primeira coisa que um usuário novo vê, antes até do cartão
@@ -1899,22 +1951,28 @@ button:disabled {
   z-index: 2000;
   display: flex;
   flex-direction: column;
-  padding: max(var(--rb-space-3), env(safe-area-inset-top)) var(--ob-gutter) max(var(--rb-space-3), env(safe-area-inset-bottom));
+  padding: max(var(--rb-space-4), calc(env(safe-area-inset-top) + var(--rb-space-2))) var(--ob-gutter) max(var(--rb-space-4), calc(env(safe-area-inset-bottom) + var(--rb-space-2)));
+  justify-content: center;
   overflow-x: hidden;
 }
 
-/* Header no topo e CTA/Pular numa posição inferior fixa nas 4 etapas; a
-   região entre o progresso e o CTA é a área de conteúdo, e o bloco
-   compacto de cada etapa fica centralizado verticalmente nela (ver
-   .onboarding-step). */
+/* O tutorial é um CONTAINER vertical compacto, centralizado na altura
+   útil (já descontadas as safe areas): ocupa ~82% dela, deixando respiro
+   perceptível acima do RunBeat e abaixo do Pular — lê como tutorial por
+   cima do app, não como mais uma tela. Dentro dele, header no topo,
+   CTA/Pular embaixo (mesma posição nas 4 etapas) e o conteúdo de cada
+   etapa centralizado entre os dois (ver .onboarding-step). Se o conteúdo
+   precisar de mais que isso (viewport baixo), o container cresce até
+   100% e, no limite, a área das etapas rola. */
 
 .onboarding-overlay[hidden] {
   display: none;
 }
 
 .onboarding-card {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 1 auto;
+  min-height: 82%;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   max-width: 440px;
@@ -2001,9 +2059,11 @@ button:disabled {
   box-shadow: 0 0 8px rgba(255, 217, 0, 0.45);
 }
 
-/* Cada tela tem a própria altura (a oculta sai do fluxo via "hidden"),
-   e o CTA vem logo depois do conteúdo com um gap fixo — densidade da
-   versão compacta aprovada, sem vazio herdado da tela mais alta.
+/* As 4 etapas ficam EMPILHADAS na mesma célula do grid; a oculta mantém
+   o atributo "hidden" (contrato do onboarding.js), mas vira
+   visibility:hidden em vez de display:none. Assim o container tem sempre
+   a altura da etapa mais alta e CTA/Pular não mudam de lugar entre as
+   etapas (nem durante o swipe); cada etapa fica centralizada na célula.
    Container de rolagem vai de borda a borda (margin negativa + mesmo
    padding de volta): como overflow-y:auto também recorta no eixo X, é o
    único jeito de a corredora da Tela 1 sangrar até a borda da tela em vez
@@ -2011,11 +2071,17 @@ button:disabled {
 .onboarding-steps {
   flex: 1 1 auto;
   min-height: 0;
-  display: flex;
+  display: grid;
+  grid-template-areas: "step";
   margin: 0 calc(var(--ob-gutter) * -1);
   padding: 0 var(--ob-gutter);
   overflow-x: hidden;
   overflow-y: auto;
+  /* Swipe (onboarding.js): o navegador fica só com o pan vertical; o gesto
+     horizontal chega inteiro aos Pointer Events. */
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* Conteúdo alinhado à esquerda (exceto a Tela 4), ancorado no topo logo
@@ -2028,14 +2094,14 @@ button:disabled {
   width: 100%;
   min-width: 0;
   gap: var(--rb-space-3);
-  padding: 10px 0 var(--rb-space-2);
-  /* Centraliza o bloco na área de conteúdo; se não couber (viewport
-     baixo), as margens auto viram 0 e o container rola a partir do topo. */
-  margin: auto 0;
+  padding: 6px 0 var(--rb-space-1);
+  grid-area: step;
+  align-self: center;
 }
 
 .onboarding-step[hidden] {
-  display: none;
+  display: flex;
+  visibility: hidden;
 }
 
 /* Transição entre slides (fade + leve deslocamento horizontal, ~250ms) —
@@ -2047,8 +2113,19 @@ button:disabled {
   to { opacity: 1; transform: translateX(0); }
 }
 
+@keyframes onboarding-step-in-back {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 .onboarding-step:not([hidden]) {
   animation: onboarding-step-in 0.25s ease-out;
+}
+
+/* Voltando (swipe da esquerda pra direita), a etapa entra pelo outro
+   lado — data-direction é definido em onboarding.js. */
+.onboarding-overlay[data-direction="back"] .onboarding-step:not([hidden]) {
+  animation-name: onboarding-step-in-back;
 }
 
 .onboarding-title {
@@ -2217,6 +2294,8 @@ button:disabled {
 
 .onboarding-options-equal .onboarding-option {
   gap: 10px;
+  padding-top: 18px;
+  padding-bottom: 18px;
 }
 
 .onboarding-options-equal .onboarding-option-head {
@@ -2583,7 +2662,7 @@ button:disabled {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding-top: var(--rb-space-3);
+  padding-top: var(--rb-space-2);
 }
 
 #onboarding-next {
@@ -2626,7 +2705,8 @@ button:disabled {
     gap: var(--rb-space-3);
   }
 
-  .onboarding-option {
+  .onboarding-option,
+  .onboarding-options-equal .onboarding-option {
     gap: var(--rb-space-3);
     padding: 14px 16px;
   }
@@ -2652,7 +2732,7 @@ button:disabled {
   }
 }
 
-@media (max-height: 660px) {
+@media (max-height: 700px) {
   .onboarding-overlay {
     padding-top: max(var(--rb-space-2), env(safe-area-inset-top));
   }
@@ -2745,7 +2825,8 @@ button:disabled {
     font-size: clamp(1.25rem, 5.8vw, 1.4rem);
   }
 
-  .onboarding-option {
+  .onboarding-option,
+  .onboarding-options-equal .onboarding-option {
     padding: 12px 14px;
   }
 
@@ -2816,7 +2897,8 @@ button:disabled {
     animation: none;
   }
 
-  .onboarding-step:not([hidden]) {
+  .onboarding-step:not([hidden]),
+  .onboarding-overlay[data-direction="back"] .onboarding-step:not([hidden]) {
     animation: none;
   }
 

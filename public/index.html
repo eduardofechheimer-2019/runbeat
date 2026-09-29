@@ -67,7 +67,7 @@
           <button type="button" id="lang-pt-btn" class="lang-btn" data-lang="pt">PT</button>
           <button type="button" id="lang-en-btn" class="lang-btn" data-lang="en">EN</button>
         </div>
-        <button id="help-btn" class="help-btn" type="button" data-i18n-aria-label="helpAriaLabel" aria-label="Como funciona">
+        <button id="help-btn" class="help-btn" type="button" data-i18n-aria-label="helpAriaLabel" aria-label="Configurações">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065Z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
       </div>
@@ -224,6 +224,22 @@
       <button type="button" id="multiselect-modal-close" class="multiselect-modal-close" data-i18n-aria-label="multiselectCloseAriaLabel" aria-label="Fechar">✕</button>
     </div>
     <div id="multiselect-modal-panel" class="multiselect-panel"></div>
+  </div>
+</div>
+
+<div id="settings-modal" class="multiselect-modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title" hidden>
+  <div class="multiselect-modal-card">
+    <div class="multiselect-modal-header">
+      <h3 id="settings-modal-title" data-i18n="settingsTitle">Configurações</h3>
+      <button type="button" id="settings-modal-close" class="multiselect-modal-close" data-i18n-aria-label="multiselectCloseAriaLabel" aria-label="Fechar">✕</button>
+    </div>
+    <div class="settings-list">
+      <button type="button" id="settings-replay-tutorial" class="settings-row">
+        <svg class="settings-row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v5h5" /><path d="M10 9.5v5l4-2.5-4-2.5Z" /></svg>
+        <span class="settings-row-label" data-i18n="settingsReplayTutorial">Ver tutorial novamente</span>
+        <svg class="settings-row-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+      </button>
+    </div>
   </div>
 </div>
 

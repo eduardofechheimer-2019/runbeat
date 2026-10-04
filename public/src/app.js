@@ -454,7 +454,7 @@ function setSyncHighlight(syncIsHighlighted) {
 // Antes disso o app tentava achar dinamicamente uma faixa "silenciosa" via
 // busca no catálogo do Spotify — trocado por uma faixa fixa e conhecida,
 // que é mais previsível que depender do resultado de uma busca.
-const WARMUP_TRACK_ID = "3mSFn1km1dGcGHUNqmEaHM"; // "One Bird Singing" — Auge Espiritual
+const WARMUP_TRACK_ID = "3ccQUpgvYqmgblII6yzyDM"; // https://open.spotify.com/track/3ccQUpgvYqmgblII6yzyDM
 
 // "Aquece" o Spotify abrindo o app de verdade (Universal Link — ver
 // showNoDeviceLink pra mais detalhes de por que Universal Link em vez do

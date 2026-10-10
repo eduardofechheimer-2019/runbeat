@@ -1,8 +1,17 @@
 import { STORAGE_KEYS } from "./config.js";
 import { t, onLanguageChange } from "./i18n.js";
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 6;
 let currentStep = 1;
+
+// Transição entre etapas: só o conteúdo da moldura desliza (a etapa atual
+// sai por um lado enquanto a próxima entra pelo outro); título "Tutorial",
+// contador, dots e botões ficam parados. Enquanto a transição roda, novos
+// pedidos de navegação são ignorados — evita pular etapa com toque duplo
+// ou swipe + toque. Duração casada com --ob-slide-duration no CSS; o
+// timeout é só uma rede de segurança caso animationend não dispare.
+const SLIDE_MS = 300;
+let transition = null;
 
 // Swipe: deslocamento horizontal mínimo (px ou fração da largura, o que for
 // maior) e quanto o eixo X precisa dominar o Y pra contar como troca de
@@ -10,6 +19,8 @@ let currentStep = 1;
 const SWIPE_MIN_PX = 56;
 const SWIPE_MIN_WIDTH_RATIO = 0.18;
 const SWIPE_AXIS_RATIO = 1.5;
+
+const ANIM_CLASSES = ["ob-enter-right", "ob-enter-left", "ob-leave-left", "ob-leave-right"];
 
 const el = {
   overlay: document.getElementById("onboarding-overlay"),
@@ -25,23 +36,17 @@ const el = {
   replayTutorialBtn: document.getElementById("settings-replay-tutorial"),
 };
 
-// Rótulo do CTA principal por etapa: "Próximo" nas três primeiras e
-// "Bora correr" só na última — único lugar que precisa saber em que etapa
-// está.
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+const stepEl = (n) => el.overlay.querySelector(`.onboarding-step[data-step="${n}"]`);
+
+// Rótulo do CTA principal: "Próximo" nas etapas 1–5 e "Começar" só na
+// última — único lugar que precisa saber em que etapa está.
 function ctaLabelFor(step) {
-  return step === TOTAL_STEPS ? t("onboardingLetsRun") : t("onboardingNext");
+  return step === TOTAL_STEPS ? t("onboardingFinish") : t("onboardingNext");
 }
 
-// data-direction no overlay só escolhe o lado de onde a etapa nova entra
-// (animação 100% CSS, desligada com prefers-reduced-motion).
-function goToStep(n) {
-  if (n !== currentStep) {
-    el.overlay.dataset.direction = n < currentStep ? "back" : "forward";
-  }
-  currentStep = n;
-  for (const step of el.steps) {
-    step.hidden = Number(step.dataset.step) !== n;
-  }
+function renderChrome(n) {
   for (const dot of el.dots) {
     dot.classList.toggle("active", Number(dot.dataset.dot) === n);
   }
@@ -49,14 +54,71 @@ function goToStep(n) {
   el.nextBtn.textContent = ctaLabelFor(n);
 }
 
+function clearAnimation(step) {
+  step.classList.remove(...ANIM_CLASSES);
+}
+
+function finishTransition() {
+  if (!transition) return;
+  const { leaving, entering, timer } = transition;
+  clearTimeout(timer);
+  if (leaving) {
+    leaving.hidden = true;
+    clearAnimation(leaving);
+  }
+  clearAnimation(entering);
+  transition = null;
+}
+
+// Mostra a etapa n. "direction" decide de que lado ela entra: "forward"
+// (pela direita, a atual sai pela esquerda) ou "back" (o contrário).
+// "fromNothing" = abertura do tutorial: só a etapa 1 entra, nada sai.
+function showStep(n, direction, { fromNothing = false } = {}) {
+  const entering = stepEl(n);
+  const leaving = fromNothing ? null : stepEl(currentStep);
+  currentStep = n;
+  renderChrome(n);
+
+  for (const step of el.steps) {
+    if (step !== entering && step !== leaving) {
+      step.hidden = true;
+      clearAnimation(step);
+    }
+  }
+  entering.hidden = false;
+
+  if (reducedMotion.matches) {
+    if (leaving && leaving !== entering) leaving.hidden = true;
+    return;
+  }
+
+  const forward = direction !== "back";
+  entering.classList.add(forward ? "ob-enter-right" : "ob-enter-left");
+  if (leaving && leaving !== entering) {
+    leaving.classList.add(forward ? "ob-leave-left" : "ob-leave-right");
+  }
+  transition = {
+    leaving: leaving !== entering ? leaving : null,
+    entering,
+    timer: setTimeout(finishTransition, SLIDE_MS + 80),
+  };
+  entering.addEventListener("animationend", finishTransition, { once: true });
+}
+
+function goToStep(n) {
+  if (transition) return;
+  if (n < 1 || n > TOTAL_STEPS || n === currentStep) return;
+  showStep(n, n < currentStep ? "back" : "forward");
+}
+
 function showOnboarding() {
-  el.overlay.dataset.direction = "forward";
-  currentStep = 1;
+  finishTransition();
   el.overlay.hidden = false;
-  goToStep(1);
+  showStep(1, "forward", { fromNothing: true });
 }
 
 function completeOnboarding() {
+  finishTransition();
   localStorage.setItem(STORAGE_KEYS.onboardingSeen, "1");
   el.overlay.hidden = true;
 }
@@ -65,7 +127,7 @@ function completeOnboarding() {
 // touch-action: pan-y, então o navegador continua dono do scroll vertical
 // (um arrasto vertical vira pointercancel e é descartado) e só o gesto
 // horizontal chega inteiro aqui. Gestos que começam num botão são
-// ignorados; nas pontas (etapa 1 pra trás, etapa 4 pra frente) o gesto não
+// ignorados; nas pontas (etapa 1 pra trás, etapa 6 pra frente) o gesto não
 // faz nada — nunca conclui o onboarding sozinho.
 function initSwipe() {
   let start = null;
@@ -90,15 +152,15 @@ function initSwipe() {
     if (Math.abs(dx) < minDistance) return;
     if (Math.abs(dx) < Math.abs(dy) * SWIPE_AXIS_RATIO) return;
 
-    if (dx < 0 && currentStep < TOTAL_STEPS) goToStep(currentStep + 1);
-    else if (dx > 0 && currentStep > 1) goToStep(currentStep - 1);
+    if (dx < 0) goToStep(currentStep + 1);
+    else goToStep(currentStep - 1);
   });
 
   el.stepsArea.addEventListener("pointercancel", reset);
   el.stepsArea.addEventListener("lostpointercapture", reset);
 }
 
-// Configurações: a engrenagem abre um painel próprio (não mais o tutorial
+// Configurações: a engrenagem abre um painel próprio (não o tutorial
 // direto); o tutorial só reabre pela opção explícita "Ver tutorial
 // novamente", na etapa 1, sem mexer em runbeat_onboarding_seen.
 function openSettings() {
@@ -130,6 +192,7 @@ function initSettings() {
 
 export function initOnboarding() {
   el.nextBtn.addEventListener("click", () => {
+    if (transition) return;
     if (currentStep >= TOTAL_STEPS) completeOnboarding();
     else goToStep(currentStep + 1);
   });
@@ -141,9 +204,8 @@ export function initOnboarding() {
     showOnboarding();
   }
 
-  // O texto dos passos (título/parágrafo) é traduzido junto com o resto da
-  // tela estática via data-i18n/data-i18n-html — só o rótulo do botão
-  // principal e o contador "n / 4" precisam ser recalculados à mão, porque
-  // dependem do passo atual.
-  onLanguageChange(() => goToStep(currentStep));
+  // O texto das etapas é traduzido junto com o resto da tela estática via
+  // data-i18n/data-i18n-html — só o rótulo do botão principal e o contador
+  // "n / 6" dependem da etapa atual e são recalculados aqui.
+  onLanguageChange(() => renderChrome(currentStep));
 }

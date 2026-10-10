@@ -250,124 +250,94 @@
         <img src="img/logo-mark.png" alt="" class="onboarding-brand-logo" />
         <span class="onboarding-brand-name">RunBeat</span>
       </div>
-      <p class="onboarding-eyebrow" data-i18n="onboardingTutorialLabel">Tutorial</p>
+    </header>
+
+    <div class="onboarding-body">
+      <h2 class="onboarding-tutorial-title" data-i18n="onboardingTutorialLabel">Tutorial</h2>
       <div class="onboarding-progress-row">
-        <span class="onboarding-progress" id="onboarding-progress" aria-hidden="true">1 / 4</span>
+        <span class="onboarding-progress" id="onboarding-progress" aria-hidden="true">1 / 6</span>
         <div class="onboarding-dots">
           <span class="onboarding-dot" data-dot="1"></span>
           <span class="onboarding-dot" data-dot="2"></span>
           <span class="onboarding-dot" data-dot="3"></span>
           <span class="onboarding-dot" data-dot="4"></span>
-        </div>
-      </div>
-    </header>
-
-    <div class="onboarding-steps">
-
-      <div class="onboarding-step" data-step="1">
-        <h3 class="onboarding-title" data-i18n-html="onboardingTitle1">Você e a música.<br><span class="onboarding-highlight">Juntos, no mesmo ritmo.</span></h3>
-        <div class="onboarding-visual" aria-hidden="true">
-          <img src="img/onboarding-runner.png" alt="" class="onboarding-runner-img" />
-        </div>
-        <div class="onboarding-sync">
-          <div class="onboarding-sync-side">
-            <span class="onboarding-sync-value">172</span>
-            <span class="onboarding-sync-unit">SPM</span>
-            <span class="onboarding-sync-caption" data-i18n="onboardingSpmCaption">Passos por minuto</span>
-          </div>
-          <span class="onboarding-sync-arrow" aria-hidden="true">↔</span>
-          <div class="onboarding-sync-side onboarding-sync-side-bpm">
-            <span class="onboarding-sync-value">174</span>
-            <span class="onboarding-sync-unit">BPM</span>
-            <span class="onboarding-sync-caption" data-i18n="onboardingBpmCaption">Batidas por minuto</span>
-          </div>
+          <span class="onboarding-dot" data-dot="5"></span>
+          <span class="onboarding-dot" data-dot="6"></span>
         </div>
       </div>
 
-      <div class="onboarding-step" data-step="2" hidden>
-        <h3 class="onboarding-title" data-i18n-html="onboardingTitle2">Escolha o que<br>quer <span class="onboarding-highlight">ouvir.</span></h3>
-        <div class="onboarding-options">
-          <div class="onboarding-option">
-            <div class="onboarding-option-head">
-              <span class="onboarding-option-badge onboarding-option-badge-spotify">
-                <svg class="onboarding-option-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.59 14.41c-.19.3-.58.4-.89.21-2.44-1.49-5.51-1.83-9.12-1a.626.626 0 0 1-.28-1.22c3.95-.9 7.34-.51 10.07 1.13.31.19.4.58.22.88zm1.22-2.72c-.24.37-.73.49-1.1.26-2.79-1.72-7.05-2.22-10.35-1.21a.744.744 0 0 1-.94-.49.746.746 0 0 1 .49-.94c3.77-1.14 8.46-.59 11.65 1.37.37.23.49.73.25 1.01zm.11-2.83c-3.35-1.99-8.87-2.17-12.06-1.2a.895.895 0 1 1-.52-1.71c3.67-1.11 9.76-.9 13.61 1.39.5.29.65.94.36 1.44a1.04 1.04 0 0 1-1.39.08z"/></svg>
-              </span>
-              <p class="onboarding-option-title" data-i18n="onboardingCardYourPlaylists">Suas playlists</p>
-              <svg class="onboarding-option-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5.5l6.5 6.5L9 18.5" /></svg>
-            </div>
-            <div class="onboarding-option-covers" aria-hidden="true"><span></span><span></span><span></span><span class="onboarding-option-more">•••</span></div>
+      <div class="onboarding-frame">
+        <div class="onboarding-steps">
+
+          <div class="onboarding-step" data-step="1">
+            <p class="ob-lead">
+              <span data-i18n="onboardingIntroLead">Com RunBeat a música vai seguir o seu ritmo.</span>
+              <span class="onboarding-highlight" data-i18n="onboardingIntroSecret">O segredo? …</span>
+            </p>
           </div>
-          <div class="onboarding-option onboarding-option-brand">
-            <div class="onboarding-option-head">
-              <img src="img/logo-mark.png" alt="" class="onboarding-option-logo" />
-              <p class="onboarding-option-title" data-i18n="onboardingCardRunbeatPlaylist">Gêneros RunBeat</p>
-              <svg class="onboarding-option-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5.5l6.5 6.5L9 18.5" /></svg>
+
+          <div class="onboarding-step ob-step-bpm" data-step="2" hidden>
+            <p class="ob-bpm-title">BPM = SPM</p>
+            <div class="ob-bpm-equation">
+              <span class="ob-bpm-term" data-i18n-html="onboardingBpmTerm">Batidas<br>por minuto</span>
+              <span class="ob-bpm-equals" aria-hidden="true">=</span>
+              <span class="ob-bpm-term" data-i18n-html="onboardingSpmTerm">Passos<br>por minuto</span>
             </div>
-            <div class="onboarding-option-chips" aria-hidden="true"><span>Rock</span><span>Funk</span><span>MPB</span><span class="onboarding-option-more">•••</span></div>
+            <p class="ob-body" data-i18n="onboardingBpmBody">O RunBeat vai tocar músicas com a batida no ritmo da sua corrida.</p>
+            <p class="ob-see-how onboarding-highlight" data-i18n="onboardingSeeHow">Veja como …</p>
           </div>
+
+          <div class="onboarding-step" data-step="3" hidden>
+            <p class="ob-step-title" data-i18n="onboardingStep1Title">1. Conectar ao Spotify</p>
+            <div class="ob-demo ob-demo-card" inert aria-hidden="true">
+              <div class="ob-demo-flow"><span class="ob-demo-flow-item is-active"><span class="ob-demo-flow-num">1</span> Spotify</span><span class="ob-demo-flow-sep"></span><span class="ob-demo-flow-item"><span class="ob-demo-flow-num">2</span></span><span class="ob-demo-flow-sep"></span><span class="ob-demo-flow-item"><span class="ob-demo-flow-num">3</span></span></div>
+              <span class="ob-demo-cta" data-i18n="connectBtn">Conectar ao Spotify</span>
+            </div>
+            <p class="ob-note" data-i18n="onboardingStep1Note">*Caso o app Spotify esteja ativo, esta etapa será concluída automaticamente.</p>
+          </div>
+
+          <div class="onboarding-step" data-step="4" hidden>
+            <p class="ob-step-title" data-i18n="onboardingStep2Title">2. Selecione as Playlists</p>
+            <div class="ob-demo ob-demo-card" inert aria-hidden="true">
+              <div class="ob-demo-flow"><span class="ob-demo-flow-item is-done"><span class="ob-demo-flow-num">✓</span></span><span class="ob-demo-flow-sep"></span><span class="ob-demo-flow-item is-active"><span class="ob-demo-flow-num">2</span> Playlists</span><span class="ob-demo-flow-sep"></span><span class="ob-demo-flow-item"><span class="ob-demo-flow-num">3</span></span></div>
+              <span class="ob-demo-hint" data-i18n="step2Title">Escolha suas playlists</span>
+              <span class="ob-demo-field" data-i18n="onboardingDemoPlaylists">1 playlist</span>
+              <div class="ob-demo-nested">
+                <span class="ob-demo-label" data-i18n="catalogGenresLabel">Gêneros RunBeat</span>
+                <span class="ob-demo-field" data-i18n="onboardingDemoGenres">3 gêneros</span>
+              </div>
+              <span class="ob-demo-cta" data-i18n="onboardingDemoLoadTracks">Carregar Faixas</span>
+            </div>
+          </div>
+
+          <div class="onboarding-step" data-step="5" hidden>
+            <p class="ob-step-title" data-i18n="onboardingStep3Title">3. Escolha o ritmo</p>
+            <div class="ob-demo ob-demo-card" inert aria-hidden="true">
+              <div class="ob-demo-flow"><span class="ob-demo-flow-item is-done"><span class="ob-demo-flow-num">✓</span></span><span class="ob-demo-flow-sep"></span><span class="ob-demo-flow-item is-done"><span class="ob-demo-flow-num">✓</span></span><span class="ob-demo-flow-sep"></span><span class="ob-demo-flow-item is-active"><span class="ob-demo-flow-num">3</span> <span data-i18n="paceLabel">Ritmo</span></span></div>
+              <span class="ob-demo-hint" data-i18n="step3Title">Escolha seu ritmo</span>
+              <span class="ob-demo-field" data-i18n="modeFixed">Ritmo fixo</span>
+              <div class="ob-demo-nested">
+                <span class="ob-demo-label" data-i18n="paceLevelLabel">Nível</span>
+                <span class="ob-demo-field">Easy Pace (60–119 bpm)</span>
+              </div>
+              <span class="ob-demo-cta" data-i18n="continueBtn">Continuar</span>
+            </div>
+          </div>
+
+          <div class="onboarding-step ob-step-done" data-step="6" hidden>
+            <p class="ob-lead ob-lead-sm" data-i18n-html="onboardingDone">Pronto! Agora é apertar “Play” e começar sua <span class="onboarding-highlight">corrida</span>.</p>
+            <div class="ob-runner" aria-hidden="true">
+              <img src="img/onboarding-runner.png" alt="" class="onboarding-runner-img" />
+            </div>
+          </div>
+
         </div>
       </div>
 
-      <div class="onboarding-step" data-step="3" hidden>
-        <h3 class="onboarding-title" data-i18n-html="onboardingTitle3">Corra do<br><span class="onboarding-highlight">seu jeito.</span></h3>
-        <div class="onboarding-options onboarding-options-equal">
-          <div class="onboarding-option onboarding-option-selected">
-            <div class="onboarding-option-head">
-              <svg class="onboarding-option-glyph onboarding-option-glyph-yellow" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M4 13v6M9 9v14M14 4v24M19 9v14M24 12v8M28 14.5v3" /></svg>
-              <span class="onboarding-option-radio onboarding-option-radio-selected" aria-hidden="true"></span>
-            </div>
-            <div class="onboarding-option-text">
-              <p class="onboarding-option-title" data-i18n="onboardingAutoLabel">Automático</p>
-              <p class="onboarding-option-body" data-i18n="onboardingAutoBody">A música acompanha seus passos.</p>
-            </div>
-          </div>
-          <div class="onboarding-option">
-            <div class="onboarding-option-head">
-              <svg class="onboarding-option-glyph" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><rect x="4" y="19" width="6" height="9" rx="1.5" /><rect x="13" y="12" width="6" height="16" rx="1.5" /><rect x="22" y="4" width="6" height="24" rx="1.5" /></svg>
-              <span class="onboarding-option-radio" aria-hidden="true"></span>
-            </div>
-            <div class="onboarding-option-text">
-              <p class="onboarding-option-title" data-i18n="modeFixed">Ritmo fixo</p>
-              <p class="onboarding-option-body" data-i18n="onboardingFixedBody">Você escolhe o ritmo.</p>
-            </div>
-          </div>
-        </div>
+      <div class="onboarding-actions">
+        <button id="onboarding-next" type="button" class="rb-cta"></button>
+        <button id="onboarding-skip" class="onboarding-skip" type="button" data-i18n="onboardingSkip">Pular</button>
       </div>
-
-      <div class="onboarding-step" data-step="4" hidden>
-        <div class="onboarding-phrases">
-          <p class="onboarding-title onboarding-title-phrase" data-i18n-html="onboardingPhraseA">A <span class="onboarding-highlight">batida</span> encontra o seu <span class="onboarding-highlight">passo</span>.</p>
-          <p class="onboarding-or"><span data-i18n="onboardingOr">ou</span></p>
-          <p class="onboarding-title onboarding-title-phrase" data-i18n-html="onboardingPhraseB">O seu <span class="onboarding-highlight">passo</span> encontra a <span class="onboarding-highlight">batida</span>.</p>
-        </div>
-
-        <div class="onboarding-hero-circles" aria-hidden="true">
-          <div class="onboarding-hero-circle onboarding-hero-circle-spm">
-            <span class="onboarding-hero-circle-value">172</span>
-            <span class="onboarding-hero-circle-label">SPM</span>
-          </div>
-          <span class="onboarding-hero-divider">↔</span>
-          <div class="onboarding-hero-circle onboarding-hero-circle-bpm">
-            <span class="onboarding-hero-circle-value">174</span>
-            <span class="onboarding-hero-circle-label">BPM</span>
-          </div>
-        </div>
-
-        <div class="onboarding-option onboarding-pulse-card">
-          <svg class="onboarding-option-glyph onboarding-option-glyph-yellow" viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M4 12.5h5L16 6v20l-7-6.5H4z" /><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" d="M20.5 11.5a6.5 6.5 0 0 1 0 9M24.5 7.5a12 12 0 0 1 0 17" /></svg>
-          <div class="onboarding-option-text">
-            <p class="onboarding-option-title" data-i18n="audiblePulseTitle">Marca-Passo Sonoro</p>
-            <p class="onboarding-option-body" data-i18n="onboardingPulseTeaser">Sinta a batida enquanto corre.</p>
-          </div>
-          <span class="onboarding-toggle-decorative" aria-hidden="true"><span class="onboarding-toggle-knob"></span></span>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="onboarding-actions">
-      <button id="onboarding-next" type="button" class="rb-cta"></button>
-      <button id="onboarding-skip" class="onboarding-skip" type="button" data-i18n="onboardingSkip">Pular</button>
     </div>
   </div>
 </div>

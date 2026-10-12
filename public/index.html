@@ -106,7 +106,7 @@
       <button type="button" id="catalog-genre-summary-btn" class="multiselect-summary" aria-haspopup="dialog" data-i18n="selectPlaceholder">Selecione</button>
       <select id="catalog-genre-select" multiple size="6" hidden></select>
     </div>
-    <button id="build-pool-btn" class="rb-cta" disabled data-i18n="loadBpmBtn">Carregar BPM</button>
+    <button id="build-pool-btn" class="rb-cta" disabled data-i18n="loadBpmBtn">Carregar faixas</button>
     <p id="pool-progress" class="rb-status" hidden></p>
   </section>
 
@@ -162,11 +162,7 @@
           <span class="toggle-switch-track"><span class="toggle-switch-knob"></span></span>
         </span>
       </label>
-      <p id="audio-status" class="audio-status" hidden></p>
     </div>
-    <p id="cadence-wait-hint" class="cadence-wait-hint" hidden data-i18n="cadenceWaitHint">🏃 Pode começar a correr! Estamos esperando os primeiros passos.</p>
-
-    <p id="run-error" class="error" hidden></p>
 
     <div class="run-info rb-now-playing">
       <p class="run-info-title" data-i18n="nowPlayingTitle">Tocando:</p>
@@ -186,7 +182,15 @@
       <p id="warmup-status" class="warmup-status" hidden></p>
     </div>
 
-    <a id="open-spotify-link" class="button-link" hidden data-i18n="warmupBtn">Spotify sync (clique aqui)</a>
+    <!-- Mensagens de status/erro do player: logo abaixo do botão principal,
+         por cima da Faixa Bônus, sem empurrar o layout; um toque fecha (ver
+         .player-msgs no CSS e playerLayout.js). -->
+    <div class="player-msgs" aria-live="polite">
+      <p id="cadence-wait-hint" class="cadence-wait-hint" hidden data-i18n="cadenceWaitHint">🏃 Pode começar a correr! Estamos esperando os primeiros passos.</p>
+      <p id="run-error" class="error" hidden></p>
+      <p id="audio-status" class="audio-status" hidden></p>
+      <a id="open-spotify-link" class="button-link" hidden data-i18n="warmupBtn">Spotify sync (clique aqui)</a>
+    </div>
 
     <div class="playpause-row">
       <button id="prev-btn" class="side-btn" type="button" hidden data-i18n-aria-label="prevAriaLabel" aria-label="Faixa anterior">
@@ -200,6 +204,13 @@
       <button id="next-btn" class="side-btn" type="button" hidden data-i18n-aria-label="nextAriaLabel" aria-label="Próxima faixa">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 5v14M4 5l12 7-12 7V5Z"/></svg>
       </button>
+    </div>
+
+    <!-- Caminho alternativo discreto, logo abaixo do botão principal (ver
+         playerLayout.js): pular o sync antes dele / refazer o sync depois. -->
+    <div class="player-alt-row">
+      <button type="button" id="player-skip-sync" class="player-alt-btn" data-i18n="playerSkipSync">Pular sincronização</button>
+      <button type="button" id="player-resync" class="player-alt-btn" data-i18n="playerResync">Sincronizar novamente</button>
     </div>
 
     <div id="boost-section" class="boost-section">
@@ -253,13 +264,15 @@
       <p id="spotify-notice-text" class="spotify-notice-text" data-i18n-html="spotifyNoticeBody">Você agora será direcionado ao Spotify, para sincronização. Para voltar, aperte em <strong>“RunBeat”</strong> como ilustrado abaixo.</p>
     </div>
     <div class="spotify-notice-illustration" role="img" data-i18n-aria-label="spotifyNoticeImageAlt" aria-label="Spotify aberto no iPhone, com a pílula “◀ RunBeat” no canto superior esquerdo para voltar ao RunBeat.">
-      <img src="img/spotify-return-guide.jpg" width="1188" height="2576" alt="" />
       <div class="spotify-notice-zoom" aria-hidden="true"></div>
-      <svg class="spotify-notice-highlight" viewBox="0 0 1188 2576" aria-hidden="true">
-        <path class="spotify-notice-link-shadow" d="M20 126 V 1081 H 150" />
-        <path class="spotify-notice-link" d="M20 126 V 1081 H 150" />
-        <rect x="14" y="87" width="198" height="54" rx="27" />
-        <rect class="spotify-notice-zoom-ring" x="222" y="970" width="737" height="185" rx="92" />
+      <div class="spotify-notice-shot">
+        <img src="img/spotify-return-guide.jpg" width="1188" height="2576" alt="" />
+      </div>
+      <svg class="spotify-notice-highlight" viewBox="0 0 2328 2576" aria-hidden="true">
+        <path class="spotify-notice-arrow" d="M500 372 C 500 150, 820 114, 1098 114" />
+        <path class="spotify-notice-arrowhead" d="M1140 114 L 1090 86 L 1090 142 Z" />
+        <rect x="1154" y="87" width="198" height="54" rx="27" />
+        <rect class="spotify-notice-zoom-ring" x="82" y="426" width="773" height="188" rx="94" />
       </svg>
     </div>
     <button type="button" id="spotify-notice-ok" class="spotify-notice-ok" data-i18n="spotifyNoticeOk">Ok. Entendi.</button>
@@ -329,7 +342,7 @@
                 <span class="ob-demo-label" data-i18n="catalogGenresLabel">Gêneros RunBeat</span>
                 <span class="ob-demo-field" data-i18n="onboardingDemoGenres">3 gêneros</span>
               </div>
-              <span class="ob-demo-cta" data-i18n="onboardingDemoLoadTracks">Carregar Faixas</span>
+              <span class="ob-demo-cta" data-i18n="onboardingDemoLoadTracks">Carregar faixas</span>
             </div>
           </div>
 
@@ -367,6 +380,7 @@
 
 <script type="module" src="src/app.js"></script>
 <script type="module" src="src/spotifyReturnNotice.js"></script>
+<script type="module" src="src/playerLayout.js"></script>
 <script>
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(() => {});

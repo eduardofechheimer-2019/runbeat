@@ -113,6 +113,10 @@ const translations = {
     onboardingStep3Title: "3. Escolha o ritmo",
     onboardingDone: "Pronto! Agora é apertar “Play” e começar sua <span class=\"onboarding-highlight\">corrida</span>.",
     onboardingFinish: "Começar",
+    spotifyNoticeTitle: "Aviso importante",
+    spotifyNoticeBody: "Você agora será direcionado ao Spotify, para sincronização. Para voltar, aperte em <strong>“RunBeat”</strong> como ilustrado abaixo.",
+    spotifyNoticeOk: "Ok. Entendi.",
+    spotifyNoticeImageAlt: "Spotify aberto no iPhone, com a pílula “◀ RunBeat” no canto superior esquerdo para voltar ao RunBeat.",
     settingsTitle: "Configurações",
     settingsReplayTutorial: "Ver tutorial novamente",
 
@@ -228,6 +232,10 @@ const translations = {
     onboardingStep3Title: "3. Choose your pace",
     onboardingDone: "All set! Now just tap “Play” and start your <span class=\"onboarding-highlight\">run</span>.",
     onboardingFinish: "Start",
+    spotifyNoticeTitle: "Important notice",
+    spotifyNoticeBody: "You will now be redirected to Spotify for synchronization. To return, tap <strong>“RunBeat”</strong> as shown below.",
+    spotifyNoticeOk: "OK. Got it.",
+    spotifyNoticeImageAlt: "Spotify open on iPhone, with the “◀ RunBeat” pill at the top left to return to RunBeat.",
     settingsTitle: "Settings",
     settingsReplayTutorial: "View tutorial again",
 

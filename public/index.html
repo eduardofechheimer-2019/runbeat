@@ -243,6 +243,29 @@
   </div>
 </div>
 
+<div id="spotify-notice" class="spotify-notice" role="dialog" aria-modal="true" aria-labelledby="spotify-notice-title" aria-describedby="spotify-notice-text" hidden>
+  <div class="spotify-notice-dialog" tabindex="-1">
+    <div class="spotify-notice-card">
+      <h2 id="spotify-notice-title" class="spotify-notice-title">
+        <svg class="spotify-notice-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="#e5383b" d="M10.3 3.6 1.9 18.2A2 2 0 0 0 3.6 21h16.8a2 2 0 0 0 1.7-2.8L13.7 3.6a2 2 0 0 0-3.4 0Z"/><path fill="#fff" d="M11 8.5h2l-.3 6.2h-1.4L11 8.5Zm1 7.7a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Z"/></svg>
+        <span data-i18n="spotifyNoticeTitle">Aviso importante</span>
+      </h2>
+      <p id="spotify-notice-text" class="spotify-notice-text" data-i18n-html="spotifyNoticeBody">Você agora será direcionado ao Spotify, para sincronização. Para voltar, aperte em <strong>“RunBeat”</strong> como ilustrado abaixo.</p>
+    </div>
+    <div class="spotify-notice-illustration" role="img" data-i18n-aria-label="spotifyNoticeImageAlt" aria-label="Spotify aberto no iPhone, com a pílula “◀ RunBeat” no canto superior esquerdo para voltar ao RunBeat.">
+      <img src="img/spotify-return-guide.jpg" width="1188" height="2576" alt="" />
+      <div class="spotify-notice-zoom" aria-hidden="true"></div>
+      <svg class="spotify-notice-highlight" viewBox="0 0 1188 2576" aria-hidden="true">
+        <path class="spotify-notice-link-shadow" d="M20 126 V 1081 H 150" />
+        <path class="spotify-notice-link" d="M20 126 V 1081 H 150" />
+        <rect x="14" y="87" width="198" height="54" rx="27" />
+        <rect class="spotify-notice-zoom-ring" x="222" y="970" width="737" height="185" rx="92" />
+      </svg>
+    </div>
+    <button type="button" id="spotify-notice-ok" class="spotify-notice-ok" data-i18n="spotifyNoticeOk">Ok. Entendi.</button>
+  </div>
+</div>
+
 <div id="onboarding-overlay" class="onboarding-overlay" hidden>
   <div class="onboarding-card">
     <header class="onboarding-header">
@@ -343,6 +366,7 @@
 </div>
 
 <script type="module" src="src/app.js"></script>
+<script type="module" src="src/spotifyReturnNotice.js"></script>
 <script>
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(() => {});

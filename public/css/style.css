@@ -2458,3 +2458,186 @@ button:disabled {
     transition: none;
   }
 }
+
+/* --- Aviso de transição RunBeat → Spotify (primeiro "Spotify sync") ---
+   Modal por cima do app: cartão escuro com título + alerta e texto, a
+   captura do Spotify mostrando onde tocar pra voltar e o botão amarelo de
+   confirmação (pílula com halo, mesma família do "Spotify sync"). Rola
+   verticalmente em telas baixas em vez de cortar o botão. Lógica em
+   src/spotifyReturnNotice.js. */
+.spotify-notice {
+  position: fixed;
+  inset: 0;
+  z-index: 1800;
+  display: flex;
+  justify-content: center;
+  padding: max(var(--rb-space-6), calc(env(safe-area-inset-top) + var(--rb-space-4))) var(--rb-space-4) max(var(--rb-space-6), calc(env(safe-area-inset-bottom) + var(--rb-space-4)));
+  background: rgba(4, 5, 7, 0.97);
+  overflow-x: hidden;
+  overflow-y: auto;
+  animation: spotify-notice-in 160ms ease-out;
+}
+
+.spotify-notice[hidden] {
+  display: none;
+}
+
+@keyframes spotify-notice-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.spotify-notice-dialog {
+  width: min(100%, 360px);
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(16px, 3vh, 24px);
+  outline: none;
+}
+
+/* O contêiner recebe o foco inicial (leitores de tela anunciam o aviso),
+   mas não precisa do anel de foco — o botão mantém o dele. */
+.spotify-notice-dialog:focus,
+.spotify-notice-dialog:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.spotify-notice-card {
+  width: 100%;
+  padding: var(--rb-space-4) var(--rb-space-5);
+  border-radius: var(--rb-radius-md);
+  border: 1px solid var(--rb-border);
+  background: #22262c;
+  box-shadow: var(--rb-shadow-md);
+}
+
+.spotify-notice-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--rb-space-2);
+  margin: 0 0 var(--rb-space-3);
+  font-family: var(--rb-font-display);
+  font-weight: var(--rb-weight-extrabold);
+  font-size: 1.15rem;
+  line-height: 1.2;
+  color: var(--rb-text);
+}
+
+.spotify-notice-icon {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.spotify-notice-text {
+  margin: 0;
+  font-size: var(--rb-text-base);
+  line-height: 1.45;
+  color: var(--rb-text);
+}
+
+.spotify-notice-text strong {
+  font-weight: var(--rb-weight-bold);
+}
+
+/* Captura do Spotify (com a pílula "◀ RunBeat" destacada): largura
+   proporcional à tela, altura automática — nunca distorce. */
+/* Captura real e inteira do iPhone (1188×2576), sem alterações. Por cima:
+   uma "lupa" que mostra a região da pílula "◀ RunBeat" ampliada 4,2× (a
+   mesma imagem como fundo, só reposicionada e escalada) e um SVG, no mesmo
+   sistema de coordenadas da captura, com o contorno amarelo na pílula real,
+   o contorno na pílula ampliada e a linha que liga as duas. */
+.spotify-notice-illustration {
+  /* A ilustração é alta; a largura sai da altura disponível pra título,
+     texto, imagem e botão caberem sem rolagem (a rolagem do aviso continua
+     como último recurso em telas muito baixas). */
+  --spotify-notice-reserve: calc(max(var(--rb-space-6), calc(env(safe-area-inset-top) + var(--rb-space-4))) + max(var(--rb-space-6), calc(env(safe-area-inset-bottom) + var(--rb-space-4))) + 285px);
+  position: relative;
+  width: min(100%, max(100px, calc((100vh - var(--spotify-notice-reserve)) * 1188 / 2576)));
+  width: min(100%, max(100px, calc((100dvh - var(--spotify-notice-reserve)) * 1188 / 2576)));
+  border-radius: var(--rb-radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  box-shadow: var(--rb-shadow-md);
+}
+
+.spotify-notice-illustration img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Região ampliada: x 8–232, y 82–154 da captura, exibida em x 150, y 930,
+   941×302 (coordenadas da captura). */
+.spotify-notice-zoom {
+  position: absolute;
+  left: calc(150 / 1188 * 100%);
+  top: calc(930 / 2576 * 100%);
+  width: calc(941 / 1188 * 100%);
+  aspect-ratio: 224 / 72;
+  background: url("../img/spotify-return-guide.jpg") no-repeat;
+  background-size: calc(1188 / 224 * 100%) auto;
+  background-position: calc(8 / (1188 - 224) * 100%) calc(82 / (2576 - 72) * 100%);
+  border: 2px solid var(--rb-yellow);
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+}
+
+.spotify-notice-highlight {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: var(--rb-yellow);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.spotify-notice-highlight rect {
+  fill: var(--rb-yellow-soft);
+  stroke-width: 12;
+}
+
+.spotify-notice-highlight .spotify-notice-zoom-ring {
+  fill: none;
+  stroke-width: 12;
+}
+
+.spotify-notice-link {
+  stroke-width: 10;
+}
+
+.spotify-notice-link-shadow {
+  stroke: rgba(0, 0, 0, 0.55);
+  stroke-width: 20;
+}
+
+.spotify-notice-ok {
+  width: auto;
+  min-width: 190px;
+  margin: 0;
+  padding: var(--rb-space-3) var(--rb-space-6);
+  border-radius: var(--rb-radius-pill);
+  border: none;
+  background: var(--rb-yellow);
+  color: var(--rb-ink);
+  font-family: var(--rb-font-display);
+  font-weight: var(--rb-weight-extrabold);
+  font-size: var(--rb-text-md);
+  box-shadow: 0 0 0 6px rgba(255, 217, 0, 0.16), 0 0 22px rgba(255, 217, 0, 0.32);
+}
+
+.spotify-notice-ok:focus-visible {
+  box-shadow: 0 0 0 6px rgba(255, 217, 0, 0.16), var(--rb-focus-ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spotify-notice {
+    animation: none;
+  }
+}

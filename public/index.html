@@ -106,7 +106,7 @@
       <button type="button" id="catalog-genre-summary-btn" class="multiselect-summary" aria-haspopup="dialog" data-i18n="selectPlaceholder">Selecione</button>
       <select id="catalog-genre-select" multiple size="6" hidden></select>
     </div>
-    <button id="build-pool-btn" class="rb-cta" disabled data-i18n="loadBpmBtn">Carregar BPM</button>
+    <button id="build-pool-btn" class="rb-cta" disabled data-i18n="loadBpmBtn">Carregar faixas</button>
     <p id="pool-progress" class="rb-status" hidden></p>
   </section>
 
@@ -162,11 +162,7 @@
           <span class="toggle-switch-track"><span class="toggle-switch-knob"></span></span>
         </span>
       </label>
-      <p id="audio-status" class="audio-status" hidden></p>
     </div>
-    <p id="cadence-wait-hint" class="cadence-wait-hint" hidden data-i18n="cadenceWaitHint">🏃 Pode começar a correr! Estamos esperando os primeiros passos.</p>
-
-    <p id="run-error" class="error" hidden></p>
 
     <div class="run-info rb-now-playing">
       <p class="run-info-title" data-i18n="nowPlayingTitle">Tocando:</p>
@@ -181,12 +177,20 @@
     </div>
 
     <div id="warmup-row" class="warmup-row">
-      <button id="warmup-btn" class="warmup-btn is-highlighted" type="button" data-i18n="warmupBtn">Spotify sync (clique aqui)</button>
+      <button id="warmup-btn" class="warmup-btn is-highlighted" type="button" data-i18n="warmupBtn">Spotify sync</button>
       <p id="warmup-hint" class="warmup-hint" data-i18n="warmupHint">↖️ Voltar é só tocar em "‹ RunBeat"</p>
       <p id="warmup-status" class="warmup-status" hidden></p>
     </div>
 
-    <a id="open-spotify-link" class="button-link" hidden data-i18n="warmupBtn">Spotify sync (clique aqui)</a>
+    <!-- Mensagens de status/erro do player: logo abaixo do botão principal,
+         por cima da Faixa Bônus, sem empurrar o layout; um toque fecha (ver
+         .player-msgs no CSS e playerLayout.js). -->
+    <div class="player-msgs" aria-live="polite">
+      <p id="cadence-wait-hint" class="cadence-wait-hint" hidden data-i18n="cadenceWaitHint">🏃 Pode começar a correr! Estamos esperando os primeiros passos.</p>
+      <p id="run-error" class="error" hidden></p>
+      <p id="audio-status" class="audio-status" hidden></p>
+      <a id="open-spotify-link" class="button-link" hidden data-i18n="warmupBtn">Spotify sync</a>
+    </div>
 
     <div class="playpause-row">
       <button id="prev-btn" class="side-btn" type="button" hidden data-i18n-aria-label="prevAriaLabel" aria-label="Faixa anterior">
@@ -200,6 +204,12 @@
       <button id="next-btn" class="side-btn" type="button" hidden data-i18n-aria-label="nextAriaLabel" aria-label="Próxima faixa">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 5v14M4 5l12 7-12 7V5Z"/></svg>
       </button>
+    </div>
+
+    <!-- Linha discreta reservada logo abaixo do botão principal (ver
+         playerLayout.js): depois do sync, "Sincronizar novamente". -->
+    <div class="player-alt-row">
+      <button type="button" id="player-resync" class="player-alt-btn" data-i18n="playerResync">Sincronizar novamente</button>
     </div>
 
     <div id="boost-section" class="boost-section">
@@ -243,6 +253,31 @@
   </div>
 </div>
 
+<div id="spotify-notice" class="spotify-notice" role="dialog" aria-modal="true" aria-labelledby="spotify-notice-title" aria-describedby="spotify-notice-text" hidden>
+  <div class="spotify-notice-dialog" tabindex="-1">
+    <div class="spotify-notice-card">
+      <h2 id="spotify-notice-title" class="spotify-notice-title">
+        <svg class="spotify-notice-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="#e5383b" d="M10.3 3.6 1.9 18.2A2 2 0 0 0 3.6 21h16.8a2 2 0 0 0 1.7-2.8L13.7 3.6a2 2 0 0 0-3.4 0Z"/><path fill="#fff" d="M11 8.5h2l-.3 6.2h-1.4L11 8.5Zm1 7.7a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Z"/></svg>
+        <span data-i18n="spotifyNoticeTitle">Aviso importante</span>
+      </h2>
+      <p id="spotify-notice-text" class="spotify-notice-text" data-i18n-html="spotifyNoticeBody">Você agora será direcionado ao Spotify, para sincronização. Para voltar, aperte em <strong>“RunBeat”</strong> como ilustrado abaixo.</p>
+    </div>
+    <div class="spotify-notice-illustration" role="img" data-i18n-aria-label="spotifyNoticeImageAlt" aria-label="Spotify aberto no iPhone, com a pílula “◀ RunBeat” no canto superior esquerdo para voltar ao RunBeat.">
+      <div class="spotify-notice-zoom" aria-hidden="true"></div>
+      <div class="spotify-notice-shot">
+        <img src="img/spotify-return-guide.jpg" width="1188" height="2576" alt="" />
+      </div>
+      <svg class="spotify-notice-highlight" viewBox="0 0 2328 2576" aria-hidden="true">
+        <path class="spotify-notice-arrow" d="M500 372 C 500 150, 820 114, 1098 114" />
+        <path class="spotify-notice-arrowhead" d="M1140 114 L 1090 86 L 1090 142 Z" />
+        <rect x="1154" y="87" width="198" height="54" rx="27" />
+        <rect class="spotify-notice-zoom-ring" x="82" y="426" width="773" height="188" rx="94" />
+      </svg>
+    </div>
+    <button type="button" id="spotify-notice-ok" class="spotify-notice-ok" data-i18n="spotifyNoticeOk">Ok. Entendi.</button>
+  </div>
+</div>
+
 <div id="onboarding-overlay" class="onboarding-overlay" hidden>
   <div class="onboarding-card">
     <header class="onboarding-header">
@@ -255,7 +290,7 @@
     <div class="onboarding-body">
       <h2 class="onboarding-tutorial-title" data-i18n="onboardingTutorialLabel">Tutorial</h2>
       <div class="onboarding-progress-row">
-        <span class="onboarding-progress" id="onboarding-progress" aria-hidden="true">1 / 6</span>
+        <span class="onboarding-progress" id="onboarding-progress" aria-hidden="true">1 / 7</span>
         <div class="onboarding-dots">
           <span class="onboarding-dot" data-dot="1"></span>
           <span class="onboarding-dot" data-dot="2"></span>
@@ -263,20 +298,25 @@
           <span class="onboarding-dot" data-dot="4"></span>
           <span class="onboarding-dot" data-dot="5"></span>
           <span class="onboarding-dot" data-dot="6"></span>
+          <span class="onboarding-dot" data-dot="7"></span>
         </div>
       </div>
 
       <div class="onboarding-frame">
         <div class="onboarding-steps">
 
-          <div class="onboarding-step" data-step="1">
+          <div class="onboarding-step ob-step-welcome" data-step="1">
+            <p class="ob-lead" data-i18n="onboardingWelcome">Antes de começarmos, entenda o que é e como funciona o RunBeat</p>
+          </div>
+
+          <div class="onboarding-step" data-step="2" hidden>
             <p class="ob-lead">
               <span data-i18n="onboardingIntroLead">Com RunBeat a música vai seguir o seu ritmo.</span>
               <span class="onboarding-highlight" data-i18n="onboardingIntroSecret">O segredo? …</span>
             </p>
           </div>
 
-          <div class="onboarding-step ob-step-bpm" data-step="2" hidden>
+          <div class="onboarding-step ob-step-bpm" data-step="3" hidden>
             <p class="ob-bpm-title">BPM = SPM</p>
             <div class="ob-bpm-equation">
               <span class="ob-bpm-term" data-i18n-html="onboardingBpmTerm">Batidas<br>por minuto</span>
@@ -284,10 +324,10 @@
               <span class="ob-bpm-term" data-i18n-html="onboardingSpmTerm">Passos<br>por minuto</span>
             </div>
             <p class="ob-body" data-i18n="onboardingBpmBody">O RunBeat vai tocar músicas com a batida no ritmo da sua corrida.</p>
-            <p class="ob-see-how onboarding-highlight" data-i18n="onboardingSeeHow">Veja como …</p>
+            <p class="ob-see-how onboarding-highlight" data-i18n="onboardingSeeHow">Veja como configurar o RunBeat para sua corrida, em 3 passos…</p>
           </div>
 
-          <div class="onboarding-step" data-step="3" hidden>
+          <div class="onboarding-step" data-step="4" hidden>
             <p class="ob-step-title" data-i18n="onboardingStep1Title">1. Conectar ao Spotify</p>
             <div class="ob-demo ob-demo-card" inert aria-hidden="true">
               <div class="ob-demo-flow"><span class="ob-demo-flow-item is-active"><span class="ob-demo-flow-num">1</span> Spotify</span><span class="ob-demo-flow-sep"></span><span class="ob-demo-flow-item"><span class="ob-demo-flow-num">2</span></span><span class="ob-demo-flow-sep"></span><span class="ob-demo-flow-item"><span class="ob-demo-flow-num">3</span></span></div>
@@ -296,7 +336,7 @@
             <p class="ob-note" data-i18n="onboardingStep1Note">*Caso o app Spotify esteja ativo, esta etapa será concluída automaticamente.</p>
           </div>
 
-          <div class="onboarding-step" data-step="4" hidden>
+          <div class="onboarding-step" data-step="5" hidden>
             <p class="ob-step-title" data-i18n="onboardingStep2Title">2. Selecione as Playlists</p>
             <div class="ob-demo ob-demo-card" inert aria-hidden="true">
               <div class="ob-demo-flow"><span class="ob-demo-flow-item is-done"><span class="ob-demo-flow-num">✓</span></span><span class="ob-demo-flow-sep"></span><span class="ob-demo-flow-item is-active"><span class="ob-demo-flow-num">2</span> Playlists</span><span class="ob-demo-flow-sep"></span><span class="ob-demo-flow-item"><span class="ob-demo-flow-num">3</span></span></div>
@@ -306,11 +346,11 @@
                 <span class="ob-demo-label" data-i18n="catalogGenresLabel">Gêneros RunBeat</span>
                 <span class="ob-demo-field" data-i18n="onboardingDemoGenres">3 gêneros</span>
               </div>
-              <span class="ob-demo-cta" data-i18n="onboardingDemoLoadTracks">Carregar Faixas</span>
+              <span class="ob-demo-cta" data-i18n="onboardingDemoLoadTracks">Carregar faixas</span>
             </div>
           </div>
 
-          <div class="onboarding-step" data-step="5" hidden>
+          <div class="onboarding-step" data-step="6" hidden>
             <p class="ob-step-title" data-i18n="onboardingStep3Title">3. Escolha o ritmo</p>
             <div class="ob-demo ob-demo-card" inert aria-hidden="true">
               <div class="ob-demo-flow"><span class="ob-demo-flow-item is-done"><span class="ob-demo-flow-num">✓</span></span><span class="ob-demo-flow-sep"></span><span class="ob-demo-flow-item is-done"><span class="ob-demo-flow-num">✓</span></span><span class="ob-demo-flow-sep"></span><span class="ob-demo-flow-item is-active"><span class="ob-demo-flow-num">3</span> <span data-i18n="paceLabel">Ritmo</span></span></div>
@@ -324,8 +364,8 @@
             </div>
           </div>
 
-          <div class="onboarding-step ob-step-done" data-step="6" hidden>
-            <p class="ob-lead ob-lead-sm" data-i18n-html="onboardingDone">Pronto! Agora é apertar “Play” e começar sua <span class="onboarding-highlight">corrida</span>.</p>
+          <div class="onboarding-step ob-step-done" data-step="7" hidden>
+            <p class="ob-lead ob-lead-sm" data-i18n-html="onboardingDone">Pronto. Tutorial concluído. <span class="onboarding-highlight">Bora começar.</span></p>
             <div class="ob-runner" aria-hidden="true">
               <img src="img/onboarding-runner.png" alt="" class="onboarding-runner-img" />
             </div>
@@ -343,6 +383,8 @@
 </div>
 
 <script type="module" src="src/app.js"></script>
+<script type="module" src="src/spotifyReturnNotice.js"></script>
+<script type="module" src="src/playerLayout.js"></script>
 <script>
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(() => {});

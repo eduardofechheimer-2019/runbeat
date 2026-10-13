@@ -347,6 +347,16 @@ header h1 {
 
 .step-card[hidden] { display: none; }
 
+/* Ao avançar de etapa, o app.js alinha o cartão novo ao topo da tela
+   (scrollIntoView block:"start"). Como o cabeçalho fica logo acima dos
+   cartões, esse alinhamento empurrava o cabeçalho pra fora da tela sempre
+   que a página era mais alta que a área visível (Safari com as barras, iPhone
+   SE, Player). A margem de rolagem faz o mesmo scrollIntoView levar a página
+   ao topo — cartão novo E cabeçalho visíveis — sem mudar nada no app.js. */
+.step-card {
+  scroll-margin-top: 100vh;
+}
+
 /* Cartão já concluído: fica visível, mas "sem destaque" (cinza, dessaturado)
    acima do cartão ativo — um toque nele reabre pra editar (ver app.js).
    "condensed" (ver mais abaixo) é a mesma cor, só reduzido a uma linha. */
@@ -654,9 +664,12 @@ h2 {
 .rb-step-card:not([data-state="completed"]):not([data-state="condensed"]) .step-title.rb-step-hint {
   display: block;
   font-family: var(--rb-font-ui);
-  font-size: var(--rb-text-sm);
-  font-weight: var(--rb-weight-regular);
-  color: var(--rb-text-secondary);
+  /* Instrução de ação da etapa ("Escolha suas playlists", "Escolha seu
+     ritmo"): mesmo destaque tipográfico do rótulo "Gêneros RunBeat"
+     (.label-emphasis) — texto claro, peso 700 — pra não parecer apagada. */
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--fg);
   white-space: normal;
   overflow: visible;
   text-overflow: clip;
@@ -2142,7 +2155,7 @@ button:disabled {
   color: var(--rb-text);
 }
 
-.onboarding-step[data-step="1"] .ob-lead > .onboarding-highlight {
+.onboarding-step[data-step="2"] .ob-lead > .onboarding-highlight {
   display: block;
   margin-top: var(--rb-space-2);
 }
@@ -2202,8 +2215,11 @@ button:disabled {
   margin: 0;
   font-family: var(--rb-font-display);
   font-weight: var(--rb-weight-extrabold);
-  font-size: clamp(1.25rem, 5.8vw, 1.45rem);
-  line-height: 1.2;
+  /* Frase mais longa ("Veja como configurar o RunBeat para sua corrida, em
+     3 passos…") — um pouco menor que antes pra não virar a etapa mais alta
+     e esticar a moldura de todas as telas no iPhone SE / Safari. */
+  font-size: clamp(1.05rem, 4.6vw, 1.2rem);
+  line-height: 1.25;
 }
 
 /* Telas 3–5 — título do passo + réplica ilustrativa do cartão real. */
@@ -2456,5 +2472,654 @@ button:disabled {
 
   .onboarding-dot {
     transition: none;
+  }
+}
+
+/* --- Aviso de transição RunBeat → Spotify (primeiro "Spotify sync") ---
+   Modal por cima do app: cartão escuro com título + alerta e texto, a
+   captura do Spotify mostrando onde tocar pra voltar e o botão amarelo de
+   confirmação (pílula com halo, mesma família do "Spotify sync"). Rola
+   verticalmente em telas baixas em vez de cortar o botão. Lógica em
+   src/spotifyReturnNotice.js. */
+.spotify-notice {
+  position: fixed;
+  inset: 0;
+  z-index: 1800;
+  display: flex;
+  justify-content: center;
+  padding: max(var(--rb-space-6), calc(env(safe-area-inset-top) + var(--rb-space-4))) var(--rb-space-4) max(var(--rb-space-6), calc(env(safe-area-inset-bottom) + var(--rb-space-4)));
+  background: rgba(4, 5, 7, 0.97);
+  overflow-x: hidden;
+  overflow-y: auto;
+  animation: spotify-notice-in 160ms ease-out;
+}
+
+.spotify-notice[hidden] {
+  display: none;
+}
+
+@keyframes spotify-notice-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.spotify-notice-dialog {
+  width: min(100%, 360px);
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(16px, 3vh, 24px);
+  outline: none;
+}
+
+/* O contêiner recebe o foco inicial (leitores de tela anunciam o aviso),
+   mas não precisa do anel de foco — o botão mantém o dele. */
+.spotify-notice-dialog:focus,
+.spotify-notice-dialog:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.spotify-notice-card {
+  width: 100%;
+  padding: var(--rb-space-4) var(--rb-space-5);
+  border-radius: var(--rb-radius-md);
+  border: 1px solid var(--rb-border);
+  background: #22262c;
+  box-shadow: var(--rb-shadow-md);
+}
+
+.spotify-notice-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--rb-space-2);
+  margin: 0 0 var(--rb-space-3);
+  font-family: var(--rb-font-display);
+  font-weight: var(--rb-weight-extrabold);
+  font-size: 1.15rem;
+  line-height: 1.2;
+  color: var(--rb-text);
+}
+
+.spotify-notice-icon {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.spotify-notice-text {
+  margin: 0;
+  font-size: var(--rb-text-base);
+  line-height: 1.45;
+  color: var(--rb-text);
+}
+
+.spotify-notice-text strong {
+  font-weight: var(--rb-weight-bold);
+}
+
+/* Captura do Spotify (com a pílula "◀ RunBeat" destacada): largura
+   proporcional à tela, altura automática — nunca distorce. */
+/* Composição de proporção fixa (2328×2576 "unidades da captura"): a lupa
+   à esquerda (x 0–1000) e a captura real e inteira do iPhone à direita
+   (x 1140–2328, 1188×2576, sem alterações), lado a lado e sem
+   sobreposição. A lupa mostra a região da pílula "◀ RunBeat" (x 8–232,
+   y 82–154 da captura) ampliada ~4,5× — a mesma imagem como fundo, só
+   reposicionada e escalada. Um SVG único, no mesmo sistema de coordenadas,
+   desenha a seta da lupa até a pílula real e os contornos amarelos; como a
+   proporção é fixa, tudo escala junto sem distorcer a seta. */
+.spotify-notice-illustration {
+  /* A largura sai da altura disponível pra título, texto, composição e
+     botão caberem sem rolagem (a rolagem do aviso continua como último
+     recurso em telas muito baixas). */
+  --spotify-notice-reserve: calc(max(var(--rb-space-6), calc(env(safe-area-inset-top) + var(--rb-space-4))) + max(var(--rb-space-6), calc(env(safe-area-inset-bottom) + var(--rb-space-4))) + 285px);
+  position: relative;
+  width: min(100%, max(180px, calc((100vh - var(--spotify-notice-reserve)) * 2328 / 2576)));
+  width: min(100%, max(180px, calc((100dvh - var(--spotify-notice-reserve)) * 2328 / 2576)));
+  aspect-ratio: 2328 / 2576;
+}
+
+.spotify-notice-shot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: calc(1188 / 2328 * 100%);
+  height: 100%;
+  border-radius: var(--rb-radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  box-shadow: var(--rb-shadow-md);
+}
+
+.spotify-notice-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.spotify-notice-zoom {
+  position: absolute;
+  left: 0;
+  top: calc(380 / 2576 * 100%);
+  width: calc(1000 / 2328 * 100%);
+  aspect-ratio: 224 / 72;
+  background: url("../img/spotify-return-guide.jpg") no-repeat;
+  background-size: calc(1188 / 224 * 100%) auto;
+  background-position: calc(8 / (1188 - 224) * 100%) calc(82 / (2576 - 72) * 100%);
+  border: 2px solid var(--rb-yellow);
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+}
+
+.spotify-notice-highlight {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: var(--rb-yellow);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.spotify-notice-highlight rect {
+  fill: var(--rb-yellow-soft);
+  stroke-width: 12;
+}
+
+.spotify-notice-highlight .spotify-notice-zoom-ring {
+  fill: none;
+  stroke-width: 12;
+}
+
+.spotify-notice-arrow {
+  stroke-width: 16;
+}
+
+.spotify-notice-arrowhead {
+  fill: var(--rb-yellow);
+  stroke-width: 8;
+}
+
+.spotify-notice-ok {
+  width: auto;
+  min-width: 190px;
+  margin: 0;
+  padding: var(--rb-space-3) var(--rb-space-6);
+  border-radius: var(--rb-radius-pill);
+  border: none;
+  background: var(--rb-yellow);
+  color: var(--rb-ink);
+  font-family: var(--rb-font-display);
+  font-weight: var(--rb-weight-extrabold);
+  font-size: var(--rb-text-md);
+  box-shadow: 0 0 0 6px rgba(255, 217, 0, 0.16), 0 0 22px rgba(255, 217, 0, 0.32);
+}
+
+.spotify-notice-ok:focus-visible {
+  box-shadow: 0 0 0 6px rgba(255, 217, 0, 0.16), var(--rb-focus-ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spotify-notice {
+    animation: none;
+  }
+}
+
+/* ===================================================================
+   Player contínuo (#card-run) — a mesma estrutura do começo ao fim; só
+   muda o que está em destaque. O estado vem de src/playerLayout.js
+   (data-player-state = "sync" | "ready" | "running", no cartão e no
+   <html>). Antes da corrida tudo fica atenuado e só a próxima ação
+   (Spotify sync, depois Play) fica em amarelo; com a corrida, o player
+   "acende". Nenhum estado muda o tamanho de nada: os blocos têm altura
+   fixa, o botão principal troca de conteúdo num espaço reservado e as
+   mensagens aparecem sobrepostas.
+   =================================================================== */
+
+/* Cabeçalho e etapas concluídas: cinza antes da corrida. */
+html[data-player-state="sync"] #app-header .header-logo,
+html[data-player-state="ready"] #app-header .header-logo {
+  filter: grayscale(1) brightness(0.75);
+}
+
+html[data-player-state="sync"] #app-header h1,
+html[data-player-state="ready"] #app-header h1 {
+  color: var(--rb-text-secondary);
+  -webkit-text-stroke-color: var(--rb-text-secondary);
+}
+
+html[data-player-state="sync"] .step-card[data-state="condensed"] .step-badge,
+html[data-player-state="ready"] .step-card[data-state="condensed"] .step-badge {
+  background: #3a3f47;
+  color: #9aa0a8;
+}
+
+html[data-player-state="sync"] .step-card[data-state="condensed"] .step-title,
+html[data-player-state="ready"] .step-card[data-state="condensed"] .step-title,
+html[data-player-state="sync"] .step-card[data-state="condensed"] .rb-condensed-label,
+html[data-player-state="ready"] .step-card[data-state="condensed"] .rb-condensed-label {
+  color: var(--rb-text-secondary);
+}
+
+/* Seletor PT/EN e Configurações: continuam funcionando, só sem cor. */
+html[data-player-state="sync"] .lang-btn.is-active,
+html[data-player-state="ready"] .lang-btn.is-active {
+  background: #3a3f47;
+  color: #d5d9de;
+}
+
+html[data-player-state="sync"] .lang-switch,
+html[data-player-state="ready"] .lang-switch,
+html[data-player-state="sync"] .help-btn,
+html[data-player-state="ready"] .help-btn {
+  opacity: 0.75;
+}
+
+#app-header .header-logo,
+#app-header h1,
+.lang-btn,
+.lang-switch,
+.help-btn,
+.step-card[data-state="condensed"] .step-badge {
+  transition: filter 0.4s ease, color 0.4s ease, background-color 0.4s ease, opacity 0.4s ease;
+}
+
+/* Grade fixa: painel SPM/BPM, Marca-Passo, Tocando, botão principal,
+   alternativa discreta, Faixa Bônus. O ":not([hidden])" garante que esta
+   regra (mais específica que ".step-card[hidden]") nunca revele o cartão
+   enquanto o app.js o mantém escondido nas etapas de configuração. */
+#card-run[data-player-state]:not([hidden]) {
+  --player-gap: var(--rb-space-3);
+  --player-panel-pad: 14px;
+  --player-value-size: clamp(2.4rem, 14vw, 2.9rem);
+  --player-now-h: 128px;
+  --player-action-h: 72px;
+  --player-pulse-h: 64px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto var(--player-now-h) var(--player-action-h) 24px auto;
+  grid-template-areas: "beat" "pulse" "now" "action" "alt" "boost";
+  row-gap: var(--player-gap);
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+#card-run[data-player-state] #beat-visual-title,
+#card-run[data-player-state] .beat-extra-row,
+#card-run[data-player-state] #warmup-hint,
+#card-run[data-player-state] #warmup-status {
+  display: none;
+}
+
+/* O painel existe desde a entrada no player (o app.js só o "revela" na
+   primeira faixa); os filhos entram direto na grade. */
+#card-run[data-player-state] .beat-visual,
+#card-run[data-player-state] .beat-visual[hidden] {
+  display: contents;
+}
+
+#card-run[data-player-state] .beat-columns,
+#card-run[data-player-state] .rb-pulse-row,
+#card-run[data-player-state] .rb-now-playing {
+  margin: 0;
+  border: 1px solid var(--rb-border);
+  border-radius: var(--rb-radius-md);
+  background: color-mix(in srgb, var(--rb-surface-elevated) 88%, transparent);
+  box-shadow: var(--rb-shadow-sm);
+}
+
+#card-run[data-player-state] .beat-columns {
+  grid-area: beat;
+  padding: var(--player-panel-pad) var(--rb-space-3) calc(var(--player-panel-pad) + 6px);
+}
+
+#card-run[data-player-state] .beat-col-value {
+  font-size: var(--player-value-size);
+}
+
+/* SPM/BPM sem medição: "000" no lugar do texto do app.js (que continua lá,
+   só invisível). Atenuado antes da corrida; na corrida, enquanto não há
+   medição válida, segue "000" na cor do painel ativo, mais discreto. */
+#card-run[data-player-state] .beat-col-value[data-placeholder],
+#card-run[data-player-state]:not([data-player-state="running"]) .beat-col-value {
+  font-size: 0;
+}
+
+#card-run[data-player-state] .beat-col-value[data-placeholder]::after,
+#card-run[data-player-state]:not([data-player-state="running"]) .beat-col-value::after {
+  content: "000";
+  font-size: var(--player-value-size);
+  opacity: 0.35;
+}
+
+#card-run[data-player-state]:not([data-player-state="running"]) .beat-col-value,
+#card-run[data-player-state]:not([data-player-state="running"]) .beat-col-value::after {
+  color: var(--rb-text-secondary);
+}
+
+#card-run[data-player-state]:not([data-player-state="running"]) .beat-col-value::after {
+  opacity: 0.22;
+}
+
+#card-run[data-player-state]:not([data-player-state="running"]) .beat-col-label,
+#card-run[data-player-state]:not([data-player-state="running"]) .beat-col-sublabel,
+#card-run[data-player-state]:not([data-player-state="running"]) .beat-col-divider {
+  opacity: 0.45;
+}
+
+#card-run[data-player-state="running"] .beat-columns {
+  border-color: color-mix(in srgb, var(--rb-yellow) 35%, var(--rb-border));
+}
+
+/* Marca-Passo: sempre visível, altura fixa. O aviso de interferência só
+   aparece com o controle ligado, dentro dessa mesma altura (o título sobe
+   um pouco; nada fora da linha se mexe). */
+#card-run[data-player-state] .rb-pulse-row {
+  grid-area: pulse;
+  height: var(--player-pulse-h);
+  box-sizing: border-box;
+  padding: 0 var(--rb-space-4);
+  border-top: 1px solid var(--rb-border);
+  align-items: center;
+}
+
+#card-run[data-player-state] .rb-pulse-row .checkbox-subtitle {
+  display: none;
+  margin-top: 2px;
+  font-size: var(--rb-text-xs);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#card-run[data-player-state] .rb-pulse-row:has(#audible-pulse-toggle:checked) .checkbox-subtitle {
+  display: block;
+}
+
+#card-run[data-player-state]:not([data-player-state="running"]) .rb-pulse-row .toggle-row-text {
+  opacity: 0.7;
+}
+
+/* Tocando: altura fixa pra 3 linhas, uma linha por item (reticências). */
+#card-run[data-player-state] .rb-now-playing {
+  grid-area: now;
+  padding: 12px var(--rb-space-4);
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#card-run[data-player-state] .rb-now-playing .run-info-title {
+  margin: 0 0 4px;
+}
+
+#card-run[data-player-state] .rb-now-playing .run-info-list li {
+  display: flex;
+  gap: var(--rb-space-2);
+  align-items: baseline;
+  min-width: 0;
+  margin: 0;
+  line-height: 1.3;
+}
+
+#card-run[data-player-state] .rb-now-playing .rb-redundant-label {
+  display: inline;
+  flex: none;
+}
+
+#card-run[data-player-state] .rb-now-playing .run-info-list li > strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#card-run[data-player-state] .rb-now-playing .rb-now-playing-track {
+  font-size: var(--rb-text-md);
+}
+
+#card-run[data-player-state]:not([data-player-state="running"]) #track-genre-row[hidden] {
+  display: flex;
+}
+
+#card-run[data-player-state]:not([data-player-state="running"]) .rb-now-playing {
+  opacity: 0.6;
+}
+
+#card-run[data-player-state]:not([data-player-state="running"]) .now-playing-spotify-icon {
+  filter: grayscale(1);
+}
+
+/* Marca-Passo ligado antes da corrida: o controle continua mostrando
+   ligado/desligado (posição do botão), mas sem o amarelo. */
+#card-run[data-player-state]:not([data-player-state="running"]) .toggle-switch input:checked ~ .toggle-switch-track {
+  background: #8a9099;
+}
+
+/* Faixa Bônus já configurada: o botão vermelho fica sem cor até a corrida. */
+#card-run[data-player-state]:not([data-player-state="running"]) .boost-btn {
+  filter: grayscale(1) brightness(0.8);
+}
+
+/* Mensagens (aguardando passos, erros, áudio, link "sem dispositivo"):
+   logo abaixo do botão principal, por cima da linha discreta e da Faixa
+   Bônus — nunca sobre o painel Tocando nem sobre os controles. A caixa tem
+   altura zero na grade (não empurra nada); o conteúdo transborda pra baixo. */
+#card-run[data-player-state] .player-msgs {
+  grid-area: alt;
+  align-self: start;
+  height: 0;
+  overflow: visible;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--rb-space-2);
+}
+
+#card-run[data-player-state] .player-msgs:not(:has(> :not([hidden]))) {
+  display: none;
+}
+
+#card-run[data-player-state] .player-msgs > * {
+  flex: none;
+  margin: 0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  font-size: var(--rb-text-sm);
+  line-height: 1.35;
+}
+
+/* Erro e status de áudio: caixa opaca discreta. Um toque fecha a
+   mensagem (ver playerLayout.js) — o "✕" indica isso. */
+#card-run[data-player-state] .player-msgs > .error,
+#card-run[data-player-state] .player-msgs > .audio-status {
+  padding: var(--rb-space-2) var(--rb-space-3);
+  border-radius: var(--rb-radius-sm);
+  background: #262b33;
+}
+
+#card-run[data-player-state] .player-msgs > .error,
+#card-run[data-player-state] .player-msgs > .audio-status,
+#card-run[data-player-state] .player-msgs > .cadence-wait-hint {
+  position: relative;
+  padding-right: 30px;
+  cursor: pointer;
+}
+
+#card-run[data-player-state] .player-msgs > .error::after,
+#card-run[data-player-state] .player-msgs > .audio-status::after,
+#card-run[data-player-state] .player-msgs > .cadence-wait-hint::after {
+  content: "✕";
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  color: var(--rb-text-secondary);
+  font-size: 0.8em;
+}
+
+/* "Marca-Passo Sonoro ativo" repete o que o próprio controle já mostra e
+   ficaria fixo por cima da Faixa Bônus — no player só aparece o alerta de
+   som bloqueado (.audio-status-warn). */
+#card-run[data-player-state] .player-msgs > .audio-status:not(.audio-status-warn) {
+  display: none;
+}
+
+/* "Pode começar a correr": mesmo visual de antes, fundo opaco. */
+#card-run[data-player-state] .player-msgs > .cadence-wait-hint {
+  background: color-mix(in srgb, var(--rb-yellow) 12%, #1b2026);
+}
+
+/* Ordem: o que pede ação primeiro (erro + link pra abrir o Spotify). */
+#card-run[data-player-state] .player-msgs > .error { order: 1; }
+#card-run[data-player-state] .player-msgs > .button-link { order: 2; padding: 10px 14px; }
+#card-run[data-player-state] .player-msgs > .cadence-wait-hint { order: 3; }
+#card-run[data-player-state] .player-msgs > .audio-status { order: 4; }
+
+#card-run[data-player-state] .player-msgs > [hidden] {
+  display: none;
+}
+
+/* Botão principal: Spotify sync, Play ou ◀ Pause ▶ — sempre no mesmo
+   espaço (mesma célula da grade, altura reservada). */
+#card-run[data-player-state] .warmup-row,
+#card-run[data-player-state] .playpause-row {
+  grid-area: action;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#card-run[data-player-state="sync"] .playpause-row,
+#card-run[data-player-state="ready"] .warmup-row,
+#card-run[data-player-state="running"] .warmup-row {
+  visibility: hidden;
+}
+
+#card-run[data-player-state="sync"] .warmup-btn {
+  min-width: 220px;
+  max-width: 100%;
+  padding: var(--rb-space-4) var(--rb-space-6);
+  border-color: var(--rb-yellow);
+  background: var(--rb-yellow);
+  color: var(--rb-ink);
+  font-size: var(--rb-text-md);
+  box-shadow: 0 0 0 6px rgba(255, 217, 0, 0.16), 0 0 22px rgba(255, 217, 0, 0.32);
+}
+
+/* Linha discreta sob o botão principal, com altura reservada em todos os
+   estados (vazia antes do sync e na corrida) — nada se desloca. */
+#card-run[data-player-state] .player-alt-row {
+  grid-area: alt;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-alt-btn {
+  width: auto;
+  min-height: 24px;
+  margin: 0;
+  padding: 0 var(--rb-space-2);
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--rb-text-secondary);
+  font-family: inherit;
+  font-size: var(--rb-text-sm);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+#card-run[data-player-state] .player-alt-btn {
+  display: none;
+}
+
+#card-run[data-player-state="ready"] #player-resync {
+  display: inline-block;
+}
+
+#card-run[data-player-state] .boost-section {
+  grid-area: boost;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* Telas baixas (iPhone SE, Safari com barras): mesmos blocos, mais
+   compactos — controles e textos mantêm o tamanho de toque/leitura. */
+@media (max-height: 740px) {
+  #card-run[data-player-state]:not([hidden]) {
+    --player-gap: var(--rb-space-2);
+    --player-panel-pad: 8px;
+    --player-value-size: 2.15rem;
+  }
+
+  #card-run[data-player-state]:not([hidden]) {
+    --player-now-h: 116px;
+    --player-action-h: 66px;
+    --player-pulse-h: 56px;
+  }
+
+  #card-run[data-player-state] .rb-now-playing {
+    padding: 8px var(--rb-space-4);
+  }
+
+}
+
+/* Telas baixas: mensagens mais compactas, pra erro + link "sem dispositivo"
+   caberem entre o botão principal e o fim da tela. */
+@media (max-height: 740px) {
+  #card-run[data-player-state] .player-msgs {
+    gap: 6px;
+  }
+
+  #card-run[data-player-state] .player-msgs > * {
+    font-size: var(--rb-text-xs);
+  }
+
+  #card-run[data-player-state] .player-msgs > .error,
+  #card-run[data-player-state] .player-msgs > .audio-status,
+  #card-run[data-player-state] .player-msgs > .cadence-wait-hint {
+    padding: 6px 22px 6px 10px;
+  }
+
+  #card-run[data-player-state] .player-msgs > .button-link {
+    padding: 8px 12px;
+    font-size: var(--rb-text-sm);
+  }
+
+  #card-run[data-player-state] .player-msgs > .error::after,
+  #card-run[data-player-state] .player-msgs > .audio-status::after,
+  #card-run[data-player-state] .player-msgs > .cadence-wait-hint::after {
+    right: 7px;
+  }
+}
+
+/* Safari com barras visíveis numa tela já baixa: compacta mais um passo. */
+@media (max-height: 600px) {
+  #card-run[data-player-state]:not([hidden]) {
+    --player-gap: 6px;
+    --player-panel-pad: 6px;
+    --player-value-size: 1.9rem;
+    --player-now-h: 112px;
+  }
+
+  #card-run[data-player-state] .rb-now-playing {
+    padding: 6px var(--rb-space-4);
   }
 }

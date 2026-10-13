@@ -347,6 +347,16 @@ header h1 {
 
 .step-card[hidden] { display: none; }
 
+/* Ao avançar de etapa, o app.js alinha o cartão novo ao topo da tela
+   (scrollIntoView block:"start"). Como o cabeçalho fica logo acima dos
+   cartões, esse alinhamento empurrava o cabeçalho pra fora da tela sempre
+   que a página era mais alta que a área visível (Safari com as barras, iPhone
+   SE, Player). A margem de rolagem faz o mesmo scrollIntoView levar a página
+   ao topo — cartão novo E cabeçalho visíveis — sem mudar nada no app.js. */
+.step-card {
+  scroll-margin-top: 100vh;
+}
+
 /* Cartão já concluído: fica visível, mas "sem destaque" (cinza, dessaturado)
    acima do cartão ativo — um toque nele reabre pra editar (ver app.js).
    "condensed" (ver mais abaixo) é a mesma cor, só reduzido a uma linha. */
@@ -654,9 +664,12 @@ h2 {
 .rb-step-card:not([data-state="completed"]):not([data-state="condensed"]) .step-title.rb-step-hint {
   display: block;
   font-family: var(--rb-font-ui);
-  font-size: var(--rb-text-sm);
-  font-weight: var(--rb-weight-regular);
-  color: var(--rb-text-secondary);
+  /* Instrução de ação da etapa ("Escolha suas playlists", "Escolha seu
+     ritmo"): mesmo destaque tipográfico do rótulo "Gêneros RunBeat"
+     (.label-emphasis) — texto claro, peso 700 — pra não parecer apagada. */
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--fg);
   white-space: normal;
   overflow: visible;
   text-overflow: clip;
@@ -2142,7 +2155,7 @@ button:disabled {
   color: var(--rb-text);
 }
 
-.onboarding-step[data-step="1"] .ob-lead > .onboarding-highlight {
+.onboarding-step[data-step="2"] .ob-lead > .onboarding-highlight {
   display: block;
   margin-top: var(--rb-space-2);
 }
@@ -2202,8 +2215,11 @@ button:disabled {
   margin: 0;
   font-family: var(--rb-font-display);
   font-weight: var(--rb-weight-extrabold);
-  font-size: clamp(1.25rem, 5.8vw, 1.45rem);
-  line-height: 1.2;
+  /* Frase mais longa ("Veja como configurar o RunBeat para sua corrida, em
+     3 passos…") — um pouco menor que antes pra não virar a etapa mais alta
+     e esticar a moldura de todas as telas no iPhone SE / Safari. */
+  font-size: clamp(1.05rem, 4.6vw, 1.2rem);
+  line-height: 1.25;
 }
 
 /* Telas 3–5 — título do passo + réplica ilustrativa do cartão real. */

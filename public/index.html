@@ -290,7 +290,7 @@
     <div class="onboarding-body">
       <h2 class="onboarding-tutorial-title" data-i18n="onboardingTutorialLabel">Tutorial</h2>
       <div class="onboarding-progress-row">
-        <span class="onboarding-progress" id="onboarding-progress" aria-hidden="true">1 / 6</span>
+        <span class="onboarding-progress" id="onboarding-progress" aria-hidden="true">1 / 7</span>
         <div class="onboarding-dots">
           <span class="onboarding-dot" data-dot="1"></span>
           <span class="onboarding-dot" data-dot="2"></span>
@@ -298,20 +298,25 @@
           <span class="onboarding-dot" data-dot="4"></span>
           <span class="onboarding-dot" data-dot="5"></span>
           <span class="onboarding-dot" data-dot="6"></span>
+          <span class="onboarding-dot" data-dot="7"></span>
         </div>
       </div>
 
       <div class="onboarding-frame">
         <div class="onboarding-steps">
 
-          <div class="onboarding-step" data-step="1">
+          <div class="onboarding-step ob-step-welcome" data-step="1">
+            <p class="ob-lead" data-i18n="onboardingWelcome">Antes de começarmos, entenda o que é e como funciona o RunBeat</p>
+          </div>
+
+          <div class="onboarding-step" data-step="2" hidden>
             <p class="ob-lead">
               <span data-i18n="onboardingIntroLead">Com RunBeat a música vai seguir o seu ritmo.</span>
               <span class="onboarding-highlight" data-i18n="onboardingIntroSecret">O segredo? …</span>
             </p>
           </div>
 
-          <div class="onboarding-step ob-step-bpm" data-step="2" hidden>
+          <div class="onboarding-step ob-step-bpm" data-step="3" hidden>
             <p class="ob-bpm-title">BPM = SPM</p>
             <div class="ob-bpm-equation">
               <span class="ob-bpm-term" data-i18n-html="onboardingBpmTerm">Batidas<br>por minuto</span>
@@ -319,10 +324,10 @@
               <span class="ob-bpm-term" data-i18n-html="onboardingSpmTerm">Passos<br>por minuto</span>
             </div>
             <p class="ob-body" data-i18n="onboardingBpmBody">O RunBeat vai tocar músicas com a batida no ritmo da sua corrida.</p>
-            <p class="ob-see-how onboarding-highlight" data-i18n="onboardingSeeHow">Veja como …</p>
+            <p class="ob-see-how onboarding-highlight" data-i18n="onboardingSeeHow">Veja como configurar o RunBeat para sua corrida, em 3 passos…</p>
           </div>
 
-          <div class="onboarding-step" data-step="3" hidden>
+          <div class="onboarding-step" data-step="4" hidden>
             <p class="ob-step-title" data-i18n="onboardingStep1Title">1. Conectar ao Spotify</p>
             <div class="ob-demo ob-demo-card" inert aria-hidden="true">
               <div class="ob-demo-flow"><span class="ob-demo-flow-item is-active"><span class="ob-demo-flow-num">1</span> Spotify</span><span class="ob-demo-flow-sep"></span><span class="ob-demo-flow-item"><span class="ob-demo-flow-num">2</span></span><span class="ob-demo-flow-sep"></span><span class="ob-demo-flow-item"><span class="ob-demo-flow-num">3</span></span></div>
@@ -331,7 +336,7 @@
             <p class="ob-note" data-i18n="onboardingStep1Note">*Caso o app Spotify esteja ativo, esta etapa será concluída automaticamente.</p>
           </div>
 
-          <div class="onboarding-step" data-step="4" hidden>
+          <div class="onboarding-step" data-step="5" hidden>
             <p class="ob-step-title" data-i18n="onboardingStep2Title">2. Selecione as Playlists</p>
             <div class="ob-demo ob-demo-card" inert aria-hidden="true">
               <div class="ob-demo-flow"><span class="ob-demo-flow-item is-done"><span class="ob-demo-flow-num">✓</span></span><span class="ob-demo-flow-sep"></span><span class="ob-demo-flow-item is-active"><span class="ob-demo-flow-num">2</span> Playlists</span><span class="ob-demo-flow-sep"></span><span class="ob-demo-flow-item"><span class="ob-demo-flow-num">3</span></span></div>
@@ -345,7 +350,7 @@
             </div>
           </div>
 
-          <div class="onboarding-step" data-step="5" hidden>
+          <div class="onboarding-step" data-step="6" hidden>
             <p class="ob-step-title" data-i18n="onboardingStep3Title">3. Escolha o ritmo</p>
             <div class="ob-demo ob-demo-card" inert aria-hidden="true">
               <div class="ob-demo-flow"><span class="ob-demo-flow-item is-done"><span class="ob-demo-flow-num">✓</span></span><span class="ob-demo-flow-sep"></span><span class="ob-demo-flow-item is-done"><span class="ob-demo-flow-num">✓</span></span><span class="ob-demo-flow-sep"></span><span class="ob-demo-flow-item is-active"><span class="ob-demo-flow-num">3</span> <span data-i18n="paceLabel">Ritmo</span></span></div>
@@ -359,8 +364,8 @@
             </div>
           </div>
 
-          <div class="onboarding-step ob-step-done" data-step="6" hidden>
-            <p class="ob-lead ob-lead-sm" data-i18n-html="onboardingDone">Pronto! Agora é apertar “Play” e começar sua <span class="onboarding-highlight">corrida</span>.</p>
+          <div class="onboarding-step ob-step-done" data-step="7" hidden>
+            <p class="ob-lead ob-lead-sm" data-i18n-html="onboardingDone">Pronto. Tutorial concluído. <span class="onboarding-highlight">Bora começar.</span></p>
             <div class="ob-runner" aria-hidden="true">
               <img src="img/onboarding-runner.png" alt="" class="onboarding-runner-img" />
             </div>

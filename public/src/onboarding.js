@@ -1,7 +1,7 @@
 import { STORAGE_KEYS } from "./config.js";
 import { t, onLanguageChange } from "./i18n.js";
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 let currentStep = 1;
 
 // Transição entre etapas: só o conteúdo da moldura desliza (a etapa atual
@@ -40,7 +40,7 @@ const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 const stepEl = (n) => el.overlay.querySelector(`.onboarding-step[data-step="${n}"]`);
 
-// Rótulo do CTA principal: "Próximo" nas etapas 1–5 e "Começar" só na
+// Rótulo do CTA principal: "Próximo" nas etapas 1–6 e "Início" só na
 // última — único lugar que precisa saber em que etapa está.
 function ctaLabelFor(step) {
   return step === TOTAL_STEPS ? t("onboardingFinish") : t("onboardingNext");
@@ -127,7 +127,7 @@ function completeOnboarding() {
 // touch-action: pan-y, então o navegador continua dono do scroll vertical
 // (um arrasto vertical vira pointercancel e é descartado) e só o gesto
 // horizontal chega inteiro aqui. Gestos que começam num botão são
-// ignorados; nas pontas (etapa 1 pra trás, etapa 6 pra frente) o gesto não
+// ignorados; nas pontas (etapa 1 pra trás, etapa 7 pra frente) o gesto não
 // faz nada — nunca conclui o onboarding sozinho.
 function initSwipe() {
   let start = null;

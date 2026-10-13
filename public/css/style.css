@@ -2690,15 +2690,34 @@ html[data-player-state="ready"] .step-card[data-state="condensed"] .rb-condensed
   color: var(--rb-text-secondary);
 }
 
+/* Seletor PT/EN e Configurações: continuam funcionando, só sem cor. */
+html[data-player-state="sync"] .lang-btn.is-active,
+html[data-player-state="ready"] .lang-btn.is-active {
+  background: #3a3f47;
+  color: #d5d9de;
+}
+
+html[data-player-state="sync"] .lang-switch,
+html[data-player-state="ready"] .lang-switch,
+html[data-player-state="sync"] .help-btn,
+html[data-player-state="ready"] .help-btn {
+  opacity: 0.75;
+}
+
 #app-header .header-logo,
 #app-header h1,
+.lang-btn,
+.lang-switch,
+.help-btn,
 .step-card[data-state="condensed"] .step-badge {
-  transition: filter 0.4s ease, color 0.4s ease, background-color 0.4s ease;
+  transition: filter 0.4s ease, color 0.4s ease, background-color 0.4s ease, opacity 0.4s ease;
 }
 
 /* Grade fixa: painel SPM/BPM, Marca-Passo, Tocando, botão principal,
-   alternativa discreta, Faixa Bônus. */
-#card-run[data-player-state] {
+   alternativa discreta, Faixa Bônus. O ":not([hidden])" garante que esta
+   regra (mais específica que ".step-card[hidden]") nunca revele o cartão
+   enquanto o app.js o mantém escondido nas etapas de configuração. */
+#card-run[data-player-state]:not([hidden]) {
   --player-gap: var(--rb-space-3);
   --player-panel-pad: 14px;
   --player-value-size: clamp(2.4rem, 14vw, 2.9rem);
@@ -2764,8 +2783,12 @@ html[data-player-state="ready"] .step-card[data-state="condensed"] .rb-condensed
   opacity: 0.35;
 }
 
+#card-run[data-player-state]:not([data-player-state="running"]) .beat-col-value,
 #card-run[data-player-state]:not([data-player-state="running"]) .beat-col-value::after {
   color: var(--rb-text-secondary);
+}
+
+#card-run[data-player-state]:not([data-player-state="running"]) .beat-col-value::after {
   opacity: 0.22;
 }
 
@@ -2854,6 +2877,21 @@ html[data-player-state="ready"] .step-card[data-state="condensed"] .rb-condensed
 
 #card-run[data-player-state]:not([data-player-state="running"]) .rb-now-playing {
   opacity: 0.6;
+}
+
+#card-run[data-player-state]:not([data-player-state="running"]) .now-playing-spotify-icon {
+  filter: grayscale(1);
+}
+
+/* Marca-Passo ligado antes da corrida: o controle continua mostrando
+   ligado/desligado (posição do botão), mas sem o amarelo. */
+#card-run[data-player-state]:not([data-player-state="running"]) .toggle-switch input:checked ~ .toggle-switch-track {
+  background: #8a9099;
+}
+
+/* Faixa Bônus já configurada: o botão vermelho fica sem cor até a corrida. */
+#card-run[data-player-state]:not([data-player-state="running"]) .boost-btn {
+  filter: grayscale(1) brightness(0.8);
 }
 
 /* Mensagens (aguardando passos, erros, áudio, link "sem dispositivo"):
@@ -2965,16 +3003,8 @@ html[data-player-state="ready"] .step-card[data-state="condensed"] .rb-condensed
   box-shadow: 0 0 0 6px rgba(255, 217, 0, 0.16), 0 0 22px rgba(255, 217, 0, 0.32);
 }
 
-/* Play pelo atalho "Pular sincronização": amarelo como depois do sync
-   (sem o esmaecido que o app.js aplica enquanto o sync não foi feito). */
-#card-run[data-player-state="ready"] .play-pause-btn.is-muted {
-  border-color: var(--rb-yellow);
-  background: var(--rb-yellow);
-  color: var(--rb-ink);
-  box-shadow: var(--rb-shadow-sm);
-}
-
-/* Alternativa discreta sob o botão principal (linha reservada). */
+/* Linha discreta sob o botão principal, com altura reservada em todos os
+   estados (vazia antes do sync e na corrida) — nada se desloca. */
 #card-run[data-player-state] .player-alt-row {
   grid-area: alt;
   height: 24px;
@@ -3003,7 +3033,6 @@ html[data-player-state="ready"] .step-card[data-state="condensed"] .rb-condensed
   display: none;
 }
 
-#card-run[data-player-state="sync"] #player-skip-sync,
 #card-run[data-player-state="ready"] #player-resync {
   display: inline-block;
 }
@@ -3018,13 +3047,13 @@ html[data-player-state="ready"] .step-card[data-state="condensed"] .rb-condensed
 /* Telas baixas (iPhone SE, Safari com barras): mesmos blocos, mais
    compactos — controles e textos mantêm o tamanho de toque/leitura. */
 @media (max-height: 740px) {
-  #card-run[data-player-state] {
+  #card-run[data-player-state]:not([hidden]) {
     --player-gap: var(--rb-space-2);
     --player-panel-pad: 8px;
     --player-value-size: 2.15rem;
   }
 
-  #card-run[data-player-state] {
+  #card-run[data-player-state]:not([hidden]) {
     --player-now-h: 116px;
     --player-action-h: 66px;
     --player-pulse-h: 56px;
@@ -3067,7 +3096,7 @@ html[data-player-state="ready"] .step-card[data-state="condensed"] .rb-condensed
 
 /* Safari com barras visíveis numa tela já baixa: compacta mais um passo. */
 @media (max-height: 600px) {
-  #card-run[data-player-state] {
+  #card-run[data-player-state]:not([hidden]) {
     --player-gap: 6px;
     --player-panel-pad: 6px;
     --player-value-size: 1.9rem;

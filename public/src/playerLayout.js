@@ -11,18 +11,18 @@
 //   - ready:   warmUpSpotify() põe .is-attention no Play no momento do toque
 //              (não depende do visibilitychange da volta do Spotify);
 //   - sync:    nenhum dos dois.
-// Antes da corrida o Play fica fora da tela, então há um caminho
-// alternativo discreto pra ninguém ficar travado: "Pular sincronização"
-// (mostra o Play, que funciona com ou sem sync, como sempre funcionou) e,
-// depois do sync, "Sincronizar novamente" (repete o toque no botão
-// original, que segue passando pelo aviso e pelo warmUpSpotify() intactos).
+// Uma ação por vez: antes do sync só existe o "Spotify sync" (o Play aparece
+// assim que ele é tocado, mesmo que a abertura do Spotify falhe — o toque
+// basta). Depois do sync, um link discreto "Sincronizar novamente" repete o
+// toque no botão original, que segue passando pelo aviso e pelo
+// warmUpSpotify() intactos. Durante a corrida, falhas de reprodução seguem
+// o caminho que o app.js já tem (erro + link "Spotify sync" pra abrir o app).
 
 const el = {
   card: document.getElementById("card-run"),
   warmupRow: document.getElementById("warmup-row"),
   warmupBtn: document.getElementById("warmup-btn"),
   playBtn: document.getElementById("play-pause-btn"),
-  skipBtn: document.getElementById("player-skip-sync"),
   resyncBtn: document.getElementById("player-resync"),
   msgs: document.querySelector(".player-msgs"),
   runError: document.getElementById("run-error"),
@@ -30,22 +30,27 @@ const el = {
   values: [document.getElementById("cadence-live-value"), document.getElementById("beat-bpm-value")],
 };
 
-let syncSkipped = false;
-
 function currentState() {
   if (el.warmupRow.hidden) return "running";
-  if (syncSkipped || el.playBtn.classList.contains("is-attention")) return "ready";
+  if (el.playBtn.classList.contains("is-attention")) return "ready";
   return "sync";
 }
 
-// O estado também vai pro <html> (cabeçalho e etapas condensadas ficam fora
-// do cartão), mas só enquanto o player está na tela — ao reabrir uma etapa
-// anterior o cabeçalho volta ao normal.
+// O estado só existe enquanto o player (#card-run) está na tela — durante as
+// três etapas de configuração o cartão fica `hidden` e nenhum estilo do
+// player pode valer. Por isso o atributo sai do cartão E do <html> (cabeçalho
+// e etapas condensadas ficam fora do cartão) sempre que ele é escondido, e
+// só volta quando o app.js o revela (depois do "Continuar" da etapa 3, ou ao
+// voltar pra ele depois de reabrir uma etapa).
 function render() {
+  if (el.card.hidden) {
+    delete el.card.dataset.playerState;
+    delete document.documentElement.dataset.playerState;
+    return;
+  }
   const state = currentState();
   el.card.dataset.playerState = state;
-  if (el.card.hidden) delete document.documentElement.dataset.playerState;
-  else document.documentElement.dataset.playerState = state;
+  document.documentElement.dataset.playerState = state;
 }
 
 // SPM/BPM sem medição válida ("—", "medindo...") aparecem como "000" (ver
@@ -62,11 +67,6 @@ new MutationObserver(render).observe(el.playBtn, { attributes: true, attributeFi
 const valuesObserver = new MutationObserver(markPlaceholders);
 for (const value of el.values) valuesObserver.observe(value, { childList: true, characterData: true, subtree: true });
 
-el.skipBtn.addEventListener("click", () => {
-  syncSkipped = true;
-  render();
-  el.playBtn.focus({ preventScroll: true });
-});
 el.resyncBtn.addEventListener("click", () => el.warmupBtn.click());
 
 // As mensagens aparecem por cima da Faixa Bônus (ver .player-msgs no CSS).

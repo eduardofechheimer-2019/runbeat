@@ -177,7 +177,7 @@
     </div>
 
     <div id="warmup-row" class="warmup-row">
-      <button id="warmup-btn" class="warmup-btn is-highlighted" type="button" data-i18n="warmupBtn">Spotify sync (clique aqui)</button>
+      <button id="warmup-btn" class="warmup-btn is-highlighted" type="button" data-i18n="warmupBtn">Spotify sync</button>
       <p id="warmup-hint" class="warmup-hint" data-i18n="warmupHint">↖️ Voltar é só tocar em "‹ RunBeat"</p>
       <p id="warmup-status" class="warmup-status" hidden></p>
     </div>
@@ -189,7 +189,7 @@
       <p id="cadence-wait-hint" class="cadence-wait-hint" hidden data-i18n="cadenceWaitHint">🏃 Pode começar a correr! Estamos esperando os primeiros passos.</p>
       <p id="run-error" class="error" hidden></p>
       <p id="audio-status" class="audio-status" hidden></p>
-      <a id="open-spotify-link" class="button-link" hidden data-i18n="warmupBtn">Spotify sync (clique aqui)</a>
+      <a id="open-spotify-link" class="button-link" hidden data-i18n="warmupBtn">Spotify sync</a>
     </div>
 
     <div class="playpause-row">
@@ -206,10 +206,9 @@
       </button>
     </div>
 
-    <!-- Caminho alternativo discreto, logo abaixo do botão principal (ver
-         playerLayout.js): pular o sync antes dele / refazer o sync depois. -->
+    <!-- Linha discreta reservada logo abaixo do botão principal (ver
+         playerLayout.js): depois do sync, "Sincronizar novamente". -->
     <div class="player-alt-row">
-      <button type="button" id="player-skip-sync" class="player-alt-btn" data-i18n="playerSkipSync">Pular sincronização</button>
       <button type="button" id="player-resync" class="player-alt-btn" data-i18n="playerResync">Sincronizar novamente</button>
     </div>
 

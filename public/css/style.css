@@ -3123,3 +3123,43 @@ html[data-player-state="ready"] .help-btn {
     padding: 6px var(--rb-space-4);
   }
 }
+
+/* Diagnóstico do Spotify (Configurações) — painel de texto só de leitura. */
+.spotify-diag-modal .multiselect-modal-card {
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.spotify-diag-output {
+  flex: 1;
+  min-height: 0;
+  margin: var(--rb-space-3) 0;
+  padding: var(--rb-space-3);
+  overflow: auto;
+  border: 1px solid var(--rb-border);
+  border-radius: var(--rb-radius-sm);
+  background: #0d1014;
+  color: var(--rb-text);
+  font: 0.72rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.spotify-diag-actions {
+  display: flex;
+  gap: var(--rb-space-2);
+}
+
+.spotify-diag-btn {
+  flex: 1;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--rb-border);
+  border-radius: var(--rb-radius-pill);
+  background: transparent;
+  color: var(--rb-text);
+  font-size: var(--rb-text-sm);
+}

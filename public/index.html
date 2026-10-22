@@ -249,6 +249,26 @@
         <span class="settings-row-label" data-i18n="settingsReplayTutorial">Ver tutorial novamente</span>
         <svg class="settings-row-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
       </button>
+      <button type="button" id="settings-spotify-diag" class="settings-row">
+        <svg class="settings-row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4" /></svg>
+        <span class="settings-row-label" data-i18n="settingsSpotifyDiag">Diagnóstico do Spotify</span>
+        <svg class="settings-row-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Diagnóstico do Spotify (somente leitura) — ver src/spotifyDiagnostics.js -->
+<div id="spotify-diag-modal" class="multiselect-modal spotify-diag-modal" role="dialog" aria-modal="true" aria-labelledby="spotify-diag-title" hidden>
+  <div class="multiselect-modal-card">
+    <div class="multiselect-modal-header">
+      <h3 id="spotify-diag-title" data-i18n="settingsSpotifyDiag">Diagnóstico do Spotify</h3>
+      <button type="button" id="spotify-diag-close" class="multiselect-modal-close" data-i18n-aria-label="multiselectCloseAriaLabel" aria-label="Fechar">✕</button>
+    </div>
+    <pre id="spotify-diag-output" class="spotify-diag-output"></pre>
+    <div class="spotify-diag-actions">
+      <button type="button" id="spotify-diag-refresh" class="spotify-diag-btn">Atualizar</button>
+      <button type="button" id="spotify-diag-copy" class="spotify-diag-btn">Copiar relatório</button>
     </div>
   </div>
 </div>
@@ -382,6 +402,7 @@
   </div>
 </div>
 
+<script type="module" src="src/spotifyDiagnostics.js"></script>
 <script type="module" src="src/app.js"></script>
 <script type="module" src="src/spotifyReturnNotice.js"></script>
 <script type="module" src="src/playerLayout.js"></script>

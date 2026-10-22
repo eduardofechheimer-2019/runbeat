@@ -121,6 +121,7 @@ const translations = {
     playerResync: "Sincronizar novamente",
     settingsTitle: "Configurações",
     settingsReplayTutorial: "Ver tutorial novamente",
+    settingsSpotifyDiag: "Diagnóstico do Spotify",
 
     configureClientId: "Configure SPOTIFY_CLIENT_ID em src/config.js antes de conectar (ver README).",
     spotifyRefusedLogin: "Spotify recusou o login: {error}",
@@ -242,6 +243,7 @@ const translations = {
     playerResync: "Sync again",
     settingsTitle: "Settings",
     settingsReplayTutorial: "View tutorial again",
+    settingsSpotifyDiag: "Spotify diagnostics",
 
     configureClientId: "Set SPOTIFY_CLIENT_ID in src/config.js before connecting (see README).",
     spotifyRefusedLogin: "Spotify refused the login: {error}",

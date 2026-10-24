@@ -3,16 +3,43 @@ import { t } from "./i18n.js";
 
 const API_BASE = "https://api.spotify.com/v1";
 
+// A API do Spotify devolve 5xx (principalmente 503) de forma intermitente —
+// visto no diagnóstico com GET /me/playlists voltando 503 e, minutos depois,
+// a mesma chamada voltando 200. Leituras (GET) são seguras de repetir, então
+// tentam de novo sozinhas com uma espera crescente antes de mostrar erro.
+// Comandos (PUT/POST) não são repetidos aqui: o motor de troca de faixa já
+// tem o próprio retry (RETRY_AFTER_ERROR_MS em config.js).
+const READ_RETRY_DELAYS_MS = [1000, 3000];
+const MAX_RETRY_AFTER_MS = 5000;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function isRetryableStatus(status) {
+  return status === 429 || (status >= 500 && status <= 599);
+}
+
+function retryDelayMs(res, attempt) {
+  const retryAfter = Number(res.headers.get("Retry-After"));
+  if (res.status === 429 && retryAfter > 0) return Math.min(retryAfter * 1000, MAX_RETRY_AFTER_MS);
+  return READ_RETRY_DELAYS_MS[attempt];
+}
+
 async function request(path, options = {}) {
-  const token = await getValidAccessToken();
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(options.body ? { "Content-Type": "application/json" } : {}),
-      ...options.headers,
-    },
-  });
+  const isRead = !options.method || options.method === "GET";
+  let res;
+  for (let attempt = 0; ; attempt++) {
+    const token = await getValidAccessToken();
+    res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...options.headers,
+      },
+    });
+    if (!isRead || !isRetryableStatus(res.status) || attempt >= READ_RETRY_DELAYS_MS.length) break;
+    await sleep(retryDelayMs(res, attempt));
+  }
   if (res.status === 204) return null;
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
@@ -150,10 +177,36 @@ function isNoActiveDeviceError(err) {
   return err.status === 404 && /device/i.test(err.message);
 }
 
-function noActiveDeviceError() {
-  const err = new Error(t("noActiveDevice"));
+function noActiveDeviceError(messageKey = "noActiveDevice") {
+  const err = new Error(t(messageKey));
   err.code = "NO_ACTIVE_DEVICE";
   return err;
+}
+
+// O Spotify às vezes responde 204 (comando aceito) ao PUT /me/player/play e
+// mesmo assim nada toca — visto no diagnóstico com o iPhone listado como
+// "ativo", mas pausado e sem faixa logo depois do 204. Acontece quando o app
+// do Spotify no celular está em segundo plano/suspenso. Por isso, depois do
+// 204, confere o estado real algumas vezes; se não estiver tocando, trata
+// como "sem dispositivo ativo", o que leva ao fallback já testado de abrir o
+// Spotify pelo link (ver showNoDeviceLink em app.js).
+const PLAYBACK_CHECK_DELAYS_MS = [700, 1000, 1500];
+
+async function confirmPlaybackStarted() {
+  for (const delay of PLAYBACK_CHECK_DELAYS_MS) {
+    await sleep(delay);
+    let state;
+    try {
+      state = await request("/me/player");
+    } catch (err) {
+      // Não conseguir ler o estado não prova que falhou — não bloqueia a
+      // corrida por causa da conferência em si.
+      console.warn("Não deu pra conferir se o Spotify começou a tocar:", err.message);
+      return;
+    }
+    if (state?.is_playing && state.item) return;
+  }
+  throw noActiveDeviceError("playbackNotStarted");
 }
 
 // Retoma o dispositivo ativo de onde parou (sem `uris` no corpo) — diferente
@@ -166,6 +219,7 @@ export async function resumePlayback() {
     if (isNoActiveDeviceError(err)) throw noActiveDeviceError();
     throw err;
   }
+  await confirmPlaybackStarted();
 }
 
 // Toca uma faixa imediatamente no dispositivo ativo do usuário (o app Spotify
@@ -192,5 +246,6 @@ export async function playTrackUri(uri) {
     }
     throw err;
   }
+  await confirmPlaybackStarted();
 }
 

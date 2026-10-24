@@ -986,8 +986,16 @@ async function playNextAndSchedule() {
       showNoDeviceLink(track);
       // Assim que o usuário voltar pro RunBeat depois de abrir o Spotify
       // pelo link acima, o listener de visibilitychange já tenta de novo
-      // na hora, sem esperar esse intervalo inteiro (ver mais abaixo).
+      // na hora (ver mais abaixo).
       noDeviceRetryPending = true;
+      // SEM retry por timer aqui: enquanto o usuário está no Spotify
+      // (aberto pelo link), o RunBeat continua rodando um pouco em segundo
+      // plano, e um PUT /me/player/play chegando nessa hora interrompe a
+      // música que o Spotify acabou de começar — visto no diagnóstico de
+      // 25/10/2026, com comandos a cada ~9 s e a música parando dentro do
+      // próprio Spotify. A próxima tentativa fica só pra volta ao RunBeat
+      // (visibilitychange) ou pros botões Próxima/Anterior.
+      return;
     }
     // Não trava o loop — tenta de novo em breve (ex. dispositivo Spotify
     // pode ter ficado inativo temporariamente, ou muitas faixas quebradas

@@ -24,13 +24,31 @@ window.fetch = async (input, init) => {
   if (!url.startsWith(API)) return originalFetch(input, init);
   const started = Date.now();
   const entry = { at: new Date(started), method: (init?.method || "GET").toUpperCase(), path: url.slice(API.length), status: "…", ms: 0, detail: "" };
+  // Pedido de reprodução: guarda qual faixa foi pedida (corpo do PUT) pra
+  // comparar com o que o Spotify diz estar tocando logo depois.
+  let requested = "";
+  try {
+    const uris = JSON.parse(init?.body || "null")?.uris;
+    if (uris?.length) requested = `pedido: ${uris.join(", ")}`;
+  } catch { /* corpo não-JSON: ignora */ }
   log.push(entry);
   if (log.length > MAX_LOG) log.shift();
   try {
     const res = await originalFetch(input, init);
     entry.status = res.status;
     entry.ms = Date.now() - started;
-    if (!res.ok) res.clone().text().then((t) => (entry.detail = t.slice(0, 300))).catch(() => {});
+    if (requested) entry.detail = requested;
+    if (!res.ok) {
+      res.clone().text().then((t) => (entry.detail = [requested, t.slice(0, 300)].filter(Boolean).join("\n    "))).catch(() => {});
+    } else if (entry.method === "GET" && entry.path === "/me/player") {
+      // Resumo do estado lido (conferência depois do play): mostra se estava
+      // tocando, qual faixa e em qual dispositivo, sem mudar a resposta.
+      res.clone().text().then((t) => {
+        if (!t) return void (entry.detail = "nenhum dispositivo ativo");
+        const b = JSON.parse(t);
+        entry.detail = `${b.is_playing ? "tocando" : "pausado"} · ${b.item ? `${b.item.name} (${b.item.uri})` : "sem faixa"} · ${b.device?.name ?? "?"}`;
+      }).catch(() => {});
+    }
     return res;
   } catch (err) {
     entry.status = "falha de rede";

@@ -30,8 +30,9 @@ window.fetch = async (input, init) => {
   // comparar com o que o Spotify diz estar tocando logo depois.
   let requested = "";
   try {
-    const uris = JSON.parse(init?.body || "null")?.uris;
-    if (uris?.length) requested = `pedido: ${uris.join(", ")}`;
+    const body = JSON.parse(init?.body || "null");
+    if (body?.uris?.length) requested = `pedido: ${body.uris.join(", ")}`;
+    else if (body?.context_uri) requested = `pedido: ${body.context_uri}${body.offset?.uri ? ` a partir de ${body.offset.uri}` : ""}`;
   } catch { /* corpo não-JSON: ignora */ }
   log.push(entry);
   if (log.length > MAX_LOG) log.shift();
@@ -42,6 +43,12 @@ window.fetch = async (input, init) => {
     if (requested) entry.detail = requested;
     if (!res.ok) {
       res.clone().text().then((t) => (entry.detail = [requested, t.slice(0, 300)].filter(Boolean).join("\n    "))).catch(() => {});
+    } else if (entry.method === "GET" && entry.path.startsWith("/tracks/")) {
+      // Faixa lida antes de tocar: álbum, posição e se dá pra tocar no país
+      // da conta (e com qual ID, se o Spotify trocou — "relinking").
+      res.clone().json().then((b) => {
+        entry.detail = `${b.name} · álbum ${b.album?.name ?? "?"} (faixa ${b.track_number ?? "?"}) · ${b.is_playable === false ? "NÃO tocável no país" : "tocável"}${b.linked_from ? ` · no país é ${b.uri}` : ""}`;
+      }).catch(() => {});
     } else if (entry.method === "GET" && entry.path === "/me/player") {
       // Resumo do estado lido (conferência depois do play): mostra se estava
       // tocando, qual faixa e em qual dispositivo, sem mudar a resposta.

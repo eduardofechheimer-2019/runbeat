@@ -242,26 +242,28 @@ async function waitForRequestedTrack(uri, seq, delays) {
 }
 
 // Confere se a faixa pedida começou e, se não, corrige no máximo uma vez de
-// cada jeito antes de desistir. Visto no diagnóstico de 25/10/2026: com o
-// Spotify do iPhone em segundo plano e pausado, o PUT /me/player/play com
-// `uris` volta 204 mas o app fica "pausado, sem faixa"; um "retomar" (PUT
-// /me/player/play sem corpo) logo depois fez a faixa pedida tocar. Se depois
-// disso estiver tocando outra faixa (ex. a de aquecimento), pede a faixa de
-// novo — com o app já tocando, a troca funciona. Se nada der certo, cai no
-// fallback já existente (erro + botão pra abrir o Spotify, ver app.js).
+// cada jeito antes de desistir:
+//   - tocando outra faixa: a fila do Spotify tinha algo antes da faixa pedida
+//     (ex. uma faixa enfileirada numa tentativa anterior que não pulou) —
+//     pula de novo, até MAX_EXTRA_SKIPS vezes;
+//   - pausado: o "próxima" trocou de faixa mas manteve a pausa (ex. o
+//     usuário tinha pausado) — retoma uma vez.
+// Se nada der certo, cai no fallback já existente (erro + botão pra abrir o
+// Spotify, ver app.js).
 const SETTLED = ["ok", "unknown", "superseded"];
+const MAX_EXTRA_SKIPS = 3;
 
 async function confirmRequestedTrack(uri, seq) {
-  let result = await waitForRequestedTrack(uri, seq, [700, 1000]);
+  let result = await waitForRequestedTrack(uri, seq, [700, 1000, 1500]);
+  for (let skips = 0; result === "other" && skips < MAX_EXTRA_SKIPS; skips++) {
+    if (seq !== playbackCommandSeq) return;
+    await request("/me/player/next", { method: "POST" }).catch((err) => console.warn("Falha ao pular no Spotify:", err.message));
+    result = await waitForRequestedTrack(uri, seq, [700, 1000]);
+  }
   if (SETTLED.includes(result)) return;
   if (result === "stopped") {
-    await request("/me/player/play", { method: "PUT" }).catch((err) => console.warn("Falha ao retomar no Spotify:", err.message));
-    result = await waitForRequestedTrack(uri, seq, [800, 1200]);
-    if (SETTLED.includes(result)) return;
-  }
-  if (result === "other") {
     if (seq !== playbackCommandSeq) return;
-    await request("/me/player/play", { method: "PUT", body: JSON.stringify({ uris: [uri] }) }).catch((err) => console.warn("Falha ao pedir a faixa de novo:", err.message));
+    await request("/me/player/play", { method: "PUT" }).catch((err) => console.warn("Falha ao retomar no Spotify:", err.message));
     result = await waitForRequestedTrack(uri, seq, [800, 1200]);
     if (SETTLED.includes(result)) return;
   }
@@ -285,13 +287,17 @@ export async function resumePlayback() {
 // Toca uma faixa imediatamente no dispositivo ativo do usuário (o app Spotify
 // do celular, por ex.) — chamada automática do motor de matching, sem
 // intervenção manual.
+//
+// Troca pela fila (POST /me/player/queue + POST /me/player/next) em vez de
+// PUT /me/player/play com `uris`. Visto no teste de troca de faixa do
+// diagnóstico (25/10/2026, iPhone com o Spotify tocando em segundo plano):
+// fila + próxima trocou em ~1 s; o PUT com `uris` voltou 204 mas deixou o
+// Spotify "pausado, sem faixa" — e nem retomar recuperou depois disso.
 export async function playTrackUri(uri) {
   const seq = ++playbackCommandSeq;
   try {
-    await request("/me/player/play", {
-      method: "PUT",
-      body: JSON.stringify({ uris: [uri] }),
-    });
+    await request(`/me/player/queue?uri=${encodeURIComponent(uri)}`, { method: "POST" });
+    await request("/me/player/next", { method: "POST" });
   } catch (err) {
     // 404 cobre dois casos bem diferentes: nenhum dispositivo Spotify ativo,
     // ou o ID da faixa não existe mais no catálogo (pode acontecer com

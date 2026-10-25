@@ -162,6 +162,7 @@ export async function getPlaybackState() {
 // Pausa o dispositivo ativo do usuário — chamada quando o "Pause" do
 // RunBeat é apertado.
 export async function pausePlayback() {
+  playbackCommandSeq++;
   try {
     await request("/me/player/pause", { method: "PUT" });
   } catch (err) {
@@ -209,10 +210,69 @@ async function confirmPlaybackStarted() {
   throw noActiveDeviceError("playbackNotStarted");
 }
 
+// Cada comando de reprodução (tocar faixa, retomar, pausar) ganha um número.
+// A conferência/correção de um play só age enquanto ele ainda é o comando
+// mais recente — se o usuário pausar ou trocar de faixa no meio, ela para em
+// silêncio, sem retomar nem repetir nada por cima da ação do usuário.
+let playbackCommandSeq = 0;
+
+const isRequestedTrack = (item, uri) => !!item && (item.uri === uri || item.linked_from?.uri === uri);
+
+// Lê o estado algumas vezes até ver a faixa pedida tocando. Resultado:
+//   "ok"         — a faixa pedida está tocando;
+//   "unknown"    — não deu pra ler o estado (não prova falha, não bloqueia);
+//   "superseded" — outro comando de reprodução veio depois deste;
+//   "other"      — está tocando, mas outra faixa (ex. a de aquecimento);
+//   "stopped"    — pausado / sem faixa.
+async function waitForRequestedTrack(uri, seq, delays) {
+  let state = null;
+  for (const delay of delays) {
+    await sleep(delay);
+    if (seq !== playbackCommandSeq) return "superseded";
+    try {
+      state = await request("/me/player");
+    } catch (err) {
+      console.warn("Não deu pra conferir se o Spotify começou a tocar:", err.message);
+      return "unknown";
+    }
+    if (seq !== playbackCommandSeq) return "superseded";
+    if (state?.is_playing && isRequestedTrack(state.item, uri)) return "ok";
+  }
+  return state?.is_playing ? "other" : "stopped";
+}
+
+// Confere se a faixa pedida começou e, se não, corrige no máximo uma vez de
+// cada jeito antes de desistir. Visto no diagnóstico de 25/10/2026: com o
+// Spotify do iPhone em segundo plano e pausado, o PUT /me/player/play com
+// `uris` volta 204 mas o app fica "pausado, sem faixa"; um "retomar" (PUT
+// /me/player/play sem corpo) logo depois fez a faixa pedida tocar. Se depois
+// disso estiver tocando outra faixa (ex. a de aquecimento), pede a faixa de
+// novo — com o app já tocando, a troca funciona. Se nada der certo, cai no
+// fallback já existente (erro + botão pra abrir o Spotify, ver app.js).
+const SETTLED = ["ok", "unknown", "superseded"];
+
+async function confirmRequestedTrack(uri, seq) {
+  let result = await waitForRequestedTrack(uri, seq, [700, 1000]);
+  if (SETTLED.includes(result)) return;
+  if (result === "stopped") {
+    await request("/me/player/play", { method: "PUT" }).catch((err) => console.warn("Falha ao retomar no Spotify:", err.message));
+    result = await waitForRequestedTrack(uri, seq, [800, 1200]);
+    if (SETTLED.includes(result)) return;
+  }
+  if (result === "other") {
+    if (seq !== playbackCommandSeq) return;
+    await request("/me/player/play", { method: "PUT", body: JSON.stringify({ uris: [uri] }) }).catch((err) => console.warn("Falha ao pedir a faixa de novo:", err.message));
+    result = await waitForRequestedTrack(uri, seq, [800, 1200]);
+    if (SETTLED.includes(result)) return;
+  }
+  throw noActiveDeviceError("playbackNotStarted");
+}
+
 // Retoma o dispositivo ativo de onde parou (sem `uris` no corpo) — diferente
 // de playTrackUri, que sempre começa uma faixa do zero. Chamada quando o
 // "Play" do RunBeat é apertado de novo depois de um "Pause".
 export async function resumePlayback() {
+  playbackCommandSeq++;
   try {
     await request("/me/player/play", { method: "PUT" });
   } catch (err) {
@@ -226,6 +286,7 @@ export async function resumePlayback() {
 // do celular, por ex.) — chamada automática do motor de matching, sem
 // intervenção manual.
 export async function playTrackUri(uri) {
+  const seq = ++playbackCommandSeq;
   try {
     await request("/me/player/play", {
       method: "PUT",
@@ -246,6 +307,6 @@ export async function playTrackUri(uri) {
     }
     throw err;
   }
-  await confirmPlaybackStarted();
+  await confirmRequestedTrack(uri, seq);
 }
 

@@ -199,22 +199,41 @@ async function runSwitchTest() {
   const q = phone ? `device_id=${encodeURIComponent(phone.id)}` : "";
 
   // Fila + próxima primeiro: se um teste pausar o Spotify, o iOS pode
-  // suspendê-lo e prejudicar os seguintes.
+  // suspendê-lo e prejudicar os seguintes. Antes de pular, lê a fila pra ver
+  // em que posição a faixa entrou (no relatório de 25/10 22:51 ela não
+  // aparecia nas 10 primeiras — o Spotify tinha enchido a fila sozinho).
   const [a, b, c] = TEST_TRACKS;
   const qs = q ? `&${q}` : "";
   const sq = await call("POST", `/me/player/queue?uri=${encodeURIComponent(`spotify:track:${a}`)}${qs}`);
+  await sleep(500);
+  const qr = await readOnly("/me/player/queue");
+  const qItems = qr.body?.queue ?? [];
+  const pos = qItems.findIndex((it) => it?.id === a);
+  out.push(`• fila antes de pular: ${qItems.length} faixas; a do teste ${pos >= 0 ? `está na posição ${pos + 1}` : "NÃO aparece"}${qItems[0] ? ` (1ª: ${qItems[0].name})` : ""}`);
   const sn = await call("POST", `/me/player/next${q ? `?${q}` : ""}`);
   let r = await waitForTrack(a);
   out.push(`• 1) fila + próxima → fila ${sq}, próxima ${sn} → ${r.ok ? `✅ TROCOU (${r.ms} ms)` : `❌ não trocou — ${r.text}`}`);
 
-  let s = await call("PUT", "/me/player/play", { uris: [`spotify:track:${b}`] });
-  r = await waitForTrack(b);
-  out.push(`• 2) tocar faixa → ${s} → ${r.ok ? `✅ TROCOU (${r.ms} ms)` : `❌ não trocou — ${r.text}`}`);
+  // Tocar o álbum da faixa começando nela (context_uri + offset): outro
+  // caminho do Spotify, que não passa pela fila nem pelo play com `uris`.
+  const tr = await readOnly(`/tracks/${b}`);
+  const album = tr.body?.album?.uri;
+  let s;
+  if (album) {
+    s = await call("PUT", `/me/player/play${q ? `?${q}` : ""}`, { context_uri: album, offset: { uri: `spotify:track:${b}` } });
+    r = await waitForTrack(b);
+    out.push(`• 2) tocar o álbum a partir da faixa → ${s} → ${r.ok ? `✅ TROCOU (${r.ms} ms)` : `❌ não trocou — ${r.text}`}`);
+  } else {
+    out.push(`• 2) pulado (não deu pra ler o álbum da faixa: HTTP ${tr.status})`);
+  }
 
+  // Transferir a reprodução pro celular (PUT /me/player) e então pedir a faixa.
   if (phone) {
+    const st = await call("PUT", "/me/player", { device_ids: [phone.id], play: true });
+    await sleep(1000);
     s = await call("PUT", `/me/player/play?${q}`, { uris: [`spotify:track:${c}`] });
     r = await waitForTrack(c);
-    out.push(`• 3) tocar faixa no celular (device_id) → ${s} → ${r.ok ? `✅ TROCOU (${r.ms} ms)` : `❌ não trocou — ${r.text}`}`);
+    out.push(`• 3) transferir pro celular + tocar faixa → ${st}, ${s} → ${r.ok ? `✅ TROCOU (${r.ms} ms)` : `❌ não trocou — ${r.text}`}`);
   } else {
     out.push("• 3) pulado (celular não aparece na lista)");
   }

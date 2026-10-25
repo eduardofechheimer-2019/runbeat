@@ -10,7 +10,9 @@
 //      GET /me (conta), GET /me/player/devices (dispositivos) e GET /me/player
 //      (o que está tocando e onde).
 //
-// Nenhum comando de reprodução é enviado daqui e nada no fluxo do app muda.
+// Nenhum comando de reprodução é enviado daqui e nada no fluxo do app muda —
+// exceto pelo botão "Testar troca de faixa" (ver runSwitchTest), que só roda
+// quando o usuário toca nele e registra o resultado no relatório.
 
 import { getValidAccessToken, isLoggedIn } from "./spotifyAuth.js";
 
@@ -66,6 +68,7 @@ const el = {
   refresh: document.getElementById("spotify-diag-refresh"),
   copy: document.getElementById("spotify-diag-copy"),
   out: document.getElementById("spotify-diag-output"),
+  test: document.getElementById("spotify-diag-test"),
 };
 
 const hhmmss = (d) => d.toTimeString().slice(0, 8);
@@ -133,9 +136,91 @@ async function buildReport() {
   return lines.join("\n");
 }
 
+// --- Teste de troca de faixa ---
+// Com o Spotify do iPhone tocando em segundo plano (o RunBeat na frente),
+// tenta trocar de faixa por caminhos diferentes da API e registra qual deles
+// fez a faixa pedida tocar de fato. Serve pra decidir, com evidência, como o
+// RunBeat deve trocar de faixa. Só roda quando o usuário toca no botão.
+const TEST_TRACKS = ["78EQ5LZGgviMU9k0zrqv1r", "15BlympuVSfZFROojEMY2M", "5masKPHeAOVNgxdLebIcK7"];
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let lastTest = [];
+
+async function call(method, path, body) {
+  const token = await getValidAccessToken();
+  const res = await originalFetch(`${API}${path}`, {
+    method,
+    headers: { Authorization: `Bearer ${token}`, ...(body ? { "Content-Type": "application/json" } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const text = await res.text().catch(() => "");
+  return `${res.status}${res.ok ? "" : ` ${text.replace(/\s+/g, " ").slice(0, 160)}`}`;
+}
+
+async function stateSummary() {
+  const st = await readOnly("/me/player");
+  if (st.status !== 200 || !st.body) return { text: "nada tocando / nenhum dispositivo ativo", body: null };
+  const b = st.body;
+  return { body: b, text: `${b.is_playing ? "tocando" : "pausado"} · ${b.item ? `${b.item.name} (${b.item.id})` : "sem faixa"} · ${b.device?.name ?? "?"}` };
+}
+
+async function waitForTrack(id, totalMs = 4500) {
+  const started = Date.now();
+  let last;
+  while (Date.now() - started < totalMs) {
+    await sleep(800);
+    last = await stateSummary();
+    const it = last.body?.item;
+    if (last.body?.is_playing && it && (it.id === id || it.linked_from?.id === id)) return { ok: true, ms: Date.now() - started, text: last.text };
+  }
+  return { ok: false, ms: Date.now() - started, text: last?.text ?? "?" };
+}
+
+async function runSwitchTest() {
+  const out = [`TESTE DE TROCA DE FAIXA · ${new Date().toLocaleTimeString()}`];
+  const devs = await readOnly("/me/player/devices");
+  const list = devs.body?.devices ?? [];
+  const phone = list.find((d) => d.type === "Smartphone" && d.is_active) || list.find((d) => d.type === "Smartphone");
+  const before = await stateSummary();
+  out.push(`• antes: ${before.text}`);
+  out.push(`• celular na lista: ${phone ? `${phone.name} (${phone.is_active ? "ativo" : "inativo"})` : "NÃO — abra o Spotify, toque uma música e volte"}`);
+  const q = phone ? `device_id=${encodeURIComponent(phone.id)}` : "";
+
+  // Fila + próxima primeiro: se um teste pausar o Spotify, o iOS pode
+  // suspendê-lo e prejudicar os seguintes.
+  const [a, b, c] = TEST_TRACKS;
+  const qs = q ? `&${q}` : "";
+  const sq = await call("POST", `/me/player/queue?uri=${encodeURIComponent(`spotify:track:${a}`)}${qs}`);
+  const sn = await call("POST", `/me/player/next${q ? `?${q}` : ""}`);
+  let r = await waitForTrack(a);
+  out.push(`• 1) fila + próxima → fila ${sq}, próxima ${sn} → ${r.ok ? `✅ TROCOU (${r.ms} ms)` : `❌ não trocou — ${r.text}`}`);
+
+  let s = await call("PUT", "/me/player/play", { uris: [`spotify:track:${b}`] });
+  r = await waitForTrack(b);
+  out.push(`• 2) tocar faixa → ${s} → ${r.ok ? `✅ TROCOU (${r.ms} ms)` : `❌ não trocou — ${r.text}`}`);
+
+  if (phone) {
+    s = await call("PUT", `/me/player/play?${q}`, { uris: [`spotify:track:${c}`] });
+    r = await waitForTrack(c);
+    out.push(`• 3) tocar faixa no celular (device_id) → ${s} → ${r.ok ? `✅ TROCOU (${r.ms} ms)` : `❌ não trocou — ${r.text}`}`);
+  } else {
+    out.push("• 3) pulado (celular não aparece na lista)");
+  }
+
+  const after = await stateSummary();
+  if (!after.body?.is_playing) {
+    const sr = await call("PUT", `/me/player/play${q ? `?${q}` : ""}`);
+    await sleep(2500);
+    const end = await stateSummary();
+    out.push(`• 4) retomar → ${sr} → ${end.body?.is_playing ? "✅ voltou a tocar" : "❌ continua parado"} — ${end.text}`);
+  }
+  out.push(`• fim: ${(await stateSummary()).text}`);
+  return out;
+}
+
 async function render() {
   el.out.textContent = "Consultando o Spotify…";
-  el.out.textContent = await buildReport();
+  const report = await buildReport();
+  el.out.textContent = lastTest.length ? `${report}\n\n${lastTest.join("\n")}` : report;
 }
 
 function open() {
@@ -151,6 +236,18 @@ function close() {
 el.openBtn.addEventListener("click", open);
 el.close.addEventListener("click", close);
 el.refresh.addEventListener("click", render);
+el.test.addEventListener("click", async () => {
+  el.test.disabled = true;
+  el.test.textContent = "Testando… (~20 s)";
+  try {
+    lastTest = await runSwitchTest();
+  } catch (err) {
+    lastTest = [`TESTE DE TROCA DE FAIXA: falhou — ${err.message}`];
+  }
+  el.test.disabled = false;
+  el.test.textContent = "Testar troca de faixa";
+  await render();
+});
 el.modal.addEventListener("click", (event) => {
   if (event.target === el.modal) close();
 });

@@ -241,25 +241,13 @@ async function waitForRequestedTrack(uri, seq, delays) {
   return state?.is_playing ? "other" : "stopped";
 }
 
-// Confere se a faixa pedida começou e, se não, corrige no máximo uma vez de
-// cada jeito antes de desistir:
-//   - tocando outra faixa: a fila do Spotify tinha algo antes da faixa pedida
-//     (ex. uma faixa enfileirada numa tentativa anterior que não pulou) —
-//     pula de novo, até MAX_EXTRA_SKIPS vezes;
-//   - pausado: o "próxima" trocou de faixa mas manteve a pausa (ex. o
-//     usuário tinha pausado) — retoma uma vez.
-// Se nada der certo, cai no fallback já existente (erro + botão pra abrir o
-// Spotify, ver app.js).
+// Confere se a faixa pedida começou. Se ficou pausada (ex. o usuário tinha
+// pausado), retoma uma vez; se nada der certo, cai no fallback já existente
+// (erro + botão pra abrir o Spotify, ver app.js).
 const SETTLED = ["ok", "unknown", "superseded"];
-const MAX_EXTRA_SKIPS = 3;
 
 async function confirmRequestedTrack(uri, seq) {
   let result = await waitForRequestedTrack(uri, seq, [700, 1000, 1500]);
-  for (let skips = 0; result === "other" && skips < MAX_EXTRA_SKIPS; skips++) {
-    if (seq !== playbackCommandSeq) return;
-    await request("/me/player/next", { method: "POST" }).catch((err) => console.warn("Falha ao pular no Spotify:", err.message));
-    result = await waitForRequestedTrack(uri, seq, [700, 1000]);
-  }
   if (SETTLED.includes(result)) return;
   if (result === "stopped") {
     if (seq !== playbackCommandSeq) return;
@@ -268,6 +256,36 @@ async function confirmRequestedTrack(uri, seq) {
     if (SETTLED.includes(result)) return;
   }
   throw noActiveDeviceError("playbackNotStarted");
+}
+
+function trackNotFoundError(uri) {
+  // `code` deixa o chamador (ver playNextAndSchedule em app.js) tratar
+  // esse caso específico de forma transparente pro usuário — escolhendo
+  // outra faixa na hora, em vez de mostrar esse erro na tela.
+  const err = new Error(t("trackNotFound", { uri }));
+  err.code = "TRACK_NOT_FOUND";
+  return err;
+}
+
+// Álbum de cada faixa já tocada (uri da faixa → uri do álbum), pra não
+// buscar de novo quando ela volta (ex. "voltar faixa").
+const albumByTrackUri = new Map();
+
+async function albumUriFor(uri) {
+  if (albumByTrackUri.has(uri)) return albumByTrackUri.get(uri);
+  let track;
+  try {
+    track = await request(`/tracks/${uri.split(":").pop()}`);
+  } catch (err) {
+    // A faixa não existe mais no catálogo (pode acontecer com faixas do
+    // Catálogo RunBeat, que tem uma data de curadoria própria).
+    if (err.status === 404 || err.status === 400) throw trackNotFoundError(uri);
+    throw err;
+  }
+  const album = track?.album?.uri;
+  if (!album) throw trackNotFoundError(uri);
+  albumByTrackUri.set(uri, album);
+  return album;
 }
 
 // Retoma o dispositivo ativo de onde parou (sem `uris` no corpo) — diferente
@@ -288,29 +306,30 @@ export async function resumePlayback() {
 // do celular, por ex.) — chamada automática do motor de matching, sem
 // intervenção manual.
 //
-// Troca pela fila (POST /me/player/queue + POST /me/player/next) em vez de
-// PUT /me/player/play com `uris`. Visto no teste de troca de faixa do
-// diagnóstico (25/10/2026, iPhone com o Spotify tocando em segundo plano):
-// fila + próxima trocou em ~1 s; o PUT com `uris` voltou 204 mas deixou o
-// Spotify "pausado, sem faixa" — e nem retomar recuperou depois disso.
+// Toca o álbum da faixa começando nela (context_uri + offset). Visto no
+// teste de troca de faixa do diagnóstico (25/10/2026 23:26, iPhone com o
+// Spotify em segundo plano), é o único caminho que trocou de faixa:
+//   - PUT /me/player/play com `uris`: volta 204 e deixa o Spotify "pausado,
+//     sem faixa" (nem retomar recupera);
+//   - fila + próxima: a faixa entra atrás das que o próprio Spotify põe na
+//     fila (Autoplay), e o "próxima" toca uma dessas;
+//   - álbum a partir da faixa: trocou em ~1 s.
+// O álbum continuar depois da faixa não importa: o RunBeat troca de faixa
+// antes do fim de cada uma.
 export async function playTrackUri(uri) {
   const seq = ++playbackCommandSeq;
+  const album = await albumUriFor(uri);
+  if (seq !== playbackCommandSeq) return;
   try {
-    await request(`/me/player/queue?uri=${encodeURIComponent(uri)}`, { method: "POST" });
-    await request("/me/player/next", { method: "POST" });
+    await request("/me/player/play", {
+      method: "PUT",
+      body: JSON.stringify({ context_uri: album, offset: { uri } }),
+    });
   } catch (err) {
     // 404 cobre dois casos bem diferentes: nenhum dispositivo Spotify ativo,
-    // ou o ID da faixa não existe mais no catálogo (pode acontecer com
-    // faixas do Catálogo RunBeat, que tem uma data de curadoria própria).
+    // ou a faixa não está mais no álbum/catálogo.
     if (isNoActiveDeviceError(err)) throw noActiveDeviceError();
-    if (err.status === 404) {
-      // `code` deixa o chamador (ver playNextAndSchedule em app.js) tratar
-      // esse caso específico de forma transparente pro usuário — escolhendo
-      // outra faixa na hora, em vez de mostrar esse erro na tela.
-      const notFoundErr = new Error(t("trackNotFound", { uri }));
-      notFoundErr.code = "TRACK_NOT_FOUND";
-      throw notFoundErr;
-    }
+    if (err.status === 404 || err.status === 400) throw trackNotFoundError(uri);
     throw err;
   }
   await confirmRequestedTrack(uri, seq);

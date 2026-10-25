@@ -3163,3 +3163,11 @@ html[data-player-state="ready"] .help-btn {
   color: var(--rb-text);
   font-size: var(--rb-text-sm);
 }
+
+.spotify-diag-test {
+  flex: none;
+  width: 100%;
+  margin-bottom: var(--rb-space-2);
+  border-color: var(--rb-yellow);
+  color: var(--rb-yellow);
+}

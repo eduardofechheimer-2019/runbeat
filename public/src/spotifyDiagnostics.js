@@ -7,8 +7,8 @@
 //      (método, caminho, status HTTP, corpo de erro). O fetch é só observado:
 //      a requisição e a resposta seguem exatamente iguais pro app.js.
 //   2. Consultas de leitura feitas só quando o painel é aberto/atualizado:
-//      GET /me (conta), GET /me/player/devices (dispositivos) e GET /me/player
-//      (o que está tocando e onde).
+//      GET /me (conta), GET /me/player/devices (dispositivos), GET /me/player
+//      (o que está tocando e onde) e GET /me/player/queue (fila).
 //
 // Nenhum comando de reprodução é enviado daqui e nada no fluxo do app muda —
 // exceto pelo botão "Testar troca de faixa" (ver runSwitchTest), que só roda
@@ -123,6 +123,19 @@ async function buildReport() {
       lines.push(`• posição: ${Math.round((b.progress_ms ?? 0) / 1000)} s de ${Math.round((b.item?.duration_ms ?? 0) / 1000)} s`);
     } else {
       lines.push(`• erro HTTP ${pl.status}: ${JSON.stringify(pl.body).slice(0, 200)}`);
+    }
+    lines.push("");
+
+    const qu = await readOnly("/me/player/queue");
+    lines.push("FILA DO SPOTIFY (próximas, segundo o Spotify)");
+    if (qu.status === 204) {
+      lines.push("• nada tocando");
+    } else if (qu.status === 200) {
+      const items = (qu.body?.queue ?? []).slice(0, 10);
+      if (!items.length) lines.push("• fila vazia");
+      items.forEach((it, i) => lines.push(`• ${i + 1}. ${it?.name ?? "?"} (${it?.id ?? "?"})`));
+    } else {
+      lines.push(`• erro HTTP ${qu.status}: ${JSON.stringify(qu.body).slice(0, 200)}`);
     }
   } catch (err) {
     lines.push(`Falha ao consultar o Spotify: ${err.message}`);

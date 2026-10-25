@@ -216,7 +216,9 @@ async function confirmPlaybackStarted() {
 // silêncio, sem retomar nem repetir nada por cima da ação do usuário.
 let playbackCommandSeq = 0;
 
-const isRequestedTrack = (item, uri) => !!item && (item.uri === uri || item.linked_from?.uri === uri);
+// `uris` pode ter mais de uma forma da mesma faixa (a pedida e a que o
+// Spotify toca no país da conta, ver playbackTargetFor).
+const isRequestedTrack = (item, uris) => !!item && (uris.includes(item.uri) || uris.includes(item.linked_from?.uri));
 
 // Lê o estado algumas vezes até ver a faixa pedida tocando. Resultado:
 //   "ok"         — a faixa pedida está tocando;
@@ -224,7 +226,11 @@ const isRequestedTrack = (item, uri) => !!item && (item.uri === uri || item.link
 //   "superseded" — outro comando de reprodução veio depois deste;
 //   "other"      — está tocando, mas outra faixa (ex. a de aquecimento);
 //   "stopped"    — pausado / sem faixa.
-async function waitForRequestedTrack(uri, seq, delays) {
+// `lastPlaybackState` guarda o último estado lido, pra quem chamou saber
+// qual outra faixa estava tocando.
+let lastPlaybackState = null;
+
+async function waitForRequestedTrack(uris, seq, delays) {
   let state = null;
   for (const delay of delays) {
     await sleep(delay);
@@ -235,24 +241,30 @@ async function waitForRequestedTrack(uri, seq, delays) {
       console.warn("Não deu pra conferir se o Spotify começou a tocar:", err.message);
       return "unknown";
     }
+    lastPlaybackState = state;
     if (seq !== playbackCommandSeq) return "superseded";
-    if (state?.is_playing && isRequestedTrack(state.item, uri)) return "ok";
+    if (state?.is_playing && isRequestedTrack(state.item, uris)) return "ok";
   }
   return state?.is_playing ? "other" : "stopped";
 }
 
 // Confere se a faixa pedida começou. Se ficou pausada (ex. o usuário tinha
 // pausado), retoma uma vez; se nada der certo, cai no fallback já existente
-// (erro + botão pra abrir o Spotify, ver app.js).
+// (erro + botão pra abrir o Spotify, ver app.js). Se o Spotify começou o
+// álbum pedido por outra faixa, ele não achou a pedida no álbum (visto em
+// 26/10 00:34: tocou a 1ª faixa do álbum, do 0 s) — trata como faixa
+// indisponível, e o app escolhe outra na hora, sem erro na tela. Se continua
+// tocando a faixa de antes (pedido ignorado), segue o fallback normal.
 const SETTLED = ["ok", "unknown", "superseded"];
 
-async function confirmRequestedTrack(uri, seq) {
-  let result = await waitForRequestedTrack(uri, seq, [700, 1000, 1500]);
+async function confirmRequestedTrack(uri, uris, album, seq) {
+  let result = await waitForRequestedTrack(uris, seq, [700, 1000, 1500]);
   if (SETTLED.includes(result)) return;
+  if (result === "other" && lastPlaybackState?.context?.uri === album) throw trackNotFoundError(uri);
   if (result === "stopped") {
     if (seq !== playbackCommandSeq) return;
     await request("/me/player/play", { method: "PUT" }).catch((err) => console.warn("Falha ao retomar no Spotify:", err.message));
-    result = await waitForRequestedTrack(uri, seq, [800, 1200]);
+    result = await waitForRequestedTrack(uris, seq, [800, 1200]);
     if (SETTLED.includes(result)) return;
   }
   throw noActiveDeviceError("playbackNotStarted");
@@ -267,25 +279,29 @@ function trackNotFoundError(uri) {
   return err;
 }
 
-// Álbum de cada faixa já tocada (uri da faixa → uri do álbum), pra não
-// buscar de novo quando ela volta (ex. "voltar faixa").
-const albumByTrackUri = new Map();
+// Álbum e forma tocável de cada faixa já tocada (uri pedida → { album,
+// offset }), pra não buscar de novo quando ela volta (ex. "voltar faixa").
+const targetByTrackUri = new Map();
 
-async function albumUriFor(uri) {
-  if (albumByTrackUri.has(uri)) return albumByTrackUri.get(uri);
+// Lê a faixa no catálogo do país da conta (market=from_token): a mesma
+// música pode ter outro ID nesse país ("relinking"), e é esse ID que existe
+// no álbum que o Spotify vai tocar. Sem isso, o offset pode não achar a
+// faixa e o Spotify começa o álbum do início.
+async function playbackTargetFor(uri) {
+  if (targetByTrackUri.has(uri)) return targetByTrackUri.get(uri);
   let track;
   try {
-    track = await request(`/tracks/${uri.split(":").pop()}`);
+    track = await request(`/tracks/${uri.split(":").pop()}?market=from_token`);
   } catch (err) {
     // A faixa não existe mais no catálogo (pode acontecer com faixas do
     // Catálogo RunBeat, que tem uma data de curadoria própria).
     if (err.status === 404 || err.status === 400) throw trackNotFoundError(uri);
     throw err;
   }
-  const album = track?.album?.uri;
-  if (!album) throw trackNotFoundError(uri);
-  albumByTrackUri.set(uri, album);
-  return album;
+  if (!track?.album?.uri || track.is_playable === false) throw trackNotFoundError(uri);
+  const target = { album: track.album.uri, offset: track.uri || uri };
+  targetByTrackUri.set(uri, target);
+  return target;
 }
 
 // Retoma o dispositivo ativo de onde parou (sem `uris` no corpo) — diferente
@@ -318,12 +334,12 @@ export async function resumePlayback() {
 // antes do fim de cada uma.
 export async function playTrackUri(uri) {
   const seq = ++playbackCommandSeq;
-  const album = await albumUriFor(uri);
+  const target = await playbackTargetFor(uri);
   if (seq !== playbackCommandSeq) return;
   try {
     await request("/me/player/play", {
       method: "PUT",
-      body: JSON.stringify({ context_uri: album, offset: { uri } }),
+      body: JSON.stringify({ context_uri: target.album, offset: { uri: target.offset } }),
     });
   } catch (err) {
     // 404 cobre dois casos bem diferentes: nenhum dispositivo Spotify ativo,
@@ -332,6 +348,6 @@ export async function playTrackUri(uri) {
     if (err.status === 404 || err.status === 400) throw trackNotFoundError(uri);
     throw err;
   }
-  await confirmRequestedTrack(uri, seq);
+  await confirmRequestedTrack(uri, [uri, target.offset], target.album, seq);
 }
 

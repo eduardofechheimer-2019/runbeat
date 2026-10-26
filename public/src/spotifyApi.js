@@ -217,8 +217,16 @@ async function confirmPlaybackStarted() {
 let playbackCommandSeq = 0;
 
 // `uris` pode ter mais de uma forma da mesma faixa (a pedida e a que o
-// Spotify toca no país da conta, ver playbackTargetFor).
-const isRequestedTrack = (item, uris) => !!item && (uris.includes(item.uri) || uris.includes(item.linked_from?.uri));
+// Spotify toca no país da conta, ver playbackTargetFor). `song` (nome +
+// artista) aceita também outra versão da mesma música: visto em 26/10 18:46–
+// 18:49, o Spotify tocou "The Chain - 2004 Remaster" no lugar de "The Chain",
+// "Paranoid - 2009 Remaster" no lugar de "Paranoid", e "Dream On"/"The
+// Middle" com outro ID — a música certa, que antes era descartada.
+const baseSongName = (name) => String(name ?? "").toLowerCase().split(" - ")[0].replace(/\s*[([].*$/, "").trim();
+const songKey = (track) => `${baseSongName(track?.name)}|${String(track?.artists?.[0]?.name ?? "").toLowerCase()}`;
+
+const isRequestedTrack = (item, uris, song) =>
+  !!item && (uris.includes(item.uri) || uris.includes(item.linked_from?.uri) || (!!song && songKey(item) === song));
 
 // Lê o estado algumas vezes até ver a faixa pedida tocando. Resultado:
 //   "ok"         — a faixa pedida está tocando;
@@ -230,7 +238,7 @@ const isRequestedTrack = (item, uris) => !!item && (uris.includes(item.uri) || u
 // qual outra faixa estava tocando.
 let lastPlaybackState = null;
 
-async function waitForRequestedTrack(uris, seq, delays) {
+async function waitForRequestedTrack(uris, seq, delays, song) {
   let state = null;
   for (const delay of delays) {
     await sleep(delay);
@@ -243,7 +251,7 @@ async function waitForRequestedTrack(uris, seq, delays) {
     }
     lastPlaybackState = state;
     if (seq !== playbackCommandSeq) return "superseded";
-    if (state?.is_playing && isRequestedTrack(state.item, uris)) return "ok";
+    if (state?.is_playing && isRequestedTrack(state.item, uris, song)) return "ok";
   }
   return state?.is_playing ? "other" : "stopped";
 }
@@ -257,14 +265,14 @@ async function waitForRequestedTrack(uris, seq, delays) {
 // tocando a faixa de antes (pedido ignorado), segue o fallback normal.
 const SETTLED = ["ok", "unknown", "superseded"];
 
-async function confirmRequestedTrack(uri, uris, album, seq) {
-  let result = await waitForRequestedTrack(uris, seq, [700, 1000, 1500]);
+async function confirmRequestedTrack(uri, uris, album, seq, song) {
+  let result = await waitForRequestedTrack(uris, seq, [700, 1000, 1500], song);
   if (SETTLED.includes(result)) return;
   if (result === "other" && lastPlaybackState?.context?.uri === album) throw trackNotFoundError(uri);
   if (result === "stopped") {
     if (seq !== playbackCommandSeq) return;
     await request("/me/player/play", { method: "PUT" }).catch((err) => console.warn("Falha ao retomar no Spotify:", err.message));
-    result = await waitForRequestedTrack(uris, seq, [800, 1200]);
+    result = await waitForRequestedTrack(uris, seq, [800, 1200], song);
     if (SETTLED.includes(result)) return;
   }
   throw noActiveDeviceError("playbackNotStarted");
@@ -299,7 +307,7 @@ async function playbackTargetFor(uri) {
     throw err;
   }
   if (!track?.album?.uri || track.is_playable === false) throw trackNotFoundError(uri);
-  const target = { album: track.album.uri, offset: track.uri || uri };
+  const target = { album: track.album.uri, offset: track.uri || uri, song: songKey(track) };
   targetByTrackUri.set(uri, target);
   return target;
 }
@@ -348,6 +356,6 @@ export async function playTrackUri(uri) {
     if (err.status === 404 || err.status === 400) throw trackNotFoundError(uri);
     throw err;
   }
-  await confirmRequestedTrack(uri, [uri, target.offset], target.album, seq);
+  await confirmRequestedTrack(uri, [uri, target.offset], target.album, seq, target.song);
 }
 

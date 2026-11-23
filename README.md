@@ -301,6 +301,15 @@ dependem.
    arriscaria interromper o áudio do Spotify) — mas garante que, ao
    desbloquear, a música já esteja na faixa certa pro momento, sem precisar
    esperar nem tocar em nada.
+   **Reserva na fila do Spotify**: pra a troca continuar com a tela
+   bloqueada, o RunBeat mantém faixas escolhidas por ele em "Próximas na
+   fila" do Spotify, que tocam antes do resto do álbum. Com o app na tela
+   fica 1 faixa na reserva; ao bloquear (ou sair do app), completa até 4,
+   escolhidas pela cadência daquele momento (no modo automático elas não se
+   ajustam enquanto a tela está bloqueada). Ao desbloquear, se o Spotify
+   estiver numa faixa da reserva, o RunBeat assume essa faixa e segue dali.
+   A API do Spotify não permite tirar faixas da fila, então as que sobrarem
+   ficam lá (no máximo 4) — inclusive depois de encerrar a corrida.
 9. Um **"Marca-Passo Sonoro"** (interruptor estilo iOS, opt-in) toca um clique curto no navegador
    a cada batida do BPM-alvo, pra ajudar a sincronizar o passo com a
    batida. Não é sincronizado com o áudio real da faixa (a API do Spotify

@@ -1363,11 +1363,31 @@ button:disabled {
 .beat-col-divider {
   flex-shrink: 0;
   display: flex;
+  flex-direction: column;
+  gap: var(--rb-space-1);
   align-items: center;
   justify-content: center;
   width: var(--rb-space-8);
   color: var(--rb-text-secondary);
   font-size: var(--rb-text-lg);
+}
+
+/* Relação entre passada e música da faixa tocando: "1:1" (1 batida por
+   passo) ou "1:2" (1 batida a cada 2 passos, BPM mostrado = 2 × tempo da
+   faixa). Preenchido pelo JS (ver updateBpmRatioBadge em app.js). */
+.bpm-ratio-badge {
+  padding: 1px var(--rb-space-2);
+  border-radius: var(--rb-radius-pill);
+  border: 1px solid var(--rb-yellow);
+  color: var(--rb-yellow);
+  font-size: var(--rb-text-xs);
+  font-weight: var(--rb-weight-bold);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.bpm-ratio-badge[hidden] {
+  display: none;
 }
 
 /* Linha extra abaixo das colunas ("Última medição"/"Alvo") — secundária de
@@ -1683,6 +1703,12 @@ button:disabled {
 }
 
 .play-pause-btn.is-attention {
+  animation: play-pulse 1.1s ease-in-out infinite;
+}
+
+/* "Spotify sync" pisca igual ao Play enquanto é a ação em destaque (antes
+   do 1º sync — ver setSyncHighlight em app.js). */
+.warmup-btn.is-highlighted {
   animation: play-pulse 1.1s ease-in-out infinite;
 }
 

@@ -60,6 +60,7 @@ const el = {
   librarySummary: document.getElementById("library-summary"),
   paceSummary: document.getElementById("pace-summary"),
   openSpotifyLink: document.getElementById("open-spotify-link"),
+  bpmRatioBadge: document.getElementById("bpm-ratio-badge"),
   warmupRow: document.getElementById("warmup-row"),
   warmupBtn: document.getElementById("warmup-btn"),
   warmupHint: document.getElementById("warmup-hint"),
@@ -307,6 +308,14 @@ function applyLiveModeChange() {
   clearCadenceWaitHint();
   clearTimeout(endOfTrackTimer);
   playNextAndSchedule().catch((err) => showRunError(err.message));
+}
+
+// Mostra "1:1" ou "1:2" ao lado do relógio conforme a relação da faixa que
+// está tocando (ver variantsOf em matcher.js). Sem relação conhecida, esconde.
+function updateBpmRatioBadge(track) {
+  const ratio = track?.bpmRatio;
+  el.bpmRatioBadge.hidden = !ratio;
+  if (ratio) el.bpmRatioBadge.textContent = `1:${ratio}`;
 }
 
 function startBeatPulse(effectiveBpm) {
@@ -915,6 +924,7 @@ async function playSpecificTrack(track, requestId) {
   showRunError("");
   hideNoDeviceLink();
   startBeatPulse(track.effectiveBpm);
+  updateBpmRatioBadge(track);
   // playTrackUri sempre começa a faixa do zero — se estava pausado (ex.
   // troca de faixa manual ou automática durante uma pausa), volta a
   // "tocando" de verdade, senão o botão ficaria mostrando "Play" com a
@@ -1096,7 +1106,7 @@ async function triggerBoost() {
   if (!boostTrack || !runActive) return;
   clearTimeout(endOfTrackTimer);
   const requestId = ++playRequestSeq;
-  const track = { ...boostTrack, source: t("boostTrackSource"), effectiveBpm: boostTrack.tempo };
+  const track = { ...boostTrack, source: t("boostTrackSource"), effectiveBpm: boostTrack.tempo, bpmRatio: 1 };
   try {
     const applied = await playSpecificTrack(track, requestId);
     if (!applied) return;

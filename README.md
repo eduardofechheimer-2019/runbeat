@@ -352,6 +352,16 @@ dependem.
     a Faixa Bônus continuam mostrando erro normalmente se a faixa específica
     que eles tentam tocar não existir mais, já que ali não existe uma
     "próxima candidata" natural pra tentar no lugar.
+- **Relação 1:1 e 1:2 (meio tempo).** Além de casar o BPM da faixa direto
+  com a cadência (1:1 — uma batida por passo), o app também considera cada
+  faixa em 1:2 (uma batida a cada dois passos), tratando o BPM dela como o
+  dobro: uma faixa de 90 BPM serve pra uma cadência de 180 passos/min. Vale
+  no modo automático e nos ritmos fixos. A 1:1 tem preferência: quando as
+  duas servem igualmente, a 1:1 tem o dobro de chance (peso
+  `HALF_TIME_WEIGHT` em `config.js`, hoje 0,5; 0 desliga a 1:2). O relógio
+  mostra "1:1" ou "1:2" entre as colunas de passos/min e BPM, e o BPM
+  mostrado (e o pulso) é o efetivo — já dobrado na 1:2. A Faixa Bônus é
+  sempre 1:1.
 
 ## Instalando como app no celular
 

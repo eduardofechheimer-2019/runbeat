@@ -70,6 +70,12 @@ export const MAX_TRANSPARENT_TRACK_RETRIES = 5;
 // (mais variedade, menos fiel ao BPM exato).
 export const CADENCE_MATCH_SIGMA_BPM = 10;
 
+// Peso da relação 1:2 (1 batida a cada 2 passos, BPM efetivo = 2 × tempo da
+// faixa) em relação à 1:1 na escolha de faixas (ver matcher.js). Com 0,5,
+// quando uma faixa 1:1 e uma 1:2 servem igualmente, a 1:1 tem o dobro de
+// chance (2 de cada 3). 0 desliga a 1:2; 1 dá chances iguais.
+export const HALF_TIME_WEIGHT = 0.5;
+
 // Quanto tempo esperar sem nenhuma leitura de cadência (modo automático)
 // antes de mostrar um aviso incentivando o usuário a começar a se mexer —
 // evita deixar a tela parada sem explicação enquanto o acelerômetro ainda

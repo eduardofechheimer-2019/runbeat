@@ -1,6 +1,23 @@
 // Escolhe, dentro do pool de faixas com BPM conhecido, a candidata pra
 // cadência/ritmo atual.
-import { CADENCE_MATCH_SIGMA_BPM } from "./config.js";
+import { CADENCE_MATCH_SIGMA_BPM, HALF_TIME_WEIGHT } from "./config.js";
+
+// Cada faixa pode tocar em duas relações com a passada:
+//   1:1 — 1 batida por passo (BPM efetivo = tempo da faixa);
+//   1:2 — 1 batida a cada 2 passos (BPM efetivo = 2 × tempo).
+// O "BPM efetivo" é o que se compara com a cadência/nível e o que o
+// metrônomo usa. A 1:2 entra com peso menor (HALF_TIME_WEIGHT) pra a 1:1
+// ser a preferida quando as duas servem.
+function variantsOf(track) {
+  return [
+    { track, ratio: 1, bpm: track.tempo, weight: 1 },
+    { track, ratio: 2, bpm: track.tempo * 2, weight: HALF_TIME_WEIGHT },
+  ];
+}
+
+function withRatio(variant) {
+  return { ...variant.track, effectiveBpm: variant.bpm, bpmRatio: variant.ratio };
+}
 
 // Sorteia entre as faixas do pool que caem dentro de `range`, sem repetir
 // nenhuma antes de esgotar todas as outras do MESMO intervalo — o controle
@@ -15,16 +32,14 @@ import { CADENCE_MATCH_SIGMA_BPM } from "./config.js";
 // "Ritmo fixo" — o Automático usa sorteio ponderado (ver mais abaixo), sem
 // intervalo rígido nenhum.
 function pickFromRange(pool, range, playedIds) {
-  const inRange = pool.filter((t) => t.tempo >= range.min && t.tempo <= range.max);
+  const inRange = pool.flatMap(variantsOf).filter((v) => v.bpm >= range.min && v.bpm <= range.max);
   if (inRange.length === 0) return null;
 
-  const unplayed = inRange.filter((t) => !playedIds.has(t.id));
+  const unplayed = inRange.filter((v) => !playedIds.has(v.track.id));
   const candidates = unplayed.length > 0 ? unplayed : inRange; // esgotou esse intervalo: recomeça só nele
 
-  const pick = candidates[Math.floor(Math.random() * candidates.length)];
-  // `effectiveBpm` é o BPM usado pro metrônomo visual/sonoro — sempre igual
-  // ao `tempo` bruto da faixa (relação 1:1, sem aceitar metade/dobro do BPM).
-  return { ...pick, effectiveBpm: pick.tempo };
+  // Dentro do intervalo qualquer BPM serve igual; só a relação pesa (1:1 preferida).
+  return withRatio(weightedRandomPick(candidates, (v) => v.weight));
 }
 
 // Fallback quando NENHUMA faixa do pool inteiro cai no intervalo pedido —
@@ -37,14 +52,14 @@ function pickNearestToRange(pool, range, playedIds) {
 
   let best = null;
   let bestDiff = Infinity;
-  for (const track of candidates) {
-    const diff = track.tempo < range.min ? range.min - track.tempo : track.tempo - range.max;
-    if (diff < bestDiff) {
+  for (const v of candidates.flatMap(variantsOf)) {
+    const diff = v.bpm < range.min ? range.min - v.bpm : v.bpm - range.max;
+    if (diff < bestDiff || (diff === bestDiff && best && v.ratio < best.ratio)) {
       bestDiff = diff;
-      best = track;
+      best = v;
     }
   }
-  return best ? { ...best, effectiveBpm: best.tempo } : null;
+  return best ? withRatio(best) : null;
 }
 
 // Sorteio ponderado: cada candidata recebe um peso e a escolhida é sorteada
@@ -83,11 +98,11 @@ export function pickTrackForCadence(pool, cadence, playedIds) {
   const unplayed = pool.filter((t) => !playedIds.has(t.id));
   const candidates = unplayed.length > 0 ? unplayed : pool; // esgotou o pool inteiro: recomeça
 
-  const pick = weightedRandomPick(candidates, (track) => {
-    const diff = track.tempo - cadence;
-    return Math.exp(-(diff * diff) / (2 * CADENCE_MATCH_SIGMA_BPM * CADENCE_MATCH_SIGMA_BPM));
+  const pick = weightedRandomPick(candidates.flatMap(variantsOf), (v) => {
+    const diff = v.bpm - cadence;
+    return v.weight * Math.exp(-(diff * diff) / (2 * CADENCE_MATCH_SIGMA_BPM * CADENCE_MATCH_SIGMA_BPM));
   });
-  return { ...pick, effectiveBpm: pick.tempo };
+  return withRatio(pick);
 }
 
 // Modo "ritmo fixo": o alvo é uma faixa de BPM (ex. "Warming Up" =

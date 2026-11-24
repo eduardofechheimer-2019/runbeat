@@ -1080,6 +1080,7 @@ async function adoptReserveTrackIfPlaying() {
   currentTrackId = track.id;
   renderTrackInfo(track);
   startBeatPulse(track.effectiveBpm);
+  updateBpmRatioBadge(track);
   const durationMs = track.durationMs || FALLBACK_TRACK_DURATION_MS;
   trackRemainingMs = Math.max(durationMs - (state.progress_ms || 0), 0);
   trackSegmentStartedAt = Date.now();

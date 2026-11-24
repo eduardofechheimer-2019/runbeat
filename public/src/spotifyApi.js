@@ -326,6 +326,16 @@ export async function resumePlayback() {
   await confirmPlaybackStarted();
 }
 
+// Põe uma faixa em "Próximas na fila" do Spotify. Essa fila toca antes do
+// resto do álbum que playTrackUri deixa tocando, então serve de reserva pra
+// quando o RunBeat não consegue mandar a troca de faixa (tela bloqueada: o
+// iOS congela o app e o timer de troca para). `keepalive` deixa o pedido
+// terminar mesmo se o app for congelado logo depois de enviá-lo.
+// Obs.: a API do Spotify não tem como tirar faixas da fila depois.
+export async function queueTrackUri(uri, { keepalive = false } = {}) {
+  await request(`/me/player/queue?uri=${encodeURIComponent(uri)}`, { method: "POST", keepalive });
+}
+
 // Toca uma faixa imediatamente no dispositivo ativo do usuário (o app Spotify
 // do celular, por ex.) — chamada automática do motor de matching, sem
 // intervenção manual.

@@ -36,6 +36,16 @@ export const CADENCE_WINDOW_MS = 8000;
 // Spotify pra descobrir quanto falta.
 export const END_OF_TRACK_LEAD_MS = 2000;
 
+// Reserva de faixas escolhidas pelo RunBeat na fila do Spotify ("Próximas
+// na fila"), pra tela bloqueada: com a tela bloqueada o iOS congela o app e
+// a troca de faixa não acontece, então o Spotify toca essa reserva antes de
+// seguir o álbum. Com o app visível fica só 1 na reserva (a fila do Spotify
+// não aceita remoção, então manter pouca coisa lá evita faixas "velhas");
+// ao bloquear/sair do app, completa até LOCKED_QUEUE_RESERVE com faixas
+// escolhidas pela cadência daquele momento (~15 min de música).
+export const VISIBLE_QUEUE_RESERVE = 1;
+export const LOCKED_QUEUE_RESERVE = 4;
+
 // Duração assumida quando uma faixa não vem com duração conhecida —
 // hoje praticamente só um caso residual sem duration_ms na planilha de
 // origem do Catálogo/Playlist RunBeat. Usa uma média razoável de música

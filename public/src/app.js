@@ -7,6 +7,8 @@ import {
   MAX_TRANSPARENT_TRACK_RETRIES,
   CADENCE_WAIT_HINT_DELAY_MS,
   FIXED_PACE_OPTIONS,
+  VISIBLE_QUEUE_RESERVE,
+  LOCKED_QUEUE_RESERVE,
 } from "./config.js";
 import * as auth from "./spotifyAuth.js";
 import * as api from "./spotifyApi.js";
@@ -246,6 +248,11 @@ let playRequestSeq = 0; // invalida trocas de faixa que ficaram pra trás no tem
 let notFoundRetryCount = 0;
 let history = []; // faixas já tocadas nesta corrida, em ordem — pra "Anterior"
 const playedIds = new Set();
+// Faixas que o RunBeat já pôs em "Próximas na fila" do Spotify e que ainda
+// não tocaram, na ordem da fila — reserva pra tela bloqueada (ver
+// topUpQueueReserve e VISIBLE_QUEUE_RESERVE/LOCKED_QUEUE_RESERVE em config.js).
+let queuedReserve = [];
+let reserveBusy = false;
 
 // "Faixa Bônus" — faixa fixa escolhida pelo próprio usuário (link colado,
 // não vem do pool) que toca por cima da faixa atual quando o botão é
@@ -978,6 +985,7 @@ async function playNextAndSchedule() {
     notFoundRetryCount = 0;
     history.push(track);
     scheduleEndOfTrack(track);
+    topUpQueueReserve(VISIBLE_QUEUE_RESERVE);
   } catch (err) {
     if (requestId !== playRequestSeq) return;
     if (err.code === "TRACK_NOT_FOUND" && notFoundRetryCount < MAX_TRANSPARENT_TRACK_RETRIES) {
@@ -1012,6 +1020,72 @@ async function playNextAndSchedule() {
     // seguidas, além do limite transparente acima).
     endOfTrackTimer = setTimeout(playNextAndSchedule, RETRY_AFTER_ERROR_MS);
   }
+}
+
+// --- Reserva na fila do Spotify (tela bloqueada) ---
+
+// Escolhe uma faixa pra reserva com o mesmo critério da troca normal (modo
+// fixo: faixa de BPM; automático: cadência atual), sem repetir as já
+// tocadas nem as que já estão na reserva.
+function pickReserveTrack() {
+  const exclude = new Set([...playedIds, ...queuedReserve.map((t) => t.id)]);
+  if (activeMode === "fixed") return pickTrackForRange(bpmPool, fixedRange, exclude);
+  const cadence = tracker?.getCurrentSpm() || lastMatchCadence || 0;
+  if (!cadence) return null; // sem cadência medida ainda, não dá pra escolher bem
+  return pickTrackForCadence(bpmPool, cadence, exclude);
+}
+
+// Completa a reserva até `target` faixas. Erros não aparecem na tela: a
+// reserva é só um plano B, a troca normal de faixa continua igual.
+async function topUpQueueReserve(target, { keepalive = false } = {}) {
+  if (!runActive || runPaused || reserveBusy || !bpmPool?.length) return;
+  reserveBusy = true;
+  try {
+    while (runActive && !runPaused && queuedReserve.length < target) {
+      const track = pickReserveTrack();
+      // Pool esgotado (o matcher recomeça e devolveria uma repetida): para.
+      if (!track || track.id === currentTrackId || queuedReserve.some((t) => t.id === track.id)) break;
+      await api.queueTrackUri(track.uri, { keepalive });
+      playedIds.add(track.id);
+      queuedReserve.push(track);
+    }
+  } catch (err) {
+    console.warn("Falha ao pôr faixa na fila do Spotify:", err.message);
+  } finally {
+    reserveBusy = false;
+  }
+}
+
+// Ao voltar pro app: se o Spotify está tocando uma faixa da reserva (a tela
+// ficou bloqueada e a fila foi andando), o RunBeat assume essa faixa —
+// atualiza a tela, o histórico e agenda a troca pelo que falta dela.
+// Devolve true quando assumiu.
+async function adoptReserveTrackIfPlaying() {
+  if (!queuedReserve.length) return false;
+  let state;
+  try {
+    state = await api.getPlaybackState();
+  } catch {
+    return false;
+  }
+  const item = state?.item;
+  if (!item || !runActive || runPaused) return false;
+  const idx = queuedReserve.findIndex((t) => t.id === item.id || t.id === item.linked_from?.id);
+  if (idx < 0) return false;
+  const consumed = queuedReserve.splice(0, idx + 1);
+  const track = consumed[consumed.length - 1];
+  ++playRequestSeq; // descarta qualquer troca que estivesse em andamento
+  clearTimeout(endOfTrackTimer);
+  history.push(...consumed);
+  currentTrackId = track.id;
+  renderTrackInfo(track);
+  startBeatPulse(track.effectiveBpm);
+  const durationMs = track.durationMs || FALLBACK_TRACK_DURATION_MS;
+  trackRemainingMs = Math.max(durationMs - (state.progress_ms || 0), 0);
+  trackSegmentStartedAt = Date.now();
+  endOfTrackTimer = setTimeout(playNextAndSchedule, Math.max(trackRemainingMs - END_OF_TRACK_LEAD_MS, 1000));
+  topUpQueueReserve(VISIBLE_QUEUE_RESERVE);
+  return true;
 }
 
 async function skipToNext() {
@@ -1176,6 +1250,9 @@ function startRun() {
   currentTrackId = null;
   playedIds.clear();
   history = [];
+  // Faixas de uma corrida anterior podem continuar na fila do Spotify (a API
+  // não permite tirar), mas não contam mais como reserva desta corrida.
+  queuedReserve = [];
   runActive = true;
   runPaused = false;
   trackRemainingMs = null;
@@ -1484,6 +1561,13 @@ async function init() {
   // fica em segundo plano (parte do spec) — reconquista sozinho ao voltar,
   // sem precisar que o usuário faça nada.
   document.addEventListener("visibilitychange", () => {
+    // Tela bloqueando (ou o app indo pro segundo plano): o iOS vai congelar
+    // o RunBeat e a troca de faixa para — completa a reserva na fila do
+    // Spotify agora, com a cadência deste momento (ver topUpQueueReserve).
+    if (document.visibilityState === "hidden") {
+      if (runActive && !runPaused) topUpQueueReserve(LOCKED_QUEUE_RESERVE, { keepalive: true });
+      return;
+    }
     if (document.visibilityState !== "visible") return;
     // Some a dica/status do "Spotify sync" assim que o usuário volta pro
     // RunBeat — independe da corrida já ter começado (o sync acontece antes
@@ -1511,14 +1595,18 @@ async function init() {
     // se a faixa atual já deveria ter trocado (pela duração conhecida dela,
     // não por esse timer que pode ter ficado pra trás) e troca na hora, em
     // vez de esperar o navegador decidir quando o timer atrasado dispara.
-    if (!runPaused && trackSegmentStartedAt != null && trackRemainingMs != null) {
+    // Antes disso, se o Spotify estiver tocando uma faixa da reserva na
+    // fila (a tela ficou bloqueada), o RunBeat só assume essa faixa em vez
+    // de trocar por outra.
+    adoptReserveTrackIfPlaying().then((adopted) => {
+      if (adopted || runPaused || trackSegmentStartedAt == null || trackRemainingMs == null) return;
       const elapsed = Date.now() - trackSegmentStartedAt;
       const scheduledDelay = Math.max(trackRemainingMs - END_OF_TRACK_LEAD_MS, 1000);
       if (elapsed >= scheduledDelay) {
         clearTimeout(endOfTrackTimer);
         playNextAndSchedule().catch((err) => showRunError(err.message));
       }
-    }
+    });
   });
 }
 

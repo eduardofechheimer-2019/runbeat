@@ -157,8 +157,8 @@ Tocar no título de qualquer cartão já concluído ou condensado (sem
 destaque) reabre ele pra editar (volta ao tamanho normal, com os controles
 de volta) — os cartões seguintes recuam/escondem de novo até você concluir
 esse de novo. Trocar o ritmo desse jeito com uma corrida já em andamento
-aplica a mudança na hora (não reinicia a corrida do zero, ela continua
-tocando em segundo plano); trocar as músicas refaz a análise de BPM e passa
+aplica a mudança ao apertar "Continuar" (só então a música troca, e só se o
+modo/ritmo mudou de fato; a corrida não reinicia do zero); trocar as músicas refaz a análise de BPM e passa
 de novo pelo cartão de ritmo antes de voltar pra corrida.
 
 Na primeira visita, um tutorial guiado (5 passos) também explica esse fluxo
@@ -291,10 +291,12 @@ dependem.
    RunBeat, que toca o áudio), mas o sistema suspende a aba do RunBeat
    (comportamento do navegador em segundo plano, fora do controle do app) e
    o cronômetro de troca de faixa para de contar até você desbloquear.
-   Assim que a tela do RunBeat fica visível de novo, o app confere se a
-   faixa atual já deveria ter acabado (pela duração dela, não pelo timer que
-   ficou pra trás) e troca na hora se for o caso — em vez de esperar o
-   navegador decidir quando (ou se) o timer atrasado dispara sozinho. Isso
+   Assim que a tela do RunBeat fica visível de novo, o app pergunta ao
+   Spotify o que está tocando: se ainda é a faixa atual, só reagenda a troca
+   pelo que falta dela (sem trocar de música); se é uma faixa da reserva da
+   fila, assume essa faixa; só sem essa informação cai na conta pela
+   duração. O timer de troca que dispara atrasado (app congelado) também
+   passa por essa conferência antes de trocar. Isso
    não faz a troca acontecer enquanto a tela segue bloqueada (não existe
    forma confiável de manter JavaScript rodando em segundo plano por tempo
    indeterminado numa PWA no iOS sem tocar áudio pela própria aba, o que

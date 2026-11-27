@@ -36,6 +36,11 @@ export const CADENCE_WINDOW_MS = 8000;
 // Spotify pra descobrir quanto falta.
 export const END_OF_TRACK_LEAD_MS = 2000;
 
+// Se o timer da troca de faixa disparar mais que isso depois da hora, o app
+// estava congelado (tela bloqueada/outra tela no iOS): antes de trocar,
+// confere com o Spotify o que está tocando (ver resyncWithSpotify em app.js).
+export const LATE_TIMER_TOLERANCE_MS = 5000;
+
 // Reserva de faixas escolhidas pelo RunBeat na fila do Spotify ("Próximas
 // na fila"), pra tela bloqueada: com a tela bloqueada o iOS congela o app e
 // a troca de faixa não acontece, então o Spotify toca essa reserva antes de

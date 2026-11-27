@@ -1004,7 +1004,7 @@ async function playNextAndSchedule() {
     notFoundRetryCount = 0;
     history.push(track);
     scheduleEndOfTrack(track);
-    topUpQueueReserve(VISIBLE_QUEUE_RESERVE);
+    refreshQueueReserve();
   } catch (err) {
     if (requestId !== playRequestSeq) return;
     if (err.code === "TRACK_NOT_FOUND" && notFoundRetryCount < MAX_TRANSPARENT_TRACK_RETRIES) {
@@ -1073,6 +1073,23 @@ async function topUpQueueReserve(target, { keepalive = false } = {}) {
   } finally {
     reserveBusy = false;
   }
+}
+
+// Depois de o RunBeat mandar tocar uma faixa (PUT play), o Spotify pode
+// esvaziar a fila — e a reserva que o app achava que estava lá some. Aí o
+// "próxima" da tela bloqueada caía na faixa seguinte do álbum. Por isso,
+// confere a fila de verdade, tira da reserva o que não está mais lá e
+// completa de novo.
+async function refreshQueueReserve() {
+  if (queuedReserve.length) {
+    try {
+      const upcoming = (await api.getQueue())?.queue || [];
+      queuedReserve = queuedReserve.filter((t) => upcoming.some((item) => isSameTrack(item, t)));
+    } catch (err) {
+      console.warn("Não deu pra ler a fila do Spotify:", err.message);
+    }
+  }
+  await topUpQueueReserve(VISIBLE_QUEUE_RESERVE);
 }
 
 // Ao voltar pro app: se o Spotify está tocando uma faixa da reserva (a tela
@@ -1180,6 +1197,7 @@ async function skipToPrevious() {
     const applied = await playSpecificTrack(previousTrack, requestId);
     if (!applied) return;
     scheduleEndOfTrack(previousTrack);
+    refreshQueueReserve();
   } catch (err) {
     if (requestId !== playRequestSeq) return;
     showRunError(err.message);
@@ -1264,6 +1282,7 @@ async function triggerBoost() {
     history.push(track);
     playedIds.add(track.id);
     scheduleEndOfTrack(track);
+    refreshQueueReserve();
   } catch (err) {
     if (requestId !== playRequestSeq) return;
     showRunError(err.message);

@@ -332,6 +332,12 @@ export async function resumePlayback() {
 // iOS congela o app e o timer de troca para). `keepalive` deixa o pedido
 // terminar mesmo se o app for congelado logo depois de enviá-lo.
 // Obs.: a API do Spotify não tem como tirar faixas da fila depois.
+// Lê o que o Spotify vai tocar em seguida ("Próximas na fila" e o resto do
+// contexto). Usado pra conferir se a reserva do RunBeat ainda está na fila.
+export async function getQueue() {
+  return request("/me/player/queue");
+}
+
 export async function queueTrackUri(uri, { keepalive = false } = {}) {
   await request(`/me/player/queue?uri=${encodeURIComponent(uri)}`, { method: "POST", keepalive });
 }

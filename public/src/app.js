@@ -254,6 +254,10 @@ const playedIds = new Set();
 // topUpQueueReserve e VISIBLE_QUEUE_RESERVE/LOCKED_QUEUE_RESERVE em config.js).
 let queuedReserve = [];
 let reserveBusy = false;
+// Todas as faixas que o RunBeat pôs na fila do Spotify nesta corrida — pra
+// reconhecer na volta uma faixa nossa que já tinha saído da reserva (ex. a
+// leitura da fila logo depois de uma troca veio incompleta).
+let queuedThisRun = [];
 
 // "Faixa Bônus" — faixa fixa escolhida pelo próprio usuário (link colado,
 // não vem do pool) que toca por cima da faixa atual quando o botão é
@@ -415,6 +419,10 @@ function playClick(time) {
 
 function scheduleClicks() {
   if (!audiblePulseEnabled || !clickPeriodSec || !audioCtx) return;
+  // Com o app congelado (tela bloqueada), este intervalo para e o relógio do
+  // áudio pode seguir andando: na volta, o laço abaixo criaria de uma vez
+  // centenas de cliques "atrasados". Recomeça a contagem a partir de agora.
+  if (nextClickTime < audioCtx.currentTime - 0.1) nextClickTime = audioCtx.currentTime + 0.05;
   while (nextClickTime < audioCtx.currentTime + 0.2) {
     playClick(nextClickTime);
     nextClickTime += clickPeriodSec;
@@ -430,6 +438,14 @@ async function startAudiblePulse(effectiveBpm) {
   nextClickTime = ctx.currentTime + 0.05;
   clearInterval(clickSchedulerHandle);
   clickSchedulerHandle = setInterval(scheduleClicks, 50);
+}
+
+function resumePulseOnTouch() {
+  if (!audiblePulseEnabled || !audioCtx || runPaused || !currentEffectiveBpm) return;
+  if (audioCtx.state !== "running") {
+    audioCtx.resume().catch(() => {});
+    startAudiblePulse(currentEffectiveBpm).catch(() => {});
+  }
 }
 
 function stopAudiblePulse() {
@@ -1085,6 +1101,7 @@ async function topUpQueueReserve(target, { keepalive = false } = {}) {
       await api.queueTrackUri(track.uri, { keepalive });
       playedIds.add(track.id);
       queuedReserve.push(track);
+      queuedThisRun.push(track);
     }
   } catch (err) {
     console.warn("Falha ao pôr faixa na fila do Spotify:", err.message);
@@ -1099,10 +1116,15 @@ async function topUpQueueReserve(target, { keepalive = false } = {}) {
 // confere a fila de verdade, tira da reserva o que não está mais lá e
 // completa de novo.
 async function refreshQueueReserve() {
-  if (queuedReserve.length) {
+  // Só confere as faixas que já estavam na reserva antes da leitura: as que
+  // entrarem enquanto a leitura está em andamento (ex. a tela bloqueou logo
+  // depois da troca) não aparecem nessa resposta e não podem ser descartadas.
+  const checked = [...queuedReserve];
+  if (checked.length) {
     try {
       const upcoming = (await api.getQueue())?.queue || [];
-      queuedReserve = queuedReserve.filter((t) => upcoming.some((item) => isSameTrack(item, t)));
+      const missing = checked.filter((t) => !upcoming.some((item) => isSameTrack(item, t)));
+      queuedReserve = queuedReserve.filter((t) => !missing.includes(t));
     } catch (err) {
       console.warn("Não deu pra ler a fila do Spotify:", err.message);
     }
@@ -1115,7 +1137,7 @@ async function refreshQueueReserve() {
 // atualiza a tela, o histórico e agenda a troca pelo que falta dela.
 // Devolve true quando assumiu.
 async function adoptReserveTrackIfPlaying(knownState) {
-  if (!queuedReserve.length) return false;
+  if (!queuedThisRun.length) return false;
   let state = knownState;
   if (state === undefined) {
     try {
@@ -1131,8 +1153,16 @@ async function adoptReserveTrackIfPlaying(knownState) {
   // reconhecida — o app trocava de música na volta e, com o Spotify em
   // segundo plano, o comando podia falhar e mostrar o aviso de sync.
   const idx = queuedReserve.findIndex((t) => isSameTrack(item, t));
-  if (idx < 0) return false;
-  const consumed = queuedReserve.splice(0, idx + 1);
+  let consumed;
+  if (idx >= 0) {
+    consumed = queuedReserve.splice(0, idx + 1);
+  } else {
+    // Faixa nossa que já não constava da reserva (ver queuedThisRun): assume
+    // do mesmo jeito em vez de trocar a música que está tocando.
+    const known = queuedThisRun.find((t) => isSameTrack(item, t));
+    if (!known) return false;
+    consumed = [known];
+  }
   const track = consumed[consumed.length - 1];
   ++playRequestSeq; // descarta qualquer troca que estivesse em andamento
   clearTimeout(endOfTrackTimer);
@@ -1367,6 +1397,7 @@ function startRun() {
   // Faixas de uma corrida anterior podem continuar na fila do Spotify (a API
   // não permite tirar), mas não contam mais como reserva desta corrida.
   queuedReserve = [];
+  queuedThisRun = [];
   runActive = true;
   runPaused = false;
   trackRemainingMs = null;
@@ -1690,6 +1721,14 @@ async function init() {
     }
     if (!runActive) return;
     if (!wakeLock) requestWakeLock();
+    // O marca-passo pode ter ficado mudo enquanto a tela estava bloqueada (o
+    // iOS interrompe o áudio do navegador quando o Spotify troca de faixa):
+    // retoma já na volta, e de novo no primeiro toque na tela, que é quando
+    // o iOS sempre libera o áudio.
+    if (audiblePulseEnabled && currentEffectiveBpm && !runPaused) {
+      startAudiblePulse(currentEffectiveBpm).catch(() => {});
+      document.addEventListener("pointerdown", resumePulseOnTouch, { once: true });
+    }
     // O usuário voltou pro RunBeat depois de abrir o Spotify (ex. pelo link
     // "Spotify sync (clique aqui)") — tenta tocar de novo agora, sem
     // esperar o resto do intervalo de retry automático.

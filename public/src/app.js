@@ -1091,7 +1091,11 @@ async function adoptReserveTrackIfPlaying(knownState) {
   }
   const item = state?.item;
   if (!item || !runActive || runPaused) return false;
-  const idx = queuedReserve.findIndex((t) => t.id === item.id || t.id === item.linked_from?.id);
+  // Compara também por nome + artista: o Spotify às vezes toca a faixa da
+  // fila com outro ID (versão do país da conta), e aí a reserva não era
+  // reconhecida — o app trocava de música na volta e, com o Spotify em
+  // segundo plano, o comando podia falhar e mostrar o aviso de sync.
+  const idx = queuedReserve.findIndex((t) => isSameTrack(item, t));
   if (idx < 0) return false;
   const consumed = queuedReserve.splice(0, idx + 1);
   const track = consumed[consumed.length - 1];

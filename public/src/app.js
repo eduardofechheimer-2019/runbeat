@@ -567,11 +567,10 @@ async function loadPlaylistOptions() {
   updateBuildPoolAvailability();
 }
 
-// Marcar uma opção "exclusiva" (ex. "Todos") dentro de um <select multiple>
-// desmarca qualquer outra coisa, e marcar qualquer outra coisa desmarca a
-// opção exclusiva — um <select multiple> nativo não tem esse conceito de
-// exclusividade sozinho, por isso o rastreamento da seleção anterior (pra
-// saber o que acabou de mudar). Reaproveitado tanto pro <select> de
+// Opção "Todos" dentro de um <select multiple>: marcar ela marca todas as
+// opções, desmarcar desmarca todas, e desmarcar qualquer outra tira só o
+// "Todos" — um <select multiple> nativo não tem esse conceito sozinho, por
+// isso o rastreamento da seleção anterior (pra saber o que acabou de mudar). Reaproveitado tanto pro <select> de
 // playlists ("Todos") quanto pro de gêneros do Catálogo ("Todos").
 function makeExclusivityEnforcer(selectEl, exclusiveValue) {
   let previous = new Set();
@@ -584,13 +583,17 @@ function makeExclusivityEnforcer(selectEl, exclusiveValue) {
     const options = Array.from(selectEl.options);
     const current = new Set(options.filter((o) => o.selected).map((o) => o.value));
     const exclusiveJustSelected = current.has(exclusiveValue) && !previous.has(exclusiveValue);
-    const otherJustSelected = [...current].some(
-      (v) => v !== exclusiveValue && !previous.has(v)
-    );
+    const exclusiveJustDeselected = !current.has(exclusiveValue) && previous.has(exclusiveValue);
+    const otherJustDeselected = [...previous].some((v) => v !== exclusiveValue && !current.has(v));
 
+    // "Todos" marca todas as opções (antes desmarcava as outras); desmarcar
+    // "Todos" desmarca tudo; desmarcar qualquer outra com "Todos" marcado
+    // tira só o "Todos", e a seleção vira a lista que sobrou.
     if (exclusiveJustSelected) {
-      for (const o of options) o.selected = o.value === exclusiveValue;
-    } else if (current.has(exclusiveValue) && otherJustSelected) {
+      for (const o of options) o.selected = true;
+    } else if (exclusiveJustDeselected) {
+      for (const o of options) o.selected = false;
+    } else if (current.has(exclusiveValue) && otherJustDeselected) {
       options.find((o) => o.value === exclusiveValue).selected = false;
     }
 
@@ -610,9 +613,7 @@ const genreExclusivity = makeExclusivityEnforcer(el.catalogGenreSelect, "__all__
 // implícito de "nada marcado = tudo incluído".
 function hasValidPoolSelection() {
   if (el.playlistSelect.selectedOptions.length === 0) return false;
-  const catalogAloneSelected = Array.from(el.playlistSelect.selectedOptions).some(
-    (o) => o.value === "__catalog__"
-  );
+  const catalogAloneSelected = isCatalogSelectedAlone();
   if (catalogAloneSelected && el.catalogGenreSelect.selectedOptions.length === 0) return false;
   return true;
 }
@@ -683,7 +684,9 @@ function syncMultiselectSelection(selectEl, panelEl) {
 // ("1 playlist"/"2 gêneros") em vez do "Item(s)" genérico de antes.
 function updateMultiselectSummary(selectEl, summaryBtnEl, oneKey, nKey) {
   const n = selectEl.selectedOptions.length;
-  summaryBtnEl.textContent = n === 0 ? t("selectPlaceholder") : t(n === 1 ? oneKey : nKey, { n });
+  const allSelected = Array.from(selectEl.selectedOptions).some((o) => o.value === "__all__");
+  summaryBtnEl.textContent =
+    n === 0 ? t("selectPlaceholder") : allSelected ? t("allOption") : t(n === 1 ? oneKey : nKey, { n });
   summaryBtnEl.classList.toggle("is-placeholder", n === 0);
 }
 
@@ -716,10 +719,15 @@ let catalogGenresLoaded = false;
 // selecionadas — quando "Todos" está marcado, todos os gêneros já estão
 // implícitos, então o dropdown de gêneros fica escondido. Popula o
 // dropdown na primeira vez que ficar visível.
+// Playlist RunBeat marcada sem o "Todos" — com "Todos", a RunBeat também
+// fica marcada (todas as opções ficam), mas os gêneros já estão implícitos.
+function isCatalogSelectedAlone() {
+  const values = Array.from(el.playlistSelect.selectedOptions).map((o) => o.value);
+  return values.includes("__catalog__") && !values.includes("__all__");
+}
+
 function updateCatalogGenreVisibility() {
-  const catalogSelected = Array.from(el.playlistSelect.selectedOptions).some(
-    (o) => o.value === "__catalog__"
-  );
+  const catalogSelected = isCatalogSelectedAlone();
   el.catalogGenreGroup.hidden = !catalogSelected;
   if (catalogSelected && !catalogGenresLoaded) {
     catalogGenresLoaded = true;
@@ -735,7 +743,7 @@ async function populateCatalogGenreOptions() {
   el.catalogGenreSelect.innerHTML = "";
 
   // "Todos" é uma opção exclusiva (ver genreExclusivity), igual à de
-  // playlists — marcar ela desmarca os gêneros individuais e vice-versa.
+  // playlists — marcar ela marca todos os gêneros; desmarcar um gênero tira o "Todos".
   const allOpt = document.createElement("option");
   allOpt.value = "__all__";
   allOpt.textContent = t("allOption");
@@ -756,7 +764,8 @@ async function populateCatalogGenreOptions() {
 }
 
 // "__all__" vira lista vazia pro catalogSource.js — que já trata "sem
-// filtro" como "catálogo inteiro" — já que a exclusividade garante que
+// filtro" como "catálogo inteiro" (com "Todos" marcado, todos os gêneros
+// também ficam marcados, então dá no mesmo). Antes, a exclusividade garantia que
 // "Todos" nunca fica marcado junto com gêneros específicos.
 function selectedCatalogGenres() {
   const values = Array.from(el.catalogGenreSelect.selectedOptions).map((o) => o.value);

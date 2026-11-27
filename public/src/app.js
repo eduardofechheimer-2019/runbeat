@@ -1,6 +1,7 @@
 import {
   STORAGE_KEYS,
   END_OF_TRACK_LEAD_MS,
+  LATE_TIMER_TOLERANCE_MS,
   FALLBACK_TRACK_DURATION_MS,
   CADENCE_DISPLAY_INTERVAL_MS,
   RETRY_AFTER_ERROR_MS,
@@ -309,8 +310,13 @@ function updatePaceSummary() {
 // modo/ritmo escolhida depois de já ter começado.
 function applyLiveModeChange() {
   if (!runActive) return;
-  activeMode = el.modeSelect.value;
-  fixedRange = activeMode === "fixed" ? currentFixedRange() : null;
+  const newMode = el.modeSelect.value;
+  const newRange = newMode === "fixed" ? currentFixedRange() : null;
+  const unchanged =
+    newMode === activeMode && (newMode !== "fixed" || (newRange?.min === fixedRange?.min && newRange?.max === fixedRange?.max));
+  if (unchanged) return;
+  activeMode = newMode;
+  fixedRange = newRange;
   clearInterval(bootstrapTimer);
   clearCadenceWaitHint();
   clearTimeout(endOfTrackTimer);
@@ -948,12 +954,25 @@ async function playSpecificTrack(track, requestId) {
 // faixa que mandamos tocar. Guarda o ponto de partida e a duração restante
 // pra dar pra retomar certo depois de um pause (ver pauseRun()).
 function scheduleEndOfTrack(track) {
+  scheduleTrackChangeIn(track.durationMs || FALLBACK_TRACK_DURATION_MS);
+}
+
+// Agenda a troca pra quando faltarem END_OF_TRACK_LEAD_MS de `remainingMs`.
+// Se o timer disparar bem depois da hora (o iOS congelou o app com a tela
+// bloqueada ou em outra tela e só soltou o timer na volta), não troca às
+// cegas: confere antes o que o Spotify está tocando (ver
+// resyncWithSpotify) — a faixa atual pode nem ter acabado ainda, ou o
+// Spotify já pode estar numa faixa da reserva da fila.
+function scheduleTrackChangeIn(remainingMs) {
   clearTimeout(endOfTrackTimer);
-  const durationMs = track.durationMs || FALLBACK_TRACK_DURATION_MS;
   trackSegmentStartedAt = Date.now();
-  trackRemainingMs = durationMs;
-  const delay = Math.max(durationMs - END_OF_TRACK_LEAD_MS, 1000);
-  endOfTrackTimer = setTimeout(playNextAndSchedule, delay);
+  trackRemainingMs = remainingMs;
+  const delay = Math.max(remainingMs - END_OF_TRACK_LEAD_MS, 1000);
+  const dueAt = Date.now() + delay;
+  endOfTrackTimer = setTimeout(() => {
+    if (Date.now() - dueAt > LATE_TIMER_TOLERANCE_MS) resyncWithSpotify();
+    else playNextAndSchedule();
+  }, delay);
 }
 
 // Escolhe e toca a próxima faixa pra cadência atual (usado tanto pela troca
@@ -1060,13 +1079,15 @@ async function topUpQueueReserve(target, { keepalive = false } = {}) {
 // ficou bloqueada e a fila foi andando), o RunBeat assume essa faixa —
 // atualiza a tela, o histórico e agenda a troca pelo que falta dela.
 // Devolve true quando assumiu.
-async function adoptReserveTrackIfPlaying() {
+async function adoptReserveTrackIfPlaying(knownState) {
   if (!queuedReserve.length) return false;
-  let state;
-  try {
-    state = await api.getPlaybackState();
-  } catch {
-    return false;
+  let state = knownState;
+  if (state === undefined) {
+    try {
+      state = await api.getPlaybackState();
+    } catch {
+      return false;
+    }
   }
   const item = state?.item;
   if (!item || !runActive || runPaused) return false;
@@ -1082,11 +1103,62 @@ async function adoptReserveTrackIfPlaying() {
   startBeatPulse(track.effectiveBpm);
   updateBpmRatioBadge(track);
   const durationMs = track.durationMs || FALLBACK_TRACK_DURATION_MS;
-  trackRemainingMs = Math.max(durationMs - (state.progress_ms || 0), 0);
-  trackSegmentStartedAt = Date.now();
-  endOfTrackTimer = setTimeout(playNextAndSchedule, Math.max(trackRemainingMs - END_OF_TRACK_LEAD_MS, 1000));
+  scheduleTrackChangeIn(Math.max(durationMs - (state.progress_ms || 0), 0));
   topUpQueueReserve(VISIBLE_QUEUE_RESERVE);
   return true;
+}
+
+// Mesma faixa, mesmo que o Spotify toque outra forma dela (outro ID no país
+// da conta, ou remaster com o mesmo nome).
+const baseSongName = (name) => String(name ?? "").toLowerCase().split(" - ")[0].replace(/\s*[([].*$/, "").trim();
+function isSameTrack(item, track) {
+  if (!item || !track) return false;
+  if (item.id === track.id || item.linked_from?.id === track.id) return true;
+  const firstArtist = String(track.artist ?? "").split(",")[0].trim().toLowerCase();
+  return (
+    baseSongName(item.name) === baseSongName(track.name) &&
+    String(item.artists?.[0]?.name ?? "").toLowerCase() === firstArtist
+  );
+}
+
+// Ao voltar pro RunBeat (ou quando o timer da troca dispara atrasado porque
+// o app ficou congelado), sincroniza com o que o Spotify está tocando de
+// verdade em vez de confiar só no relógio do app:
+//   - ainda é a faixa atual → só reagenda a troca pelo que falta dela
+//     (progress_ms), sem trocar de música;
+//   - é uma faixa da reserva da fila → assume essa faixa;
+//   - não deu pra saber → cai na conta pela duração, como antes.
+let resyncBusy = false;
+async function resyncWithSpotify() {
+  if (!runActive || runPaused || resyncBusy) return;
+  resyncBusy = true;
+  clearTimeout(endOfTrackTimer);
+  try {
+    let state = null;
+    try {
+      state = await api.getPlaybackState();
+    } catch (err) {
+      console.warn("Não deu pra ler o estado do Spotify na volta:", err.message);
+    }
+    if (!runActive || runPaused) return;
+    const current = history[history.length - 1];
+    if (state?.item && current && current.id === currentTrackId && isSameTrack(state.item, current)) {
+      const durationMs = state.item.duration_ms || current.durationMs || FALLBACK_TRACK_DURATION_MS;
+      scheduleTrackChangeIn(Math.max(durationMs - (state.progress_ms || 0), 0));
+      return;
+    }
+    if (state && (await adoptReserveTrackIfPlaying(state))) return;
+    if (trackSegmentStartedAt == null || trackRemainingMs == null) return;
+    const elapsed = Date.now() - trackSegmentStartedAt;
+    const left = trackRemainingMs - elapsed;
+    if (left - END_OF_TRACK_LEAD_MS <= 0) {
+      playNextAndSchedule().catch((err) => showRunError(err.message));
+    } else {
+      scheduleTrackChangeIn(left);
+    }
+  } finally {
+    resyncBusy = false;
+  }
 }
 
 async function skipToNext() {
@@ -1305,11 +1377,7 @@ function resumeRun() {
   // Retoma o agendamento de troca de faixa de onde parou, em vez de
   // recontar a duração inteira da faixa (que já estava parcialmente
   // tocada antes do pause).
-  if (trackRemainingMs != null) {
-    trackSegmentStartedAt = Date.now();
-    const delay = Math.max(trackRemainingMs - END_OF_TRACK_LEAD_MS, 1000);
-    endOfTrackTimer = setTimeout(playNextAndSchedule, delay);
-  }
+  if (trackRemainingMs != null) scheduleTrackChangeIn(trackRemainingMs);
 }
 
 // `silentlyConnected`: true quando a conexão já estava valida de uma visita
@@ -1400,14 +1468,15 @@ async function init() {
   initOnboarding();
   populatePaceOptions();
   loadBoostTrack();
+  // Com a corrida em andamento, a troca de modo/ritmo só vale ao apertar
+  // "Continuar" (ver confirmPaceBtn) — antes valia a cada mudança no
+  // seletor e trocava a música enquanto o usuário ainda estava escolhendo.
   el.modeSelect.addEventListener("change", () => {
     el.paceGroup.hidden = el.modeSelect.value !== "fixed";
     updatePaceSummary();
-    applyLiveModeChange();
   });
   el.paceSelect.addEventListener("change", () => {
     updatePaceSummary();
-    if (el.modeSelect.value === "fixed") applyLiveModeChange();
   });
   el.playlistSelect.addEventListener("change", () => {
     playlistExclusivity.enforce();
@@ -1501,10 +1570,10 @@ async function init() {
 
   el.confirmPaceBtn.addEventListener("click", () => {
     // Se a corrida já estiver rolando (usuário reabriu esse cartão só pra
-    // trocar de ritmo no meio do caminho), a troca já foi aplicada ao vivo
-    // pelo listener de "change" do mode-select/pace-select — esse botão só
-    // precisa avançar de volta pro cartão de corrida.
+    // trocar de ritmo no meio do caminho), aplica a troca agora — e só se o
+    // modo/ritmo mudou de fato; sem mudança, a música atual continua.
     updatePaceSummary();
+    applyLiveModeChange();
     advanceTo("run");
   });
 
@@ -1599,15 +1668,10 @@ async function init() {
     // Antes disso, se o Spotify estiver tocando uma faixa da reserva na
     // fila (a tela ficou bloqueada), o RunBeat só assume essa faixa em vez
     // de trocar por outra.
-    adoptReserveTrackIfPlaying().then((adopted) => {
-      if (adopted || runPaused || trackSegmentStartedAt == null || trackRemainingMs == null) return;
-      const elapsed = Date.now() - trackSegmentStartedAt;
-      const scheduledDelay = Math.max(trackRemainingMs - END_OF_TRACK_LEAD_MS, 1000);
-      if (elapsed >= scheduledDelay) {
-        clearTimeout(endOfTrackTimer);
-        playNextAndSchedule().catch((err) => showRunError(err.message));
-      }
-    });
+    // Antes, a volta trocava de música só pela conta do relógio do app —
+    // e às vezes o timer atrasado disparava junto e trocava a faixa no meio.
+    // Agora pergunta ao Spotify o que está tocando (ver resyncWithSpotify).
+    resyncWithSpotify();
   });
 }
 

@@ -361,8 +361,17 @@ async function ensureAudioContext() {
   if (!audioCtx) {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     audioCtx = new AudioCtx();
+    // No iOS o contexto pode ir pra "interrupted" quando o Spotify retoma a
+    // sessão de áudio numa troca de faixa — aí o clique some até alguém
+    // chamar resume(). Tenta retomar sozinho e atualiza o aviso na tela.
+    audioCtx.addEventListener("statechange", () => {
+      if (!audiblePulseEnabled) return;
+      if (audioCtx.state !== "running" && audioCtx.state !== "closed") audioCtx.resume().catch(() => {});
+      updateAudioStatus(audioCtx);
+    });
   }
-  if (audioCtx.state === "suspended") {
+  // Além de "suspended", o Safari do iOS usa "interrupted" (ver acima).
+  if (audioCtx.state !== "running" && audioCtx.state !== "closed") {
     try {
       await audioCtx.resume();
     } catch {
